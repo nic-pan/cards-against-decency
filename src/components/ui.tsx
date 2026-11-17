@@ -47,3 +47,40 @@ export function Badge({ children, tone = "neutral" }: { children: ReactNode; ton
     </span>
   );
 }
+
+/** On/off switch with a label and an optional hint. A disabled parent fieldset also disables it. */
+export function Toggle({
+  checked,
+  onChange,
+  label,
+  hint,
+}: {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  label: string;
+  hint?: ReactNode;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start justify-between gap-4">
+      <span className="min-w-0">
+        <span className="block text-sm font-semibold">{label}</span>
+        {hint && <span className="mt-0.5 block text-xs text-muted">{hint}</span>}
+      </span>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        onClick={() => onChange(!checked)}
+        className={`relative mt-0.5 inline-flex h-7 w-12 shrink-0 items-center rounded-full border transition disabled:cursor-not-allowed disabled:opacity-60 ${
+          checked ? "border-accent bg-accent" : "border-line bg-paper"
+        }`}
+      >
+        <span
+          className={`inline-block h-5 w-5 rounded-full bg-white shadow transition ${
+            checked ? "translate-x-6" : "translate-x-1"
+          }`}
+        />
+      </button>
+    </label>
+  );
+}

@@ -2,13 +2,18 @@
 
 import type { GameView, Settings } from "@/lib/protocol";
 import type { Act } from "./Room";
-import { Button } from "./ui";
+import { Button, Toggle } from "./ui";
 
 const range = (from: number, to: number, step = 1) =>
   Array.from({ length: Math.floor((to - from) / step) + 1 }, (_, i) => from + i * step);
 
+/** The bot count to use when the host turns bots on. */
+function suggestedBots(humans: number): number {
+  return humans === 1 ? 2 : 1;
+}
+
 function botHint(humans: number): string {
-  if (humans === 1) return "Playing alone? Add 2–3 bots for practice mode. You judge every round.";
+  if (humans === 1) return "Playing alone? Use 2–3 bots for practice mode. You are the Card Czar every round.";
   if (humans === 2) return "Two people: add 1–2 bots for a small game.";
   if (humans === 3) return "Three people: 1 bot gives more answers to choose from.";
   return "You have enough people. Bots are optional.";
@@ -46,86 +51,96 @@ export function Lobby({ view, isHost, act }: { view: GameView; isHost: boolean; 
       <section className="rounded-2xl border border-line bg-surface p-5">
         <h2 className="mb-4 font-bold">Game settings {!isHost && <span className="font-normal text-muted">(the host can change these)</span>}</h2>
 
-        <fieldset disabled={!isHost} className="space-y-5">
-          <div>
-            <span className="mb-1 block text-sm font-semibold">Bots</span>
-            <div className="flex flex-wrap gap-2">
-              {range(0, 6).map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  onClick={() => set({ botCount: n })}
-                  className={`h-11 w-11 rounded-lg border text-sm font-bold ${
-                    s.botCount === n ? "border-ink bg-ink text-paper" : "border-line hover:bg-paper"
-                  } disabled:opacity-60`}
-                >
-                  {n}
-                </button>
-              ))}
-            </div>
-            <p className="mt-1 text-xs text-muted">
-              {botHint(humans)} Bots play random cards. They never judge, write cards or chat.
-            </p>
+        <fieldset disabled={!isHost} className="space-y-6">
+          <div className="space-y-3">
+            <Toggle
+              label="Play with bots"
+              checked={s.botCount > 0}
+              onChange={(on) => set({ botCount: on ? suggestedBots(humans) : 0 })}
+              hint="Bots play random cards from the decks. They are never the Card Czar."
+            />
+            {s.botCount > 0 && (
+              <div>
+                <span className="mb-1 block text-sm font-semibold">Number of bots</span>
+                <div className="flex flex-wrap gap-2">
+                  {range(1, 6).map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => set({ botCount: n })}
+                      aria-pressed={s.botCount === n}
+                      className={`h-11 w-11 rounded-lg border text-sm font-bold ${
+                        s.botCount === n ? "border-ink bg-ink text-paper" : "border-line hover:bg-paper"
+                      } disabled:opacity-60`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1 text-xs text-muted">{botHint(humans)}</p>
+              </div>
+            )}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             <Select
               label="Points to win"
               value={s.targetScore}
               options={range(3, 15).map((n) => [n, `${n} points`])}
               onChange={(v) => set({ targetScore: v })}
+              hint="The first player to reach this score wins the game."
             />
             <Select
-              label="Maximum people"
+              label="Maximum players"
               value={s.maxPlayers}
-              options={range(3, 20).map((n) => [n, `${n} people`])}
+              options={range(3, 20).map((n) => [n, `${n} players`])}
               onChange={(v) => set({ maxPlayers: v })}
+              hint="More than 10 players is hard to follow. Rounds get slow, and more people leave or stop playing."
+              warn={s.maxPlayers > 10}
             />
             <Select
               label="Time to play a card"
               value={s.submitSeconds}
               options={[30, 45, 60, 75, 90, 120, 180, 300].map((n) => [n, seconds(n)])}
               onChange={(v) => set({ submitSeconds: v })}
+              hint="A player who does not play in time misses the round. After 2 missed rounds, the player sits out until they come back."
             />
             <Select
               label="Time for the Card Czar"
               value={s.judgeSeconds}
               options={[30, 45, 60, 75, 90, 120, 180, 300].map((n) => [n, seconds(n)])}
               onChange={(v) => set({ judgeSeconds: v })}
+              hint="If the Card Czar does not choose in time, nobody scores and the cards go back to the players."
             />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
             <Select
               label="Maximum spectators"
               value={s.maxSpectators}
               options={[0, 2, 5, 10, 15, 20].map((n) => [n, n === 0 ? "No spectators" : `${n} spectators`])}
               onChange={(v) => set({ maxSpectators: v })}
+              hint="Spectators watch the game but do not play. They are never the Card Czar."
             />
           </div>
 
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="h-4 w-4"
+          <div className="space-y-4 border-t border-line pt-5">
+            <Toggle
+              label="Show in the public game list"
               checked={s.isPublic}
-              onChange={(e) => set({ isPublic: e.target.checked })}
+              onChange={(on) => set({ isPublic: on })}
+              hint="When this is off, only people with the invite link or the room code can find the game."
             />
-            Show this game in the public game list. When this is off, only people with the link or code can join.
-          </label>
-
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              className="h-4 w-4"
+            <Toggle
+              label="Allow joining during the game"
               checked={s.allowLateJoin}
-              onChange={(e) => set({ allowLateJoin: e.target.checked })}
+              onChange={(on) => set({ allowLateJoin: on })}
+              hint="New players get cards at once and play from the next round. Spectators can also switch to playing."
             />
-            Let people join after the game starts. They play from the next round.
-          </label>
+          </div>
 
           <div>
-            <span className="mb-2 block text-sm font-semibold">Decks</span>
+            <span className="block text-sm font-semibold">Decks</span>
+            <span className="mb-2 block text-xs text-muted">
+              Select one or more decks. The game mixes the cards from all selected decks.
+            </span>
             <ul className="space-y-2">
               {view.decks.map((d) => (
                 <li key={d.id}>
@@ -169,11 +184,16 @@ function Select({
   value,
   options,
   onChange,
+  hint,
+  warn = false,
 }: {
   label: string;
   value: number;
   options: [number, string][];
   onChange: (v: number) => void;
+  hint?: string;
+  /** Shows the hint as a warning. */
+  warn?: boolean;
 }) {
   const list = options.some(([v]) => v === value) ? options : [[value, String(value)] as [number, string], ...options];
   return (
@@ -190,6 +210,7 @@ function Select({
           </option>
         ))}
       </select>
+      {hint && <span className={`mt-1 block text-xs ${warn ? "font-semibold text-accent" : "text-muted"}`}>{hint}</span>}
     </label>
   );
 }
