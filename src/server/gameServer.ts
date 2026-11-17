@@ -1,4 +1,4 @@
-import { randomBytes, randomInt, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHash, randomBytes, randomInt, scryptSync, timingSafeEqual } from "node:crypto";
 import type { Server, Socket } from "socket.io";
 import { z, ZodError } from "zod";
 import { DeckRegistry } from "../engine/deck";
@@ -34,14 +34,39 @@ export interface Room {
   tokens: Map<string, string>;
   /** Player id -> connected socket ids. One player can have several tabs. */
   sockets: Map<string, Set<string>>;
-  /** Player id -> hashed IP of the last connection. Used for bans only. */
+  /** Secret for this room's IP hashes. It lives only in memory and disappears with the room. */
+  salt: Buffer;
+  /** Player id -> hashed IP of the last connection (with the room's salt). Used for bans only. */
   ipKeys: Map<string, string>;
-  /** Banned hashed IPs and tokens. Exists only while the room exists. */
-  bans: Set<string>;
+  /** Ban id -> ban. Exists only while the room exists. */
+  bans: Map<string, Ban>;
   removeTimers: Map<string, ReturnType<typeof setTimeout>>;
   lastActivity: number;
   broadcastQueued: boolean;
   closed: boolean;
+}
+
+/** A ban blocks the player's hashed IP address and their sessions, whatever name they use next. */
+export interface Ban {
+  id: string;
+  /** The name at the time of the ban. Shown to the host for unbanning. */
+  name: string;
+  ipHash: string | null;
+  tokens: string[];
+}
+
+/** Hashes an IP address with the room's salt. The hash stays the same for the life of the room. */
+function roomIpHash(room: Room, ip: string): string {
+  return createHash("sha256").update(room.salt).update(ip).digest("base64url").slice(0, 22);
+}
+
+function isBanned(room: Room, ip: string | null, token: string | null): boolean {
+  const ipHash = ip ? roomIpHash(room, ip) : null;
+  for (const ban of room.bans.values()) {
+    if (ipHash && ban.ipHash === ipHash) return true;
+    if (token && ban.tokens.includes(token)) return true;
+  }
+  return false;
 }
 
 /** Live rooms. Replace this with a shared store when the game runs on more than one server. */
@@ -119,6 +144,7 @@ const schemas = {
   deckAdd: z.object({ code: z.string().max(20) }),
   nameCheck: z.object({ name }),
   deckRemove: z.object({ deckId: id }),
+  unban: z.object({ banId: id }),
 };
 
 class RequestError extends Error {
@@ -209,7 +235,8 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       tokens: new Map(),
       sockets: new Map(),
       ipKeys: new Map(),
-      bans: new Set(),
+      salt: randomBytes(16),
+      bans: new Map(),
       removeTimers: new Map(),
       lastActivity: Date.now(),
       broadcastQueued: false,
@@ -264,7 +291,11 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       if (room.closed) return;
       for (const [playerId, ids] of room.sockets) {
         if (!room.game.hasMember(playerId)) continue;
-        const view = { ...room.game.viewFor(playerId), code: room.code };
+        // Only the host sees the ban list, to be able to unban.
+        const bans = room.game.isHost(playerId)
+          ? [...room.bans.values()].map((b) => ({ id: b.id, name: b.name }))
+          : [];
+        const view = { ...room.game.viewFor(playerId), code: room.code, bans };
         for (const sid of ids) io.to(sid).emit("state", view);
       }
     });
@@ -280,7 +311,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
     const set = room.sockets.get(playerId) ?? new Set();
     set.add(socket.id);
     room.sockets.set(playerId, set);
-    room.ipKeys.set(playerId, ipKey(socket.data.ip));
+    room.ipKeys.set(playerId, roomIpHash(room, socket.data.ip));
     const timer = room.removeTimers.get(playerId);
     if (timer) {
       clearTimeout(timer);
@@ -517,7 +548,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       requireTerms(termsVersion);
       const room = store.get(c);
       if (!room) throw new RequestError("ROOM_NOT_FOUND");
-      if (room.bans.has(ipKey(s.data.ip))) {
+      if (isBanned(room, s.data.ip, null)) {
         securityLog("banned_join", { ip: s.data.ip, room: c });
         throw new RequestError("BANNED");
       }
@@ -550,7 +581,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       if (!room) throw new RequestError("ROOM_NOT_FOUND");
       const playerId = room.tokens.get(token);
       if (!playerId || !room.game.hasMember(playerId)) throw new RequestError("SESSION_EXPIRED");
-      if (room.bans.has(token)) throw new RequestError("BANNED");
+      if (isBanned(room, null, token)) throw new RequestError("BANNED");
       attach(s, room, playerId);
       return { code: room.code, token, playerId };
     });
@@ -626,9 +657,14 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       if (target === playerId || !room.game.memberIds().includes(target)) throw new GameError("UNKNOWN_PLAYER");
 
       if (ban) {
-        const key = room.ipKeys.get(target);
-        if (key) room.bans.add(key);
-        for (const [token, pid] of room.tokens) if (pid === target) room.bans.add(token);
+        const name = room.game.memberNames().find((m) => m.id === target)?.name ?? "Unknown player";
+        const id = randomBytes(6).toString("base64url");
+        room.bans.set(id, {
+          id,
+          name,
+          ipHash: room.ipKeys.get(target) ?? null,
+          tokens: [...room.tokens].filter(([, pid]) => pid === target).map(([token]) => token),
+        });
       }
       securityLog(ban ? "ban" : "kick", { ip: s.data.ip, room: room.code });
       for (const sid of room.sockets.get(target) ?? []) {
@@ -644,6 +680,15 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       room.removeTimers.delete(target);
       revoke(room, target);
       room.game.removePlayer(target, "kicked");
+    });
+
+    on(socket, "player:unban", (s, p) => {
+      const { room, playerId } = current(s);
+      if (!room.game.isHost(playerId)) throw new GameError("NOT_HOST");
+      const { banId } = schemas.unban.parse(p);
+      if (!room.bans.delete(banId)) throw new GameError("UNKNOWN_PLAYER");
+      securityLog("unban", { ip: s.data.ip, room: room.code });
+      queueBroadcast(room);
     });
 
     socket.on("disconnect", () => detach(socket));

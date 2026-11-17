@@ -20,7 +20,8 @@ import {
   setMuted,
 } from "@/lib/sounds";
 
-type View = GameView & { code: string };
+/** The room view. bans is empty for everybody but the host. */
+export type View = GameView & { code: string; bans: { id: string; name: string }[] };
 
 type Status =
   | { kind: "connecting" }

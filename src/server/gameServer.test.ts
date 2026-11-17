@@ -295,6 +295,30 @@ describe("game server", () => {
     expect(seenByTarget).toBe(false);
   });
 
+  it("lets the host unban a player, and shows bans only to the host", async () => {
+    const host = await client();
+    const room = await host.emit("room:create", { ...T, name: nm("Judge") });
+    const b = await client();
+    const banned = await b.emit("room:join", { ...T, code: room.code, name: "Saboteur" });
+    await host.emit("player:kick", { playerId: banned.playerId, ban: true });
+
+    const hostView = await host.until((v: any) => v.bans?.length === 1);
+    const ban = (hostView as any).bans[0];
+    expect(ban.name).toBe("Saboteur");
+
+    // A new name from the same connection is still blocked.
+    const again = await client();
+    expect((await again.emit("room:join", { ...T, code: room.code, name: "Totally New" })).error).toBe("BANNED");
+
+    expect((await host.emit("player:unban", { banId: ban.id })).ok).toBe(true);
+    await host.until((v: any) => v.bans.length === 0);
+    const back = await again.emit("room:join", { ...T, code: room.code, name: "Totally New" });
+    expect(back.ok).toBe(true);
+    // Other players never see the ban list.
+    const otherView = await again.until((v: any) => Array.isArray(v.bans));
+    expect((otherView as any).bans).toEqual([]);
+  });
+
   it("rejects malformed payloads and unknown settings", async () => {
     const a = await client();
     await a.emit("room:create", { ...T, name: nm("Host") });

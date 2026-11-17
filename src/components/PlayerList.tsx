@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { offences, type GameView, type PlayerStatus } from "@/lib/protocol";
-import type { Act, Ghost } from "./Room";
+import type { Act, Ghost, View } from "./Room";
 import { Badge } from "./ui";
 
 const STATUS_TEXT: Record<PlayerStatus, string> = {
@@ -20,7 +20,7 @@ export function PlayerList({
   act,
   ghosts = [],
 }: {
-  view: GameView;
+  view: View;
   isHost: boolean;
   act: Act;
   ghosts?: Ghost[];
@@ -124,6 +124,34 @@ export function PlayerList({
           );
         })}
       </ul>
+
+      {isHost && view.bans.length > 0 && (
+        <div className="mt-4 border-t border-line pt-3">
+          <h3 className="mb-1 flex items-baseline justify-between text-sm font-bold">
+            Banned
+            <span className="text-xs font-normal text-muted">only you see this</span>
+          </h3>
+          <ul className="space-y-1 text-sm">
+            {view.bans.map((b) => (
+              <li key={b.id} className="flex items-center gap-2">
+                <span className="min-w-0 truncate text-muted line-through">{b.name}</span>
+                <button
+                  type="button"
+                  className="ml-auto rounded border border-line px-2 py-0.5 text-xs font-semibold hover:bg-paper"
+                  onClick={() => act("player:unban", { banId: b.id })}
+                  aria-label={`Unban ${b.name}`}
+                >
+                  Unban
+                </button>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1 text-xs text-muted">
+            A ban blocks the person&apos;s internet connection, whatever name they use. Others on the same Wi-Fi are
+            blocked too.
+          </p>
+        </div>
+      )}
 
       {(view.spectators.length > 0 || view.settings.maxSpectators > 0) && (
         <div className="mt-4 border-t border-line pt-3">

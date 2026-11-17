@@ -24,6 +24,7 @@ export type SecurityEvent =
   | "banned_join"
   | "kick"
   | "ban"
+  | "unban"
   | "invalid_payload";
 
 export function securityLog(event: SecurityEvent, data: { ip?: string; room?: string; detail?: string }): void {

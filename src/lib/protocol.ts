@@ -70,12 +70,15 @@ export interface ClientToServer {
   /** A spectator starts to play. */
   "player:play": (ack: (r: Ack) => void) => void;
   "player:kick": (p: { playerId: string; ban: boolean }, ack: (r: Ack) => void) => void;
+  /** The host lifts a ban. The person can join again, with any name. */
+  "player:unban": (p: { banId: string }, ack: (r: Ack) => void) => void;
 }
 
 export interface ServerToClient {
   /** The public game list changed. Sent only to sockets that subscribed. */
   lobby: (p: { games: RoomListing[] }) => void;
-  state: (view: GameView & { code: string }) => void;
+  /** bans is empty for everybody but the host. */
+  state: (view: GameView & { code: string; bans: { id: string; name: string }[] }) => void;
   /** Another player was removed, by the host or for being idle. Everybody else sees and hears it. */
   "player:removed": (p: { playerId: string; name: string; reason: "kicked" | "idle" }) => void;
   /** You were removed from the room. */
