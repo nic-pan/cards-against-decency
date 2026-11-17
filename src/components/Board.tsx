@@ -295,7 +295,9 @@ function Table({
                     ? ` — choose ${pick === 1 ? "a card" : `${pick} cards, in order`}`
                     : judgingThisRound
                       ? " — you are the Card Czar and do not play this round"
-                      : ""}
+                      : view.players.find((p) => p.id === view.youId)?.status === "waiting"
+                        ? " — you joined during this round and play from the next one"
+                        : ""}
                 </span>
               </span>
               {judgingThisRound && (
