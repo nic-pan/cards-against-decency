@@ -19,6 +19,16 @@ docker compose run --rm app npm run typecheck
 
 To test with friends on the same network, open `http://<your-computer-ip>:3000` on their devices.
 
+## Deploying
+
+The game needs a host that runs one long-running Node.js process, because `server.ts` runs Next.js and the Socket.IO game server together.
+
+- **Vercel and other serverless hosts do not work.** They run Next.js pages as short functions and never start `server.ts`, so there is no game server.
+- **Use** Railway, Render, Fly.io or a small VPS. Run `npm run build`, then `npm start`.
+- Run **one instance only**. Live rooms are in memory, so a second instance does not see them. A restart deletes all rooms.
+- **Set `TRUST_PROXY=1`** when the app runs behind the host's proxy. Without it, every player looks like the same IP address. Then the rate limits cover all players at once, and a ban blocks everyone.
+- Rate limits for each IP address: 60 create, join and leave actions each minute, and 300 name and room checks each minute. Friends on one Wi-Fi share one IP address.
+
 ## Test players (development only)
 
 Add fake human players to a local room, to test with more people:

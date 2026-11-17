@@ -142,14 +142,19 @@ type Sock = Socket<ClientToServer, ServerToClient, Record<string, never>, Socket
 
 export interface GameServerOptions {
   store?: RoomStore;
-  /** Create, join, resume, name check and leave actions each minute from one IP address. */
+  /** Create, join, resume and leave actions each minute from one IP address. */
   joinsPerMinute?: number;
+  /** Name and seat checks each minute from one IP address. They change nothing, so the limit is higher. */
+  lookupsPerMinute?: number;
 }
 
 export function attachGameServer(server: Server, decks: DeckRegistry, options: GameServerOptions = {}) {
   const store = options.store ?? new MemoryRoomStore();
   const io = server as unknown as IO;
-  const joinAttempts = new WindowCounter(options.joinsPerMinute ?? 30, 60_000);
+  // Friends on one Wi-Fi share one IP address, so these limits are for the whole group.
+  // Behind a hosting proxy, set TRUST_PROXY=1, or all players look like one address.
+  const joinAttempts = new WindowCounter(options.joinsPerMinute ?? 60, 60_000);
+  const lookups = new WindowCounter(options.lookupsPerMinute ?? 300, 60_000);
   const passwordFailures = new WindowCounter(5, 10 * 60_000);
   // Deck imports call an outside service, so they have their own, lower limit.
   const deckImports = new WindowCounter(10, 60_000);
@@ -357,6 +362,13 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
     return { room, playerId };
   }
 
+  function checkLookupRate(socket: Sock): void {
+    if (!lookups.hit(socket.data.ip)) {
+      securityLog("join_rate_limited", { ip: socket.data.ip, detail: "lookup" });
+      throw new RequestError("RATE_LIMITED");
+    }
+  }
+
   function checkJoinRate(socket: Sock): void {
     if (!joinAttempts.hit(socket.data.ip)) {
       securityLog("join_rate_limited", { ip: socket.data.ip });
@@ -416,7 +428,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
     });
 
     on(socket, "name:check", (s, p) => {
-      checkJoinRate(s);
+      checkLookupRate(s);
       const { name: n } = schemas.nameCheck.parse(p);
       const previous = (p as { previous?: { code: string; token: string } }).previous;
       const own = previous && store.get(String(previous.code))?.tokens.get(String(previous.token));
@@ -437,7 +449,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
     });
 
     on(socket, "room:seat", (s, p) => {
-      checkJoinRate(s);
+      checkLookupRate(s);
       const seat = schemas.resume.parse(p);
       const room = store.get(seat.code);
       const playerId = room?.tokens.get(seat.token);
@@ -453,7 +465,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
     });
 
     on(socket, "room:info", (s, p) => {
-      checkJoinRate(s);
+      checkLookupRate(s);
       const { code: c } = schemas.info.parse(p);
       const room = store.get(c);
       return { exists: !!room, needsPassword: !!room?.password };
@@ -627,6 +639,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
     joinAttempts.sweep();
     passwordFailures.sweep();
     deckImports.sweep();
+    lookups.sweep();
   }, 60_000);
   sweep.unref();
 

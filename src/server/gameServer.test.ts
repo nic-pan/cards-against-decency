@@ -23,7 +23,7 @@ beforeAll(async () => {
   server = createServer();
   ioServer = new Server(server);
   // All test clients share one IP address, so the test server allows more joins.
-  attachGameServer(ioServer, loadDecks(join(process.cwd(), "data/decks")), { joinsPerMinute: 1000 });
+  attachGameServer(ioServer, loadDecks(join(process.cwd(), "data/decks")), { joinsPerMinute: 1000, lookupsPerMinute: 1000 });
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
