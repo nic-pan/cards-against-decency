@@ -39,6 +39,9 @@ export function Room({ code }: { code: string }) {
   const [ghosts, setGhosts] = useState<Ghost[]>([]);
   useTurnAlert(view, clockOffset);
   useIdleWarningSound(view);
+  // Players removed in the last seconds. A Czar who was removed gets the thud, not the "Czar left" sound.
+  const recentlyRemoved = useRef(new Set<string>());
+  useCzarLeftSound(view, recentlyRemoved);
   useEffect(() => {
     installAudioUnlock();
     installActivityTracker();
@@ -69,6 +72,8 @@ export function Room({ code }: { code: string }) {
       const index = last?.players.findIndex((p) => p.id === playerId) ?? -1;
       if (!last || index < 0) return;
       playEventSound("removed");
+      recentlyRemoved.current.add(playerId);
+      setTimeout(() => recentlyRemoved.current.delete(playerId), 5000);
       const ghost: Ghost = { player: last.players[index], index, reason };
       setGhosts((g) => [...g.filter((x) => x.player.id !== playerId), ghost]);
       setTimeout(() => setGhosts((g) => g.filter((x) => x !== ghost)), GHOST_MS);
@@ -358,6 +363,19 @@ function PhoneNotice() {
       </button>
     </div>
   );
+}
+
+/** Plays once for everybody when the Card Czar leaves during a round and the round is cancelled. */
+function useCzarLeftSound(view: View | null, recentlyRemoved: React.MutableRefObject<Set<string>>) {
+  const end = view?.round?.end;
+  const czarId = view?.round?.czarId;
+  const key = view?.round ? `${view.round.number}:${end}` : "";
+  const announced = useRef("");
+  useEffect(() => {
+    if (end !== "czarLeft" || !czarId || announced.current === key) return;
+    announced.current = key;
+    if (!recentlyRemoved.current.has(czarId)) playEventSound("czarLeft");
+  }, [end, czarId, key, recentlyRemoved]);
 }
 
 /** Plays the "suspenseful boom" once, when the player gets the red idle warning. */

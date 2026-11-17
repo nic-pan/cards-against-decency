@@ -103,6 +103,7 @@ const FILES = {
   idleWarning: "/sounds/idle-warning.mp3",
   removed: "/sounds/removed.mp3",
   banned: "/sounds/banned.mp3",
+  czarLeft: "/sounds/czar-left.mp3",
 } as const;
 
 type SoundFile = keyof typeof FILES;
@@ -143,7 +144,7 @@ async function playFile(name: SoundFile, volume: number): Promise<boolean> {
 }
 
 /** Sounds for game events. Nothing plays when the player has turned sounds off. */
-export function playEventSound(event: "idleWarning" | "removed" | "banned"): void {
+export function playEventSound(event: "idleWarning" | "removed" | "banned" | "czarLeft"): void {
   if (isMuted()) return;
   void playFile(event, 0.7);
 }
