@@ -40,11 +40,12 @@ export function PlayerList({
   return (
     <section className="rounded-2xl border border-line bg-surface p-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3">
-        <h2 className="font-bold">Players</h2>
-        <span className="text-xs text-muted">
-          {humans}/{view.settings.maxPlayers} people
-          {view.phase !== "lobby" && ` · first to ${offences(view.settings.targetScore)}`}
-        </span>
+        <h2 className="font-bold">
+          Players <span className="font-normal text-muted">{humans}/{view.settings.maxPlayers}</span>
+        </h2>
+        {view.phase !== "lobby" && (
+          <span className="text-xs text-muted">Goal: {offences(view.settings.targetScore)}</span>
+        )}
       </div>
       <ul className="divide-y divide-line">
         {rows.map(({ p, ghost }) => {
