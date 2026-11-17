@@ -208,7 +208,7 @@ describe("timeouts and inactive players", () => {
     playRound();
     expect(game.hasPlayer(idle)).toBe(false);
     expect(onRemoved).toHaveBeenCalledWith(idle, "idle", expect.any(String));
-    const removal = game.viewFor(host).notices.find((n) => n.text.includes("missing 2 rounds in a row"))!;
+    const removal = game.viewFor(host).log.find((n) => n.text.includes("missing 2 rounds in a row"))!;
     expect(removal.tone).toBe("danger");
     // The round goes on for the others.
     expect(game.viewFor(host).phase).toBe("judging");
@@ -256,7 +256,7 @@ describe("timeouts and inactive players", () => {
     expect(onRemoved).toHaveBeenCalledWith(nextCzar, "idle", expect.any(String));
     expect(game.hasPlayer(nextCzar)).toBe(false);
     // Both events stay visible to the other players.
-    const texts = game.viewFor(host).notices.map((n) => n.text).join(" | ");
+    const texts = game.viewFor(host).log.map((n) => n.text).join(" | ");
     expect(texts).toContain("did not choose in time");
     expect(texts).toContain("went back to the players' hands");
     expect(texts).toContain("missing 2 rounds in a row");
@@ -488,5 +488,30 @@ describe("removing and adding bots", () => {
     expect(added.id).not.toBe(bot.id);
     expect(added.status).toBe("waiting");
     expect(() => game.addBot(host)).toThrow("TOO_MANY_BOTS");
+  });
+});
+
+describe("activity log", () => {
+  it("records joins, rounds and winners with times", () => {
+    const { game, ids, host } = setup();
+    game.start(host);
+    submitAll(game, ids);
+    const czar = game.viewFor(host).round!.czarId;
+    game.pick(czar, game.viewFor(czar).round!.submissions![0].id);
+    const texts = game.viewFor(host).log.map((n) => n.text);
+    expect(texts[0]).toBe("P0 created the room.");
+    expect(texts).toContain("P1 joined.");
+    expect(texts).toContain("The game started.");
+    expect(texts.some((t) => /^Round 1\. Card Czar: P\d\.$/.test(t))).toBe(true);
+    expect(texts.some((t) => /^P\d won round 1\.$/.test(t))).toBe(true);
+    expect(game.viewFor(host).log.every((n) => typeof n.at === "number")).toBe(true);
+  });
+
+  it("keeps the last 50 entries", () => {
+    const { game } = setup();
+    for (let i = 0; i < 60; i++) game.removePlayer(game.addSpectator(`S${i}`), "left");
+    const log = game.viewFor(game.humanIds()[0]).log;
+    expect(log).toHaveLength(50);
+    expect(log.at(-1)!.text).toBe("S59 stopped watching.");
   });
 });

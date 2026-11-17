@@ -129,15 +129,18 @@ interface Round {
   deadline: number | null;
 }
 
+/** One entry in the room's activity log. */
 export interface Notice {
   id: number;
   text: string;
-  /** "danger" notices show in red, for example when a player is removed for being idle. */
+  /** "danger" entries show in red, for example when a player is removed for being idle. */
   tone: "info" | "danger";
+  /** Server time in milliseconds. */
+  at: number;
 }
 
-/** The number of recent notices that players see together. */
-const NOTICES_KEPT = 3;
+/** The number of log entries that the room keeps. The log disappears with the room. */
+const LOG_KEPT = 50;
 
 // ---------------------------------------------------------------------------
 // Client view (what one player is allowed to see)
@@ -213,8 +216,8 @@ export interface GameView {
   yourSubmission: WhiteCard[] | null;
   mustSubmit: boolean;
   winnerId: string | null;
-  /** Recent notices, oldest first. */
-  notices: Notice[];
+  /** The room's activity log, oldest first. */
+  log: Notice[];
   decks: DeckSummary[];
   serverNow: number;
 }
@@ -284,7 +287,7 @@ export class Game {
   private round: Round | null = null;
   private roundNumber = 0;
   private winnerId: string | null = null;
-  private notices: Notice[] = [];
+  private log: Notice[] = [];
   private noticeSeq = 0;
   private lastCzarId: string | null = null;
   private botSeq = 0;
@@ -313,6 +316,7 @@ export class Game {
     // Late joiners get cards now, but they play from the next round.
     if (this.whitePile && this.phase !== "lobby") this.refill(player);
     this.players.push(player);
+    this.setNotice(this.hostId ? `${name} joined.` : `${name} created the room.`);
     if (!this.hostId) this.hostId = player.id;
     this.changed();
     return player.id;
@@ -325,6 +329,7 @@ export class Game {
     if (this.spectators.length >= this.settings.maxSpectators) throw new GameError("SPECTATORS_FULL");
     const spectator: Spectator = { id: this.newId(), name, connected: true };
     this.spectators.push(spectator);
+    this.setNotice(`${name} is watching.`);
     this.changed();
     return spectator.id;
   }
@@ -340,12 +345,15 @@ export class Game {
     player.connected = spectator.connected;
     if (this.whitePile && this.phase !== "lobby") this.refill(player);
     this.players.push(player);
+    this.setNotice(`${spectator.name} stopped watching and joined the game.`);
     this.changed();
   }
 
   removePlayer(id: string, why: RemoveReason): void {
-    if (this.spectators.some((s) => s.id === id)) {
+    const spectator = this.spectators.find((s) => s.id === id);
+    if (spectator) {
       this.spectators = this.spectators.filter((s) => s.id !== id);
+      this.setNotice(why === "kicked" ? `${spectator.name} was removed.` : `${spectator.name} stopped watching.`);
       this.changed();
       return;
     }
@@ -546,7 +554,7 @@ export class Game {
     this.winnerId = null;
     this.roundNumber = 0;
     this.lastCzarId = null;
-    this.notices = [];
+    this.setNotice("The game started.");
     this.startRound();
   }
 
@@ -640,6 +648,7 @@ export class Game {
     if (czar) czar.idleRounds = 0;
     const player = this.find(winner.playerId);
     if (player) player.score += 1;
+    this.setNotice(`${player?.name ?? "Someone who left"} won round ${round.number}.`);
     this.endRound("winner");
   }
 
@@ -694,7 +703,7 @@ export class Game {
       mustSubmit:
         this.phase === "submitting" && !!round && round.participants.has(playerId) && !mySubmission,
       winnerId: this.winnerId,
-      notices: this.notices,
+      log: this.log,
       decks: [...this.decks.list(), ...[...this.externalDecks.values()].map((d) => ({ ...summarize(d), external: true }))],
       serverNow: Date.now(),
     };
@@ -728,6 +737,7 @@ export class Game {
 
     const czar = this.nextCzar(activeHumans);
     this.lastCzarId = czar.id;
+    this.setNotice(`Round ${this.roundNumber + 1}. Card Czar: ${czar.name}.`);
     this.roundNumber += 1;
     const round: Round = {
       number: this.roundNumber,
@@ -821,6 +831,7 @@ export class Game {
     if (champion) {
       this.phase = "gameOver";
       this.winnerId = champion.id;
+      this.setNotice(`${champion.name} wins the game with ${champion.score} Offences!`);
       round.deadline = null;
       this.changed();
       return;
@@ -955,9 +966,10 @@ export class Game {
     if (id !== this.hostId) throw new GameError("NOT_HOST");
   }
 
+  /** Adds an entry to the room's activity log. */
   private setNotice(text: string, tone: Notice["tone"] = "info"): void {
     this.noticeSeq += 1;
-    this.notices = [...this.notices, { id: this.noticeSeq, text, tone }].slice(-NOTICES_KEPT);
+    this.log = [...this.log, { id: this.noticeSeq, text, tone, at: Date.now() }].slice(-LOG_KEPT);
   }
 
   private schedule(ms: number, fn: () => void): void {

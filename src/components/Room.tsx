@@ -203,11 +203,11 @@ export function Room({ code }: { code: string }) {
           )}
         </Banner>
       )}
-      <Notices view={view} />
 
       <div className="mt-4 grid gap-6 lg:grid-cols-[17rem_1fr]">
         <aside className="order-2 lg:order-1">
           <PlayerList view={view} isHost={isHost} act={act} ghosts={ghosts} />
+          <ActivityLog log={view.log} />
         </aside>
         <main className="order-1 min-w-0 lg:order-2">
           {view.phase === "lobby" ? (
@@ -471,32 +471,49 @@ function RoomHeader({ code, practice, onLeave }: { code: string; practice: boole
   );
 }
 
-/** Recent game events, newest last. Red ones are about idle players and missed rounds. */
-function Notices({ view }: { view: View }) {
-  const [hidden, setHidden] = useState<Set<number>>(new Set());
-  const shown = view.notices.filter((n) => !hidden.has(n.id));
-  if (shown.length === 0) return null;
+/**
+ * The room's activity log under the player list: joins, leaves, rounds, winners and
+ * removals. Newest first, in a box that scrolls, so it never pushes the game down.
+ */
+function ActivityLog({ log }: { log: View["log"] }) {
+  // Entries that arrive while the page is open light up for a moment.
+  const seen = useRef<Set<number> | null>(null);
+  const [fresh, setFresh] = useState<Set<number>>(new Set());
+  useEffect(() => {
+    if (seen.current === null) {
+      seen.current = new Set(log.map((n) => n.id));
+      return;
+    }
+    const added = log.filter((n) => !seen.current!.has(n.id)).map((n) => n.id);
+    if (added.length === 0) return;
+    for (const id of added) seen.current.add(id);
+    setFresh(new Set(added));
+    const t = setTimeout(() => setFresh(new Set()), 2500);
+    return () => clearTimeout(t);
+  }, [log]);
+
+  if (log.length === 0) return null;
+  const time = (at: number) => new Date(at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
   return (
-    <div className="mt-3 space-y-2" aria-live="polite">
-      {shown.map((n) => (
-        <div
-          key={n.id}
-          role={n.tone === "danger" ? "alert" : undefined}
-          className={`flex items-start justify-between gap-3 rounded-lg border px-4 py-2.5 text-sm ${
-            n.tone === "danger" ? "border-danger bg-danger-soft font-semibold text-danger" : "border-line bg-surface"
-          }`}
-        >
-          <span>{n.text}</span>
-          <button
-            className={n.tone === "danger" ? "text-danger" : "text-muted"}
-            aria-label="Dismiss"
-            onClick={() => setHidden((h) => new Set(h).add(n.id))}
+    <section className="mt-4 rounded-2xl border border-line bg-surface p-4" aria-label="Activity">
+      <h2 className="mb-2 font-bold">Activity</h2>
+      <ol className="max-h-56 space-y-1 overflow-y-auto pr-1 text-xs" aria-live="polite">
+        {[...log].reverse().map((n) => (
+          <li
+            key={n.id}
+            className={`flex gap-2 rounded px-1.5 py-1 transition-colors duration-700 ${
+              fresh.has(n.id) ? (n.tone === "danger" ? "bg-danger-soft" : "bg-accent-soft") : ""
+            }`}
           >
-            ✕
-          </button>
-        </div>
-      ))}
-    </div>
+            <time className="shrink-0 tabular-nums text-muted" dateTime={new Date(n.at).toISOString()}>
+              {time(n.at)}
+            </time>
+            <span className={n.tone === "danger" ? "font-semibold text-danger" : ""}>{n.text}</span>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 
