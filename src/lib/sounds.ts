@@ -54,6 +54,32 @@ function tone(
   osc.stop(t + opts.length + 0.05);
 }
 
+let unlockInstalled = false;
+
+/**
+ * Browsers (Safari above all) play sound only after the player has tapped or
+ * clicked on the page. On the first tap, click or key press, start the audio
+ * engine and play a silent sample, so later sounds from game events can play.
+ */
+export function installAudioUnlock(): void {
+  if (unlockInstalled || typeof window === "undefined") return;
+  unlockInstalled = true;
+  const events = ["pointerdown", "touchend", "keydown"] as const;
+  const unlock = () => {
+    const a = audio();
+    if (!a) return;
+    try {
+      const silent = a.createBuffer(1, 1, 22050);
+      const source = a.createBufferSource();
+      source.buffer = silent;
+      source.connect(a.destination);
+      source.start();
+    } catch {}
+    if (a.state === "running") for (const e of events) window.removeEventListener(e, unlock, true);
+  };
+  for (const e of events) window.addEventListener(e, unlock, true);
+}
+
 const FILES = {
   turnFunny: "/sounds/turn-funny.mp3",
   idleWarning: "/sounds/idle-warning.mp3",

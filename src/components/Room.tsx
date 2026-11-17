@@ -9,7 +9,15 @@ import { Lobby } from "./Lobby";
 import { PlayerList } from "./PlayerList";
 import { ProfileForm } from "./ProfileForm";
 import { Button, Field, inputClass } from "./ui";
-import { getSoundStyle, playEventSound, playTurnSound, preloadSounds, setSoundStyle, type SoundStyle } from "@/lib/sounds";
+import {
+  getSoundStyle,
+  installAudioUnlock,
+  playEventSound,
+  playTurnSound,
+  preloadSounds,
+  setSoundStyle,
+  type SoundStyle,
+} from "@/lib/sounds";
 
 type View = GameView & { code: string };
 
@@ -27,9 +35,12 @@ export function Room({ code }: { code: string }) {
   const clockOffset = useRef(0);
   const lastView = useRef<View | null>(null);
   const [ghosts, setGhosts] = useState<Ghost[]>([]);
-  useTurnAlert(view);
+  useTurnAlert(view, clockOffset);
   useIdleWarningSound(view);
-  useEffect(() => preloadSounds(), []);
+  useEffect(() => {
+    installAudioUnlock();
+    preloadSounds();
+  }, []);
   const phone = useIsPhone();
   // On phones, keep the screen on during a game, so the connection and the turn reminders stay alive.
   useWakeLock(phone && !!view && view.phase !== "lobby" && view.phase !== "gameOver" && !view.youAreSpectator);
@@ -212,31 +223,39 @@ const GHOST_MS = 1900;
 
 export type Act = (event: Parameters<typeof call>[0], payload?: unknown) => Promise<boolean>;
 
+/** The horn plays in the last seconds of a turn, every 5 seconds, until the player acts. */
+const REMIND_FROM_SECONDS = 15;
+const REMIND_EVERY_SECONDS = 5;
+
 /**
  * Reminds the player when it is their turn: to play a card, or to choose as Card Czar.
- * One sound when the turn starts. While the player looks at another tab or app,
- * the sound repeats every 5 seconds and the tab title blinks.
+ * In the last 15 seconds, while the player has not acted, the horn plays every 5 seconds
+ * (at 15, 10 and 5 seconds left). While the player looks at another tab, the title blinks.
  */
-function useTurnAlert(view: View | null) {
+function useTurnAlert(view: View | null, clockOffset: React.MutableRefObject<number>) {
+  // mustSubmit is false once the player has played; the Czar's turn ends when the Czar chooses.
   const myTurn =
     !!view && (view.mustSubmit || (view.phase === "judging" && view.round?.czarId === view.youId));
+  const deadline = view?.round?.deadline ?? null;
   const key = view?.round ? `${view.round.number}:${view.phase}` : "";
-  const announced = useRef("");
 
   useEffect(() => {
     if (!myTurn) return;
-    if (announced.current !== key) {
-      announced.current = key;
-      playTurnSound();
-    }
-    const away = () => document.hidden || !document.hasFocus();
+    const played = new Set<number>();
     const title = document.title;
     let flip = false;
-    const repeat = setInterval(() => {
-      if (away()) playTurnSound();
-    }, 5000);
-    const blink = setInterval(() => {
-      if (away()) {
+    const tick = setInterval(() => {
+      if (deadline) {
+        const left = Math.ceil((deadline - (Date.now() + clockOffset.current)) / 1000);
+        // Play at 15, 10 and 5 seconds left, once each.
+        const mark = Math.ceil(left / REMIND_EVERY_SECONDS) * REMIND_EVERY_SECONDS;
+        if (left > 0 && left <= REMIND_FROM_SECONDS && !played.has(mark)) {
+          played.add(mark);
+          playTurnSound();
+        }
+      }
+      const away = document.hidden || !document.hasFocus();
+      if (away) {
         flip = !flip;
         document.title = flip ? "🃏 Your turn!" : title;
       } else if (document.title !== title) {
@@ -244,11 +263,10 @@ function useTurnAlert(view: View | null) {
       }
     }, 1000);
     return () => {
-      clearInterval(repeat);
-      clearInterval(blink);
+      clearInterval(tick);
       document.title = title;
     };
-  }, [myTurn, key]);
+  }, [myTurn, key, deadline, clockOffset]);
 }
 
 /** True on touch devices such as phones and tablets. */
