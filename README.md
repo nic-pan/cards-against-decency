@@ -135,6 +135,7 @@ The game sounds come from [Pixabay](https://pixabay.com/sound-effects/) under th
 | `turn-funny.mp3` | "Horn" by digitalstore07 (ID 430368), first blast only | "Your turn", Funny style |
 | `idle-warning.mp3` | "Suspenseful Boom" by Dragon Studio (ID 451863), from 1.4 s | The red idle warning |
 | `removed.mp3` | "Thud Sound Effect" by Dragon Studio (ID 405470), 0.3–2.0 s | Removed for being idle, or by the host |
+| `banned.mp3` | "faaah" (source and author to be added), from 0.08 s | Banned by the host (only the banned player hears it) |
 
 ## Not in version 1
 

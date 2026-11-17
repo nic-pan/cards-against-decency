@@ -79,7 +79,8 @@ export function Room({ code }: { code: string }) {
       setView(v);
     };
     const onRemoved = ({ reason }: { reason: string }) => {
-      if (reason === "idle" || reason === "kicked" || reason === "banned") playEventSound("removed");
+      if (reason === "banned") playEventSound("banned");
+      else if (reason === "idle" || reason === "kicked") playEventSound("removed");
       session.clear(code);
       setView(null);
       if (reason === "idle" || reason === "kicked" || reason === "banned") {
@@ -152,7 +153,14 @@ export function Room({ code }: { code: string }) {
       </Centered>
     );
   if (status.kind === "join")
-    return <JoinForm code={code} needsPassword={status.needsPassword} onJoined={() => setStatus({ kind: "in" })} />;
+    return (
+      <JoinForm
+        code={code}
+        needsPassword={status.needsPassword}
+        onJoined={() => setStatus({ kind: "in" })}
+        onBanned={() => setStatus({ kind: "gone", message: "", removed: "banned" })}
+      />
+    );
   if (!view) return <Centered>Loading the room…</Centered>;
 
   const me = view.players.find((p) => p.id === view.youId);
@@ -575,7 +583,17 @@ function Centered({ children }: { children: React.ReactNode }) {
   return <div className="mx-auto max-w-md px-4 py-24 text-center">{children}</div>;
 }
 
-function JoinForm({ code, needsPassword, onJoined }: { code: string; needsPassword: boolean; onJoined: () => void }) {
+function JoinForm({
+  code,
+  needsPassword,
+  onJoined,
+  onBanned,
+}: {
+  code: string;
+  needsPassword: boolean;
+  onJoined: () => void;
+  onBanned: () => void;
+}) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -592,6 +610,7 @@ function JoinForm({ code, needsPassword, onJoined }: { code: string; needsPasswo
       previous: session.current(),
     });
     setBusy(false);
+    if (!r.ok && r.error === "BANNED") return onBanned();
     if (!r.ok) return setError(r.text);
     session.set(code, r.data.token);
     onJoined();
