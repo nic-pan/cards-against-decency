@@ -430,12 +430,13 @@ function RoomHeader({ code, practice, onLeave }: { code: string; practice: boole
       {/* The logo asks before it leaves the game, like the Leave button. */}
       <Link
         href="/"
-        className="hidden text-lg font-black tracking-tight sm:inline"
+        className="hidden items-center gap-2 text-lg font-black tracking-tight sm:inline-flex"
         onClick={(e) => {
           e.preventDefault();
           setConfirmLeave(true);
         }}
       >
+        <LogoMark />
         Cards Against Decency
       </Link>
       <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-2.5 py-1.5 sm:px-3">
@@ -618,6 +619,12 @@ function IdleRemoved() {
   );
 }
 
+/** The card stack logo, next to the name in headers. */
+function LogoMark() {
+  // eslint-disable-next-line @next/next/no-img-element
+  return <img src="/logo/mark.webp" alt="" width={128} height={115} className="h-8 w-auto" />;
+}
+
 function Centered({ children }: { children: React.ReactNode }) {
   return <div className="mx-auto max-w-md px-4 py-24 text-center">{children}</div>;
 }
@@ -657,7 +664,8 @@ function JoinForm({
 
   return (
     <main className="mx-auto max-w-md px-4 py-16">
-      <Link href="/" className="text-lg font-black tracking-tight">
+      <Link href="/" className="inline-flex items-center gap-2 text-lg font-black tracking-tight">
+        <LogoMark />
         Cards Against Decency
       </Link>
       <section className="mt-6 rounded-2xl border border-line bg-surface p-5 sm:p-6">

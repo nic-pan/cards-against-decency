@@ -11,7 +11,8 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "import:jah": "tsx scripts/import-json-against-humanity.ts",
-    "dev:players": "tsx scripts/dev-players.ts"
+    "dev:players": "tsx scripts/dev-players.ts",
+    "make:logos": "tsx scripts/make-logos.ts"
   },
   "dependencies": {
     "next": "15.5.29",

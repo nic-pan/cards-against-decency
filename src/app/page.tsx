@@ -19,9 +19,17 @@ export default function Home() {
   if (step.kind === "browse") {
     return (
       <main className="mx-auto max-w-6xl px-4 py-6">
-        <header className="mb-5 flex items-center gap-3">
-          <Logo />
-          <h1 className="text-2xl font-black tracking-tight">Cards Against Decency</h1>
+        <header className="mb-5">
+          <h1>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo/wordmark.webp"
+              alt="Cards Against Decency"
+              width={960}
+              height={360}
+              className="h-14 w-auto rounded-lg sm:h-16"
+            />
+          </h1>
         </header>
         <GameBrowser name={step.name} onLogout={() => setStep({ kind: "profile" })} />
       </main>
@@ -31,10 +39,16 @@ export default function Home() {
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 sm:py-16">
       <header className="mb-8 text-center sm:mb-10">
-        <div className="inline-flex items-center gap-3">
-          <Logo />
-          <h1 className="text-3xl font-black tracking-tight sm:text-4xl">Cards Against Decency</h1>
-        </div>
+        <h1>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo/wordmark.webp"
+            alt="Cards Against Decency"
+            width={960}
+            height={360}
+            className="mx-auto w-full max-w-md rounded-2xl"
+          />
+        </h1>
         <p className="mx-auto mt-3 max-w-xl text-lg text-muted">
           A fill-in-the-blank party card game. Play with friends in the browser. No accounts, no downloads.
         </p>
@@ -64,14 +78,5 @@ export default function Home() {
         </p>
       </section>
     </main>
-  );
-}
-
-function Logo() {
-  return (
-    <span aria-hidden className="relative inline-block h-10 w-8">
-      <span className="absolute inset-0 rotate-[-8deg] rounded-md bg-card-black ring-1 ring-[#555]" />
-      <span className="absolute inset-0 translate-x-2 rotate-[6deg] rounded-md border border-line bg-card-white" />
-    </span>
   );
 }
