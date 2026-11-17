@@ -1,9 +1,15 @@
-// Messages between the browser and the server. Types only: safe to import in the client.
+// Messages between the browser and the server. Shared types and constants, safe to import in the client.
 import type { GameView, Settings } from "../engine/game";
 
 export type { GameView, Settings };
 export type { PublicPlayer, SubmissionView, RoundView, PlayerStatus } from "../engine/game";
 export type { WhiteCard, BlackCard, DeckSummary } from "../engine/deck";
+
+/**
+ * Version of the Terms of Use and Privacy Notice that players accept.
+ * Change it when the documents change. Players must then accept again.
+ */
+export const TERMS_VERSION = "draft-2026-11";
 
 export type Ack<T = object> = ({ ok: true } & T) | { ok: false; error: string; message?: string };
 
@@ -14,8 +20,8 @@ export interface JoinResult {
 }
 
 export interface ClientToServer {
-  "room:create": (p: { name: string; password?: string }, ack: (r: Ack<JoinResult>) => void) => void;
-  "room:join": (p: { code: string; name: string; password?: string }, ack: (r: Ack<JoinResult>) => void) => void;
+  "room:create": (p: { name: string; password?: string; termsVersion: string }, ack: (r: Ack<JoinResult>) => void) => void;
+  "room:join": (p: { code: string; name: string; password?: string; termsVersion: string }, ack: (r: Ack<JoinResult>) => void) => void;
   "room:resume": (p: { code: string; token: string }, ack: (r: Ack<JoinResult>) => void) => void;
   "room:leave": (ack: (r: Ack) => void) => void;
   "room:info": (p: { code: string }, ack: (r: Ack<{ exists: boolean; needsPassword: boolean }>) => void) => void;
@@ -60,4 +66,5 @@ export const ERROR_TEXT: Record<string, string> = {
   BAD_REQUEST: "That request was not valid.",
   NOT_IN_ROOM: "You are not in a room.",
   SESSION_EXPIRED: "Your session has expired. Join again.",
+  TERMS_REQUIRED: "Accept the Terms of Use and the Privacy Notice to play.",
 };

@@ -3,7 +3,7 @@ import type { Server, Socket } from "socket.io";
 import { z, ZodError } from "zod";
 import { DeckRegistry } from "../engine/deck";
 import { Game, GameError, LIMITS, NAME_MAX } from "../engine/game";
-import type { ClientToServer, ServerToClient } from "../lib/protocol";
+import { TERMS_VERSION, type ClientToServer, type ServerToClient } from "../lib/protocol";
 import { TokenBucket, WindowCounter } from "./rateLimit";
 import { ipKey, securityLog } from "./securityLog";
 
@@ -80,8 +80,8 @@ const id = z.string().min(1).max(64);
 const int = (k: keyof typeof LIMITS) => z.number().int().min(LIMITS[k].min).max(LIMITS[k].max);
 
 const schemas = {
-  create: z.object({ name, password }),
-  join: z.object({ code, name, password }),
+  create: z.object({ name, password, termsVersion: z.string().max(40).optional() }),
+  join: z.object({ code, name, password, termsVersion: z.string().max(40).optional() }),
   resume: z.object({ code, token: z.string().min(20).max(100) }),
   info: z.object({ code }),
   settings: z
@@ -306,7 +306,8 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
 
     on(socket, "room:create", (s, p) => {
       checkJoinRate(s);
-      const { name: n, password: pw } = schemas.create.parse(p);
+      const { name: n, password: pw, termsVersion } = schemas.create.parse(p);
+      requireTerms(termsVersion);
       const room = createRoom(pw);
       try {
         const playerId = room.game.addPlayer(n);
@@ -321,7 +322,8 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
 
     on(socket, "room:join", (s, p) => {
       checkJoinRate(s);
-      const { code: c, name: n, password: pw } = schemas.join.parse(p);
+      const { code: c, name: n, password: pw, termsVersion } = schemas.join.parse(p);
+      requireTerms(termsVersion);
       const room = store.get(c);
       if (!room) throw new RequestError("ROOM_NOT_FOUND");
       if (room.bans.has(ipKey(s.data.ip))) {
@@ -448,6 +450,11 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
   sweep.unref();
 
   return { store, close: () => clearInterval(sweep) };
+}
+
+/** Players must accept the current Terms of Use before they create or join a room. */
+function requireTerms(version: string | undefined): void {
+  if (version !== TERMS_VERSION) throw new RequestError("TERMS_REQUIRED");
 }
 
 function hashPassword(pw: string) {

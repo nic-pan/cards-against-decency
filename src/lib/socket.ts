@@ -2,7 +2,7 @@
 
 import { io, type Socket } from "socket.io-client";
 import type { Ack, ClientToServer, ServerToClient } from "./protocol";
-import { ERROR_TEXT } from "./protocol";
+import { ERROR_TEXT, TERMS_VERSION } from "./protocol";
 
 export type GameSocket = Socket<ServerToClient, ClientToServer>;
 
@@ -60,6 +60,19 @@ export const session = {
   setName(name: string) {
     try {
       localStorage.setItem("bs.name", name);
+    } catch {}
+  },
+  /** True when this browser accepted the current version of the terms. */
+  termsAccepted(): boolean {
+    try {
+      return localStorage.getItem("bs.terms") === TERMS_VERSION;
+    } catch {
+      return false;
+    }
+  },
+  acceptTerms() {
+    try {
+      localStorage.setItem("bs.terms", TERMS_VERSION);
     } catch {}
   },
 };

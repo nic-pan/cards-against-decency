@@ -7,6 +7,9 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import type { GameView } from "../engine/game";
 import { loadDecks } from "./decks";
 import { attachGameServer } from "./gameServer";
+import { TERMS_VERSION } from "../lib/protocol";
+
+const T = { termsVersion: TERMS_VERSION };
 
 let url = "";
 let server: ReturnType<typeof createServer>;
@@ -59,14 +62,14 @@ async function client() {
 describe("game server", () => {
   it("plays a full round with three people", async () => {
     const a = await client();
-    const created = await a.emit("room:create", { name: "Ana" });
+    const created = await a.emit("room:create", { ...T, name: "Ana" });
     expect(created.ok).toBe(true);
     expect(created.code).toMatch(/^[A-Z2-9]{6}$/);
 
     const b = await client();
     const c = await client();
-    expect((await b.emit("room:join", { code: created.code.toLowerCase(), name: "Bo" })).ok).toBe(true);
-    expect((await c.emit("room:join", { code: created.code, name: "Cy" })).ok).toBe(true);
+    expect((await b.emit("room:join", { ...T, code: created.code.toLowerCase(), name: "Bo" })).ok).toBe(true);
+    expect((await c.emit("room:join", { ...T, code: created.code, name: "Cy" })).ok).toBe(true);
 
     // Only the host can start.
     expect((await b.emit("game:start")).error).toBe("NOT_HOST");
@@ -94,9 +97,9 @@ describe("game server", () => {
 
   it("keeps the seat when a player reconnects with the token", async () => {
     const a = await client();
-    const created = await a.emit("room:create", { name: "Host" });
+    const created = await a.emit("room:create", { ...T, name: "Host" });
     const b = await client();
-    const joined = await b.emit("room:join", { code: created.code, name: "Rejoin" });
+    const joined = await b.emit("room:join", { ...T, code: created.code, name: "Rejoin" });
     b.s.disconnect();
     await a.until((v) => v.players.some((p) => p.name === "Rejoin" && !p.connected));
 
@@ -109,30 +112,39 @@ describe("game server", () => {
 
   it("checks room passwords", async () => {
     const a = await client();
-    const created = await a.emit("room:create", { name: "Host", password: "secret" });
+    const created = await a.emit("room:create", { ...T, name: "Host", password: "secret" });
     const b = await client();
     expect((await b.emit("room:info", { code: created.code })).needsPassword).toBe(true);
-    expect((await b.emit("room:join", { code: created.code, name: "B" })).error).toBe("BAD_PASSWORD");
-    expect((await b.emit("room:join", { code: created.code, name: "B", password: "secret" })).ok).toBe(true);
+    expect((await b.emit("room:join", { ...T, code: created.code, name: "B" })).error).toBe("BAD_PASSWORD");
+    expect((await b.emit("room:join", { ...T, code: created.code, name: "B", password: "secret" })).ok).toBe(true);
   });
 
   it("lets the host ban a player", async () => {
     const a = await client();
-    const created = await a.emit("room:create", { name: "Host" });
+    const created = await a.emit("room:create", { ...T, name: "Host" });
     const b = await client();
-    const joined = await b.emit("room:join", { code: created.code, name: "Troll" });
+    const joined = await b.emit("room:join", { ...T, code: created.code, name: "Troll" });
     const removed = new Promise((r) => b.s.once("removed", r));
     expect((await a.emit("player:kick", { playerId: joined.playerId, ban: true })).ok).toBe(true);
     expect(await removed).toEqual({ reason: "banned" });
-    expect((await b.emit("room:join", { code: created.code, name: "Troll2" })).error).toBe("BANNED");
+    expect((await b.emit("room:join", { ...T, code: created.code, name: "Troll2" })).error).toBe("BANNED");
     expect((await b.emit("room:resume", { code: created.code, token: joined.token })).ok).toBe(false);
+  });
+
+  it("requires the current terms to create or join", async () => {
+    const a = await client();
+    expect((await a.emit("room:create", { name: "NoTerms" })).error).toBe("TERMS_REQUIRED");
+    expect((await a.emit("room:create", { name: "Old", termsVersion: "v0" })).error).toBe("TERMS_REQUIRED");
+    const created = await a.emit("room:create", { ...T, name: "Host" });
+    const b = await client();
+    expect((await b.emit("room:join", { code: created.code, name: "B" })).error).toBe("TERMS_REQUIRED");
   });
 
   it("rejects malformed payloads and unknown settings", async () => {
     const a = await client();
-    await a.emit("room:create", { name: "Host" });
+    await a.emit("room:create", { ...T, name: "Host" });
     expect((await a.emit("settings:update", { botCount: "lots" })).error).toBe("BAD_REQUEST");
     expect((await a.emit("settings:update", { isAdmin: true })).error).toBe("BAD_REQUEST");
-    expect((await a.emit("room:join", { code: "<script>", name: "x" })).error).toBe("BAD_REQUEST");
+    expect((await a.emit("room:join", { ...T, code: "<script>", name: "x" })).error).toBe("BAD_REQUEST");
   });
 });

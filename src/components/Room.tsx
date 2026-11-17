@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { call, getSocket, session } from "@/lib/socket";
-import type { GameView, JoinResult } from "@/lib/protocol";
+import { TERMS_VERSION, type GameView, type JoinResult } from "@/lib/protocol";
 import { Board } from "./Board";
 import { Lobby } from "./Lobby";
 import { PlayerList } from "./PlayerList";
+import { ProfileForm } from "./ProfileForm";
 import { Button, Field, inputClass } from "./ui";
 
 type View = GameView & { code: string };
@@ -239,46 +240,36 @@ function Centered({ children }: { children: React.ReactNode }) {
 }
 
 function JoinForm({ code, needsPassword, onJoined }: { code: string; needsPassword: boolean; onJoined: () => void }) {
-  const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  useEffect(() => setName(session.name()), []);
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
+  async function join(name: string) {
     setBusy(true);
     setError(null);
-    const r = await call<JoinResult>("room:join", { code, name, password: needsPassword ? password : undefined });
+    const r = await call<JoinResult>("room:join", {
+      code,
+      name,
+      password: needsPassword ? password : undefined,
+      termsVersion: TERMS_VERSION,
+    });
     setBusy(false);
     if (!r.ok) return setError(r.text);
-    session.setName(name);
     session.set(code, r.data.token);
     onJoined();
   }
 
   return (
-    <main className="mx-auto max-w-sm px-4 py-16">
+    <main className="mx-auto max-w-md px-4 py-16">
       <Link href="/" className="text-lg font-black tracking-tight">
         Blank Slate
       </Link>
-      <form onSubmit={submit} className="mt-6 rounded-2xl border border-line bg-surface p-5">
-        <h1 className="text-xl font-bold">
+      <section className="mt-6 rounded-2xl border border-line bg-surface p-5 sm:p-6">
+        <h1 className="mb-1 text-xl font-bold">
           Join room <span className="font-mono tracking-[0.2em]">{code}</span>
         </h1>
-        <div className="mt-4 space-y-3">
-          <Field label="Your name">
-            <input
-              className={inputClass}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              maxLength={24}
-              required
-              autoFocus
-              autoComplete="nickname"
-            />
-          </Field>
+        <p className="mb-5 text-sm text-muted">You were invited to a game. Choose a username to join.</p>
+        <ProfileForm submitLabel="Join game" onSubmit={join} busy={busy} error={error}>
           {needsPassword && (
             <Field label="Room password">
               <input
@@ -291,12 +282,8 @@ function JoinForm({ code, needsPassword, onJoined }: { code: string; needsPasswo
               />
             </Field>
           )}
-        </div>
-        {error && <p className="mt-3 rounded-lg bg-accent-soft px-3 py-2 text-sm">{error}</p>}
-        <Button className="mt-5 w-full" disabled={busy || !name.trim()}>
-          Join
-        </Button>
-      </form>
+        </ProfileForm>
+      </section>
     </main>
   );
 }
