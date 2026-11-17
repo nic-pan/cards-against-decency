@@ -67,6 +67,16 @@ docker compose run --rm -v /path/to/folder:/src:ro app \
   npm run import:jah -- /src/cah-all-full.json "CAH Base Set" cah-base
 ```
 
+## Imported decks
+
+The host can import user-made decks from [Many Decks](https://decks.rereadgames.com) by their 5-character code. The lobby links to a [pack browser](https://certifriedmultitool.com/cah/packs) and to Many Decks.
+
+- The server fetches only from `decks.rereadgames.com/api/decks/{code}`, with a timeout and a size limit.
+- The server converts and checks every card: plain text only, at most 200 characters, 1–3 blanks.
+- Imported decks exist only in the room's memory. They are not stored or redistributed.
+- Nobody moderates these decks. A public game with an imported deck shows a "Custom decks" label in the game list.
+- Limits: 10 imported decks in each room, 10 imports each minute from one IP address.
+
 ## Not in version 1
 
 Chat, the activity log, Player Cards, saved custom decks, and community deck imports are planned for Phases 2–4 in the project brief. The public game list exists, but the extra moderation that the brief asks for with public games (Phase 4) does not exist yet.

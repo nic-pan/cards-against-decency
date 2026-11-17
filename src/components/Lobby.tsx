@@ -2,7 +2,9 @@
 
 import type { GameView, Settings } from "@/lib/protocol";
 import type { Act } from "./Room";
-import { Button, Toggle } from "./ui";
+import { useState } from "react";
+import { MANY_DECKS_URL, PACK_BROWSER_URL } from "@/lib/protocol";
+import { Badge, Button, Toggle, inputClass } from "./ui";
 
 const range = (from: number, to: number, step = 1) =>
   Array.from({ length: Math.floor((to - from) / step) + 1 }, (_, i) => from + i * step);
@@ -151,23 +153,48 @@ export function Lobby({ view, isHost, act }: { view: GameView; isHost: boolean; 
                       checked={s.deckIds.includes(d.id)}
                       onChange={() => toggleDeck(d.id)}
                     />
-                    <span className="min-w-0">
+                    <span className="min-w-0 flex-1">
                       <span className="font-semibold">{d.name}</span>
+                      {d.external && (
+                        <span className="ml-2 inline-block">
+                          <Badge tone="accent">User-made</Badge>
+                        </span>
+                      )}
                       <span className="ml-2 text-xs text-muted">
                         {d.blackCount} prompts · {d.whiteCount} answers
                       </span>
                       <span className="mt-0.5 block text-sm text-muted">{d.description}</span>
                       <span className="mt-1 block text-xs text-muted">
                         {d.attribution}{" "}
-                        <a href={d.license.url} className="underline" target="_blank" rel="noreferrer">
-                          {d.license.name}
-                        </a>
+                        {d.external ? (
+                          <a href={d.source.url} className="underline" target="_blank" rel="noreferrer">
+                            View on {d.source.name}
+                          </a>
+                        ) : (
+                          <a href={d.license.url} className="underline" target="_blank" rel="noreferrer">
+                            {d.license.name}
+                          </a>
+                        )}
                       </span>
                     </span>
+                    {d.external && (
+                      <button
+                        type="button"
+                        className="self-start rounded px-2 py-1 text-xs font-semibold text-muted hover:bg-paper"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          void act("deck:remove", { deckId: d.id });
+                        }}
+                        aria-label={`Remove ${d.name}`}
+                      >
+                        Remove
+                      </button>
+                    )}
                   </label>
                 </li>
               ))}
             </ul>
+            {isHost && <ImportDeck act={act} />}
           </div>
         </fieldset>
       </section>
@@ -212,5 +239,58 @@ function Select({
       </select>
       {hint && <span className={`mt-1 block text-xs ${warn ? "font-semibold text-accent" : "text-muted"}`}>{hint}</span>}
     </label>
+  );
+}
+
+/** Imports a user-made deck from Many Decks by its 5-character code. */
+function ImportDeck({ act }: { act: Act }) {
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function add(e: React.FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    const ok = await act("deck:add", { code });
+    setBusy(false);
+    if (ok) setCode("");
+  }
+
+  return (
+    <div className="mt-4 rounded-lg border border-dashed border-line p-4">
+      <h3 className="text-sm font-semibold">Add a deck from outside</h3>
+      <ol className="mt-1 list-decimal space-y-0.5 pl-5 text-xs text-muted">
+        <li>
+          Find a pack in the{" "}
+          <a href={PACK_BROWSER_URL} target="_blank" rel="noreferrer" className="font-semibold text-ink underline">
+            pack browser
+          </a>
+          , or build your own deck on{" "}
+          <a href={MANY_DECKS_URL} target="_blank" rel="noreferrer" className="font-semibold text-ink underline">
+            Many Decks
+          </a>
+          .
+        </li>
+        <li>Copy the 5-character deck code, for example 1ZW29.</li>
+        <li>Paste the code here and click Add deck. You can add up to 10 decks.</li>
+      </ol>
+      <form onSubmit={add} className="mt-3 flex gap-2">
+        <input
+          className={`${inputClass} max-w-40 font-mono uppercase tracking-[0.2em]`}
+          value={code}
+          onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
+          maxLength={5}
+          placeholder="CODE"
+          aria-label="Deck code"
+          autoComplete="off"
+        />
+        <Button variant="secondary" disabled={code.length !== 5 || busy} className="shrink-0">
+          {busy ? "Adding…" : "Add deck"}
+        </Button>
+      </form>
+      <p className="mt-2 text-xs text-muted">
+        Other people make these decks, and nobody checks them. If your game is public, the game list shows a
+        &quot;Custom decks&quot; label. The deck stays in this room only and is gone when the room closes.
+      </p>
+    </div>
   );
 }

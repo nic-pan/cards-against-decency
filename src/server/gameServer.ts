@@ -6,6 +6,7 @@ import { Game, GameError, LIMITS, NAME_MAX } from "../engine/game";
 import { TERMS_VERSION, type ClientToServer, type RoomListing, type ServerToClient } from "../lib/protocol";
 import { TokenBucket, WindowCounter } from "./rateLimit";
 import { ipKey, securityLog } from "./securityLog";
+import { DeckImportError, fetchManyDeck, normalizeCode } from "./manyDecks";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -107,6 +108,8 @@ const schemas = {
   submit: z.object({ cardIds: z.array(id).min(1).max(3) }),
   pick: z.object({ submissionId: id }),
   kick: z.object({ playerId: id, ban: z.boolean() }),
+  deckAdd: z.object({ code: z.string().max(20) }),
+  deckRemove: z.object({ deckId: id }),
 };
 
 class RequestError extends Error {
@@ -133,6 +136,8 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
   const io = server as unknown as IO;
   const joinAttempts = new WindowCounter(30, 60_000);
   const passwordFailures = new WindowCounter(5, 10 * 60_000);
+  // Deck imports call an outside service, so they have their own, lower limit.
+  const deckImports = new WindowCounter(10, 60_000);
 
   // ----- Public game list ----------------------------------------------
 
@@ -301,10 +306,10 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
 
   // ----- Event handling ------------------------------------------------
 
-  type Handler = (socket: Sock, payload: unknown) => object | void;
+  type Handler = (socket: Sock, payload: unknown) => object | void | Promise<object | void>;
 
   function on(socket: Sock, event: keyof ClientToServer, handler: Handler): void {
-    socket.on(event, (...args: unknown[]) => {
+    socket.on(event, async (...args: unknown[]) => {
       const ack = typeof args.at(-1) === "function" ? (args.pop() as (r: unknown) => void) : () => {};
       const payload = args[0];
       if (!socket.data.bucket.take()) {
@@ -313,10 +318,10 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
         return;
       }
       try {
-        const result = handler(socket, payload) ?? {};
+        const result = (await handler(socket, payload)) ?? {};
         ack({ ok: true, ...result });
       } catch (err) {
-        if (err instanceof GameError || err instanceof RequestError) {
+        if (err instanceof GameError || err instanceof RequestError || err instanceof DeckImportError) {
           ack({ ok: false, error: err.code, message: err.message });
         } else if (err instanceof ZodError) {
           securityLog("invalid_payload", { ip: socket.data.ip, room: socket.data.code, detail: event });
@@ -459,6 +464,24 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
       room.game.markBack(playerId);
     });
 
+    on(socket, "deck:add", async (s, p) => {
+      const { room, playerId } = current(s);
+      // Check the permission before the request to the outside service.
+      if (!room.game.isHost(playerId)) throw new GameError("NOT_HOST");
+      const deckCode = normalizeCode(schemas.deckAdd.parse(p).code);
+      if (!deckCode) throw new RequestError("BAD_DECK_CODE");
+      if (!deckImports.hit(ipKey(s.data.ip))) throw new RequestError("RATE_LIMITED");
+      const deck = await fetchManyDeck(deckCode);
+      if (room.closed) throw new RequestError("NOT_IN_ROOM");
+      room.game.addDeck(playerId, deck);
+      return { deckId: deck.id, name: deck.name };
+    });
+
+    on(socket, "deck:remove", (s, p) => {
+      const { room, playerId } = current(s);
+      room.game.removeDeck(playerId, schemas.deckRemove.parse(p).deckId);
+    });
+
     on(socket, "player:play", (s) => {
       const { room, playerId } = current(s);
       room.game.promoteSpectator(playerId);
@@ -502,6 +525,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
     }
     joinAttempts.sweep();
     passwordFailures.sweep();
+    deckImports.sweep();
   }, 60_000);
   sweep.unref();
 

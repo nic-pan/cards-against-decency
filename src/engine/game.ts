@@ -1,5 +1,5 @@
 import { randomBytes } from "node:crypto";
-import { BlackCard, DeckRegistry, DeckSummary, Pile, Rng, WhiteCard, shuffle } from "./deck";
+import { BlackCard, Deck, DeckRegistry, DeckSummary, Pile, Rng, WhiteCard, shuffle, summarize } from "./deck";
 
 // ---------------------------------------------------------------------------
 // Settings
@@ -37,6 +37,8 @@ export const MIN_PARTICIPANTS = 3;
 export const IDLE_ROUNDS_BEFORE_AWAY = 2;
 export const ROUND_OVER_MS = 7_000;
 export const NAME_MAX = 24;
+/** Maximum number of imported decks in one room. */
+export const MAX_EXTERNAL_DECKS = 10;
 
 export function defaultSettings(decks: DeckRegistry): Settings {
   return {
@@ -76,7 +78,8 @@ export type ErrorCode =
   | "UNKNOWN_SUBMISSION"
   | "UNKNOWN_PLAYER"
   | "BAD_SETTINGS"
-  | "SPECTATORS_FULL";
+  | "SPECTATORS_FULL"
+  | "TOO_MANY_DECKS";
 
 export class GameError extends Error {
   constructor(public readonly code: ErrorCode, message?: string) {
@@ -182,6 +185,8 @@ export interface GameSummary {
   targetScore: number;
   allowLateJoin: boolean;
   deckNames: string[];
+  /** True when a selected deck is user-made and not moderated. */
+  customDecks: boolean;
 }
 
 export interface GameView {
@@ -243,6 +248,8 @@ export class Game {
 
   private players: Player[] = [];
   private spectators: Spectator[] = [];
+  /** Decks that the host imported. They exist only in this room. */
+  private externalDecks = new Map<string, Deck>();
   private hostId = "";
   private settings: Settings;
   private phase: Phase = "lobby";
@@ -375,6 +382,35 @@ export class Game {
     this.changed();
   }
 
+  // ----- Imported decks ----------------------------------------------
+
+  hasDeck(id: string): boolean {
+    return !!this.deck(id);
+  }
+
+  /** Adds an imported deck to this room and selects it. Only between games. */
+  addDeck(byId: string, deck: Deck): void {
+    this.requireHost(byId);
+    if (this.phase !== "lobby" && this.phase !== "gameOver") throw new GameError("WRONG_PHASE");
+    if (this.decks.get(deck.id)) throw new GameError("UNKNOWN_DECK");
+    if (!this.externalDecks.has(deck.id) && this.externalDecks.size >= MAX_EXTERNAL_DECKS) {
+      throw new GameError("TOO_MANY_DECKS");
+    }
+    this.externalDecks.set(deck.id, deck);
+    if (!this.settings.deckIds.includes(deck.id)) {
+      this.settings = { ...this.settings, deckIds: [...this.settings.deckIds, deck.id] };
+    }
+    this.changed();
+  }
+
+  removeDeck(byId: string, deckId: string): void {
+    this.requireHost(byId);
+    if (this.phase !== "lobby" && this.phase !== "gameOver") throw new GameError("WRONG_PHASE");
+    if (!this.externalDecks.delete(deckId)) throw new GameError("UNKNOWN_DECK");
+    this.settings = { ...this.settings, deckIds: this.settings.deckIds.filter((id) => id !== deckId) };
+    this.changed();
+  }
+
   hasPlayer(id: string): boolean {
     return this.find(id) !== undefined;
   }
@@ -400,7 +436,8 @@ export class Game {
       maxSpectators: this.settings.maxSpectators,
       targetScore: this.settings.targetScore,
       allowLateJoin: this.settings.allowLateJoin,
-      deckNames: this.settings.deckIds.map((id) => this.decks.get(id)?.name ?? id),
+      deckNames: this.settings.deckIds.map((id) => this.deck(id)?.name ?? id),
+      customDecks: this.settings.deckIds.some((id) => this.externalDecks.has(id)),
     };
   }
 
@@ -434,7 +471,7 @@ export class Game {
     }
     next.deckIds = [...new Set(next.deckIds)];
     for (const deckId of next.deckIds) {
-      if (!this.decks.get(deckId)) throw new GameError("UNKNOWN_DECK");
+      if (!this.deck(deckId)) throw new GameError("UNKNOWN_DECK");
     }
     if (next.maxPlayers < this.humans().length) {
       throw new GameError("BAD_SETTINGS", "maxPlayers is lower than the current number of players");
@@ -451,7 +488,7 @@ export class Game {
     this.syncBots();
     if (this.players.length < MIN_PARTICIPANTS) throw new GameError("NOT_ENOUGH_PLAYERS");
 
-    const decks = this.settings.deckIds.map((id) => this.decks.get(id)!);
+    const decks = this.settings.deckIds.map((id) => this.deck(id)!);
     const black = decks.flatMap((d) => d.black);
     const white = decks.flatMap((d) => d.white);
     // Hands for everyone now, plus room for two late joiners. Discards reshuffle later.
@@ -580,7 +617,7 @@ export class Game {
         this.phase === "submitting" && !!round && round.participants.has(playerId) && !mySubmission,
       winnerId: this.winnerId,
       notice: this.notice,
-      decks: this.decks.list(),
+      decks: [...this.decks.list(), ...[...this.externalDecks.values()].map((d) => ({ ...summarize(d), external: true }))],
       serverNow: Date.now(),
     };
   }
@@ -761,6 +798,10 @@ export class Game {
       this.botSeq += 1;
       this.players.push(this.makePlayer(`Bot ${this.botSeq}`, true));
     }
+  }
+
+  private deck(id: string): Deck | undefined {
+    return this.externalDecks.get(id) ?? this.decks.get(id);
   }
 
   private checkName(rawName: string): string {

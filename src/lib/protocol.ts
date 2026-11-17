@@ -28,6 +28,10 @@ export interface RoomListing extends Omit<GameSummary, "isPublic"> {
 
 export type JoinAs = "player" | "spectator";
 
+/** Where hosts find and build external decks. */
+export const PACK_BROWSER_URL = "https://certifriedmultitool.com/cah/packs";
+export const MANY_DECKS_URL = "https://decks.rereadgames.com";
+
 export interface ClientToServer {
   "lobby:subscribe": (ack: (r: Ack<{ games: RoomListing[] }>) => void) => void;
   "lobby:unsubscribe": (ack: (r: Ack) => void) => void;
@@ -43,6 +47,9 @@ export interface ClientToServer {
   "card:submit": (p: { cardIds: string[] }, ack: (r: Ack) => void) => void;
   "czar:pick": (p: { submissionId: string }, ack: (r: Ack) => void) => void;
   "player:back": (ack: (r: Ack) => void) => void;
+  /** The host imports a Many Decks deck into the room by its 5-character code. */
+  "deck:add": (p: { code: string }, ack: (r: Ack<{ deckId: string; name: string }>) => void) => void;
+  "deck:remove": (p: { deckId: string }, ack: (r: Ack) => void) => void;
   /** A spectator starts to play. */
   "player:play": (ack: (r: Ack) => void) => void;
   "player:kick": (p: { playerId: string; ban: boolean }, ack: (r: Ack) => void) => void;
@@ -82,5 +89,10 @@ export const ERROR_TEXT: Record<string, string> = {
   NOT_IN_ROOM: "You are not in a room.",
   SESSION_EXPIRED: "Your session has expired. Join again.",
   SPECTATORS_FULL: "This game has no free spectator seats.",
+  TOO_MANY_DECKS: "A game can have at most 10 imported decks.",
+  BAD_DECK_CODE: "Deck codes have 5 letters or numbers, for example 1ZW29.",
+  DECK_NOT_FOUND: "No deck has that code. Check the code and try again.",
+  DECK_FETCH_FAILED: "Many Decks did not answer. Try again in a moment.",
+  DECK_EMPTY: "That deck has no usable cards.",
   TERMS_REQUIRED: "Accept the Terms of Use and the Privacy Notice to play.",
 };

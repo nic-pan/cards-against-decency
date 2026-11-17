@@ -42,8 +42,11 @@ export interface DeckSummary {
   category: Deck["category"];
   attribution: string;
   license: DeckLicense;
+  source: Deck["source"];
   blackCount: number;
   whiteCount: number;
+  /** True for a deck that the host imported into this room only. */
+  external: boolean;
 }
 
 export function summarize(deck: Deck): DeckSummary {
@@ -55,8 +58,10 @@ export function summarize(deck: Deck): DeckSummary {
     category: deck.category,
     attribution: deck.attribution,
     license: deck.license,
+    source: deck.source,
     blackCount: deck.black.length,
     whiteCount: deck.white.length,
+    external: false,
   };
 }
 

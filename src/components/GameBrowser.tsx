@@ -264,7 +264,14 @@ function GameCard({
               </span>
             )}
           </h3>
-          <Badge tone={status.tone}>{status.text}</Badge>
+          <span className="flex shrink-0 flex-col items-end gap-1">
+            <Badge tone={status.tone}>{status.text}</Badge>
+            {game.customDecks && (
+              <span title="This game uses user-made decks that nobody checks.">
+                <Badge tone="accent">Custom decks</Badge>
+              </span>
+            )}
+          </span>
         </div>
         <p className="mt-0.5 text-sm text-muted">
           {humans}/{game.maxPlayers} players · {game.spectators.length}/{game.maxSpectators} spectators

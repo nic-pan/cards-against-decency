@@ -361,3 +361,36 @@ describe("spectators", () => {
     expect(onEmpty).toHaveBeenCalled();
   });
 });
+
+describe("imported decks", () => {
+  const external = (): Deck => ({ ...makeDeck("md-abcde"), category: "community" });
+
+  it("adds an imported deck to one room only, and selects it", () => {
+    const { game, host } = setup();
+    game.addDeck(host, external());
+    const v = game.viewFor(host);
+    expect(v.settings.deckIds).toContain("md-abcde");
+    expect(v.decks.find((d) => d.id === "md-abcde")!.external).toBe(true);
+    expect(game.summary().customDecks).toBe(true);
+
+    const other = setup();
+    expect(other.game.viewFor(other.host).decks.some((d) => d.id === "md-abcde")).toBe(false);
+  });
+
+  it("lets only the host add or remove decks, and only between games", () => {
+    const { game, ids, host } = setup();
+    expect(() => game.addDeck(ids[1], external())).toThrow("NOT_HOST");
+    game.addDeck(host, external());
+    game.start(host);
+    expect(() => game.removeDeck(host, "md-abcde")).toThrow("WRONG_PHASE");
+  });
+
+  it("removes an imported deck and clears the label", () => {
+    const { game, host } = setup();
+    game.addDeck(host, external());
+    game.removeDeck(host, "md-abcde");
+    expect(game.viewFor(host).settings.deckIds).not.toContain("md-abcde");
+    expect(game.summary().customDecks).toBe(false);
+    expect(() => game.removeDeck(host, "test")).toThrow("UNKNOWN_DECK");
+  });
+});
