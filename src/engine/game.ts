@@ -16,6 +16,9 @@ export interface Settings {
   /** Seconds for the Card Czar to choose. */
   judgeSeconds: number;
   allowLateJoin: boolean;
+  /** Public rooms appear in the game list. Private rooms need the invite link or code. */
+  isPublic: boolean;
+  maxSpectators: number;
 }
 
 export const LIMITS = {
@@ -24,6 +27,7 @@ export const LIMITS = {
   targetScore: { min: 1, max: 50 },
   submitSeconds: { min: 20, max: 300 },
   judgeSeconds: { min: 20, max: 300 },
+  maxSpectators: { min: 0, max: 20 },
 } as const;
 
 export const HAND_SIZE = 10;
@@ -43,6 +47,8 @@ export function defaultSettings(decks: DeckRegistry): Settings {
     submitSeconds: 75,
     judgeSeconds: 75,
     allowLateJoin: true,
+    isPublic: true,
+    maxSpectators: 10,
   };
 }
 
@@ -69,7 +75,8 @@ export type ErrorCode =
   | "NOT_CZAR"
   | "UNKNOWN_SUBMISSION"
   | "UNKNOWN_PLAYER"
-  | "BAD_SETTINGS";
+  | "BAD_SETTINGS"
+  | "SPECTATORS_FULL";
 
 export class GameError extends Error {
   constructor(public readonly code: ErrorCode, message?: string) {
@@ -87,6 +94,13 @@ interface Player {
   /** An away player does not play or judge until they come back. */
   away: boolean;
   idleRounds: number;
+}
+
+/** A person who watches the game. Spectators have no cards and no score. */
+interface Spectator {
+  id: string;
+  name: string;
+  connected: boolean;
 }
 
 interface Submission {
@@ -150,8 +164,30 @@ export interface RoundView {
   end: RoundEnd | null;
 }
 
+export interface SpectatorView {
+  id: string;
+  name: string;
+  connected: boolean;
+}
+
+/** What the game list shows about a room. */
+export interface GameSummary {
+  isPublic: boolean;
+  hostName: string;
+  phase: Phase;
+  players: { name: string; isBot: boolean }[];
+  spectators: string[];
+  maxPlayers: number;
+  maxSpectators: number;
+  targetScore: number;
+  allowLateJoin: boolean;
+  deckNames: string[];
+}
+
 export interface GameView {
   youId: string;
+  youAreSpectator: boolean;
+  spectators: SpectatorView[];
   hostId: string;
   phase: Phase;
   settings: Settings;
@@ -206,6 +242,7 @@ export class Game {
   private readonly newId: () => string;
 
   private players: Player[] = [];
+  private spectators: Spectator[] = [];
   private hostId = "";
   private settings: Settings;
   private phase: Phase = "lobby";
@@ -234,15 +271,8 @@ export class Game {
 
   /** Adds a human player. The first human becomes the host. */
   addPlayer(rawName: string): string {
-    const name = cleanText(rawName, NAME_MAX);
-    if (name.length === 0) throw new GameError("NAME_INVALID");
-    if (this.players.some((p) => p.name.toLowerCase() === name.toLowerCase())) {
-      throw new GameError("NAME_TAKEN");
-    }
-    if (this.humans().length >= this.settings.maxPlayers) throw new GameError("ROOM_FULL");
-    if (this.phase !== "lobby" && this.phase !== "gameOver" && !this.settings.allowLateJoin) {
-      throw new GameError("LATE_JOIN_DISABLED");
-    }
+    const name = this.checkName(rawName);
+    this.checkCanJoin();
     const player = this.makePlayer(name, false);
     // Late joiners get cards now, but they play from the next round.
     if (this.whitePile && this.phase !== "lobby") this.refill(player);
@@ -252,7 +282,37 @@ export class Game {
     return player.id;
   }
 
+  /** Adds a spectator. A room needs a host first, so the first person is never a spectator. */
+  addSpectator(rawName: string): string {
+    const name = this.checkName(rawName);
+    if (!this.hostId) throw new GameError("UNKNOWN_PLAYER");
+    if (this.spectators.length >= this.settings.maxSpectators) throw new GameError("SPECTATORS_FULL");
+    const spectator: Spectator = { id: this.newId(), name, connected: true };
+    this.spectators.push(spectator);
+    this.changed();
+    return spectator.id;
+  }
+
+  /** A spectator becomes a player. The same rules apply as for a late joiner. */
+  promoteSpectator(id: string): void {
+    const spectator = this.spectators.find((s) => s.id === id);
+    if (!spectator) throw new GameError("UNKNOWN_PLAYER");
+    this.checkCanJoin();
+    this.spectators = this.spectators.filter((s) => s !== spectator);
+    const player = this.makePlayer(spectator.name, false);
+    player.id = spectator.id;
+    player.connected = spectator.connected;
+    if (this.whitePile && this.phase !== "lobby") this.refill(player);
+    this.players.push(player);
+    this.changed();
+  }
+
   removePlayer(id: string, why: "left" | "kicked" | "timeout"): void {
+    if (this.spectators.some((s) => s.id === id)) {
+      this.spectators = this.spectators.filter((s) => s.id !== id);
+      this.changed();
+      return;
+    }
     const player = this.find(id);
     if (!player) return;
     this.players = this.players.filter((p) => p.id !== id);
@@ -293,6 +353,13 @@ export class Game {
   }
 
   setConnected(id: string, connected: boolean): void {
+    const spectator = this.spectators.find((s) => s.id === id);
+    if (spectator) {
+      if (spectator.connected === connected) return;
+      spectator.connected = connected;
+      this.changed();
+      return;
+    }
     const player = this.find(id);
     if (!player || player.connected === connected) return;
     player.connected = connected;
@@ -310,6 +377,31 @@ export class Game {
 
   hasPlayer(id: string): boolean {
     return this.find(id) !== undefined;
+  }
+
+  /** True for players and spectators. */
+  hasMember(id: string): boolean {
+    return this.hasPlayer(id) || this.spectators.some((s) => s.id === id);
+  }
+
+  /** Human players and spectators. Bots are not members. */
+  memberIds(): string[] {
+    return [...this.humans().map((p) => p.id), ...this.spectators.map((s) => s.id)];
+  }
+
+  summary(): GameSummary {
+    return {
+      isPublic: this.settings.isPublic,
+      hostName: this.find(this.hostId)?.name ?? "",
+      phase: this.phase,
+      players: this.players.map((p) => ({ name: p.name, isBot: p.isBot })),
+      spectators: this.spectators.map((s) => s.name),
+      maxPlayers: this.settings.maxPlayers,
+      maxSpectators: this.settings.maxSpectators,
+      targetScore: this.settings.targetScore,
+      allowLateJoin: this.settings.allowLateJoin,
+      deckNames: this.settings.deckIds.map((id) => this.decks.get(id)?.name ?? id),
+    };
   }
 
   isHost(id: string): boolean {
@@ -457,6 +549,8 @@ export class Game {
 
     return {
       youId: playerId,
+      youAreSpectator: this.spectators.some((s) => s.id === playerId),
+      spectators: this.spectators.map((s) => ({ id: s.id, name: s.name, connected: s.connected })),
       hostId: this.hostId,
       phase: this.phase,
       settings: this.settings,
@@ -666,6 +760,23 @@ export class Game {
     for (let i = bots.length; i < this.settings.botCount; i++) {
       this.botSeq += 1;
       this.players.push(this.makePlayer(`Bot ${this.botSeq}`, true));
+    }
+  }
+
+  private checkName(rawName: string): string {
+    const name = cleanText(rawName, NAME_MAX);
+    if (name.length === 0) throw new GameError("NAME_INVALID");
+    const lower = name.toLowerCase();
+    if ([...this.players, ...this.spectators].some((p) => p.name.toLowerCase() === lower)) {
+      throw new GameError("NAME_TAKEN");
+    }
+    return name;
+  }
+
+  private checkCanJoin(): void {
+    if (this.humans().length >= this.settings.maxPlayers) throw new GameError("ROOM_FULL");
+    if (this.phase !== "lobby" && this.phase !== "gameOver" && !this.settings.allowLateJoin) {
+      throw new GameError("LATE_JOIN_DISABLED");
     }
   }
 

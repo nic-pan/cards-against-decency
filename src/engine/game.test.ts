@@ -310,3 +310,54 @@ describe("late joining", () => {
     expect(() => game.addPlayer("Late")).toThrow("LATE_JOIN_DISABLED");
   });
 });
+
+describe("spectators", () => {
+  it("lets spectators watch without cards or a turn", () => {
+    const { game, ids, host } = setup();
+    const spec = game.addSpectator("Watcher");
+    game.start(host);
+    const v = game.viewFor(spec);
+    expect(v.youAreSpectator).toBe(true);
+    expect(v.hand).toHaveLength(0);
+    expect(v.mustSubmit).toBe(false);
+    expect(v.players.some((p) => p.id === spec)).toBe(false);
+    expect(v.spectators.map((s) => s.name)).toEqual(["Watcher"]);
+    // Spectators see answers anonymously, like players.
+    submitAll(game, ids);
+    expect(game.viewFor(spec).round!.submissions!.every((s) => s.playerId === null)).toBe(true);
+  });
+
+  it("uses one name list for players and spectators", () => {
+    const { game } = setup();
+    expect(() => game.addSpectator("P1")).toThrow("NAME_TAKEN");
+    game.addSpectator("Watcher");
+    expect(() => game.addPlayer("watcher")).toThrow("NAME_TAKEN");
+  });
+
+  it("enforces the spectator limit", () => {
+    const { game, host } = setup();
+    game.updateSettings(host, { maxSpectators: 1 });
+    game.addSpectator("S1");
+    expect(() => game.addSpectator("S2")).toThrow("SPECTATORS_FULL");
+  });
+
+  it("lets a spectator start to play from the next round", () => {
+    const { game, ids, host } = setup();
+    const spec = game.addSpectator("Watcher");
+    game.start(host);
+    game.promoteSpectator(spec);
+    const v = game.viewFor(spec);
+    expect(v.youAreSpectator).toBe(false);
+    expect(v.hand).toHaveLength(HAND_SIZE);
+    expect(v.players.find((p) => p.id === spec)!.status).toBe("waiting");
+    expect(game.memberIds()).toContain(spec);
+    expect(ids).not.toContain(spec);
+  });
+
+  it("closes the room when the last player leaves, even with spectators", () => {
+    const { game, ids, onEmpty } = setup({ humans: 1 });
+    game.addSpectator("Watcher");
+    game.removePlayer(ids[0], "left");
+    expect(onEmpty).toHaveBeenCalled();
+  });
+});

@@ -1,22 +1,32 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { call, session } from "@/lib/socket";
-import { TERMS_VERSION, type JoinResult } from "@/lib/protocol";
+import { session } from "@/lib/socket";
+import { GameBrowser } from "@/components/GameBrowser";
 import { ProfileForm } from "@/components/ProfileForm";
-import { Button, Field, inputClass } from "@/components/ui";
 
-type Step = { kind: "loading" } | { kind: "profile" } | { kind: "play"; name: string };
+type Step = { kind: "loading" } | { kind: "profile" } | { kind: "browse"; name: string };
 
 export default function Home() {
   const [step, setStep] = useState<Step>({ kind: "loading" });
 
-  // A returning player who already chose a name and accepted the current terms skips step 1.
+  // A returning player who already chose a name and accepted the current terms goes straight to the game list.
   useEffect(() => {
     const name = session.name().trim();
-    setStep(name && session.termsAccepted() ? { kind: "play", name } : { kind: "profile" });
+    setStep(name && session.termsAccepted() ? { kind: "browse", name } : { kind: "profile" });
   }, []);
+
+  if (step.kind === "browse") {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-6">
+        <header className="mb-5 flex items-center gap-3">
+          <Logo />
+          <h1 className="text-2xl font-black tracking-tight">Blank Slate</h1>
+        </header>
+        <GameBrowser name={step.name} onChangeName={() => setStep({ kind: "profile" })} />
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-10 sm:py-16">
@@ -30,17 +40,15 @@ export default function Home() {
         </p>
       </header>
 
-      {step.kind === "loading" && <div className="h-80" aria-busy />}
-
-      {step.kind === "profile" && (
+      {step.kind === "loading" ? (
+        <div className="h-80" aria-busy />
+      ) : (
         <section className="mx-auto max-w-md rounded-2xl border border-line bg-surface p-5 sm:p-6">
           <h2 className="mb-1 text-xl font-bold">Choose a username</h2>
           <p className="mb-5 text-sm text-muted">You need a name and the terms to start playing.</p>
-          <ProfileForm submitLabel="Continue" onSubmit={(name) => setStep({ kind: "play", name })} />
+          <ProfileForm submitLabel="Continue" onSubmit={(name) => setStep({ kind: "browse", name })} />
         </section>
       )}
-
-      {step.kind === "play" && <PlayStep name={step.name} onChangeName={() => setStep({ kind: "profile" })} />}
 
       <section className="mt-12 grid gap-4 text-sm text-muted sm:grid-cols-3">
         <p>
@@ -56,99 +64,6 @@ export default function Home() {
         </p>
       </section>
     </main>
-  );
-}
-
-function PlayStep({ name, onChangeName }: { name: string; onChangeName: () => void }) {
-  const router = useRouter();
-  const [password, setPassword] = useState("");
-  const [usePassword, setUsePassword] = useState(false);
-  const [code, setCode] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
-
-  async function create(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError(null);
-    const r = await call<JoinResult>("room:create", {
-      name,
-      password: usePassword && password ? password : undefined,
-      termsVersion: TERMS_VERSION,
-    });
-    setBusy(false);
-    if (!r.ok) return setError(r.text);
-    session.set(r.data.code, r.data.token);
-    router.push(`/r/${r.data.code}`);
-  }
-
-  function join(e: React.FormEvent) {
-    e.preventDefault();
-    const c = code.trim().toUpperCase();
-    if (c.length !== 6) return setError("Room codes have 6 characters.");
-    router.push(`/r/${c}`);
-  }
-
-  return (
-    <>
-      <p className="mb-5 text-center text-sm">
-        Playing as <b className="text-base">{name}</b>
-        <span className="mx-2 text-muted">·</span>
-        <button type="button" className="font-semibold text-accent underline" onClick={onChangeName}>
-          Change
-        </button>
-      </p>
-
-      <div className="grid gap-6 sm:grid-cols-2">
-        <form onSubmit={create} className="flex flex-col rounded-2xl border border-line bg-surface p-5">
-          <h2 className="mb-1 text-lg font-bold">Create a room</h2>
-          <p className="mb-4 text-sm text-muted">You are the host. You choose the decks and the rules.</p>
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={usePassword} onChange={(e) => setUsePassword(e.target.checked)} />
-            Protect the room with a password
-          </label>
-          {usePassword && (
-            <div className="mt-3">
-              <Field label="Room password">
-                <input
-                  className={inputClass}
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  maxLength={64}
-                  autoComplete="new-password"
-                />
-              </Field>
-            </div>
-          )}
-          <Button className="mt-5 w-full" disabled={busy}>
-            Create room
-          </Button>
-        </form>
-
-        <form onSubmit={join} className="flex flex-col rounded-2xl border border-line bg-surface p-5">
-          <h2 className="mb-1 text-lg font-bold">Join a room</h2>
-          <p className="mb-4 text-sm text-muted">Enter the code from the host, or open their invite link.</p>
-          <Field label="Room code">
-            <input
-              className={`${inputClass} font-mono uppercase tracking-[0.3em]`}
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
-              maxLength={6}
-              placeholder="ABC234"
-              required
-              autoCapitalize="characters"
-              autoComplete="off"
-            />
-          </Field>
-          <Button className="mt-5 w-full" variant="secondary" disabled={code.length !== 6}>
-            Join room
-          </Button>
-        </form>
-      </div>
-
-      {error && <p className="mt-4 rounded-lg bg-accent-soft px-4 py-3 text-sm">{error}</p>}
-    </>
   );
 }
 

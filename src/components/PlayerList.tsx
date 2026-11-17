@@ -86,6 +86,41 @@ export function PlayerList({ view, isHost, act }: { view: GameView; isHost: bool
           );
         })}
       </ul>
+
+      {(view.spectators.length > 0 || view.settings.maxSpectators > 0) && (
+        <div className="mt-4 border-t border-line pt-3">
+          <h3 className="mb-1 flex items-baseline justify-between text-sm font-bold">
+            Spectators
+            <span className="text-xs font-normal text-muted">
+              {view.spectators.length}/{view.settings.maxSpectators}
+            </span>
+          </h3>
+          {view.spectators.length === 0 ? (
+            <p className="text-xs text-muted">Nobody is watching.</p>
+          ) : (
+            <ul className="space-y-1 text-sm">
+              {view.spectators.map((s) => (
+                <li key={s.id} className="flex items-center gap-2">
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${s.connected ? "bg-ok" : "bg-line"}`} />
+                  <span className="min-w-0 truncate">
+                    {s.name}
+                    {s.id === view.youId && <span className="text-muted"> (you)</span>}
+                  </span>
+                  {isHost && s.id !== view.youId && (
+                    <button
+                      className="ml-auto rounded px-1.5 text-xs text-muted hover:bg-paper"
+                      onClick={() => act("player:kick", { playerId: s.id, ban: false })}
+                      aria-label={`Remove ${s.name}`}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
     </section>
   );
 }

@@ -3,7 +3,7 @@ import type { Server, Socket } from "socket.io";
 import { z, ZodError } from "zod";
 import { DeckRegistry } from "../engine/deck";
 import { Game, GameError, LIMITS, NAME_MAX } from "../engine/game";
-import { TERMS_VERSION, type ClientToServer, type ServerToClient } from "../lib/protocol";
+import { TERMS_VERSION, type ClientToServer, type RoomListing, type ServerToClient } from "../lib/protocol";
 import { TokenBucket, WindowCounter } from "./rateLimit";
 import { ipKey, securityLog } from "./securityLog";
 
@@ -80,8 +80,14 @@ const id = z.string().min(1).max(64);
 const int = (k: keyof typeof LIMITS) => z.number().int().min(LIMITS[k].min).max(LIMITS[k].max);
 
 const schemas = {
-  create: z.object({ name, password, termsVersion: z.string().max(40).optional() }),
-  join: z.object({ code, name, password, termsVersion: z.string().max(40).optional() }),
+  create: z.object({ name, password, isPublic: z.boolean().optional(), termsVersion: z.string().max(40).optional() }),
+  join: z.object({
+    code,
+    name,
+    password,
+    as: z.enum(["player", "spectator"]).default("player"),
+    termsVersion: z.string().max(40).optional(),
+  }),
   resume: z.object({ code, token: z.string().min(20).max(100) }),
   info: z.object({ code }),
   settings: z
@@ -93,6 +99,8 @@ const schemas = {
       submitSeconds: int("submitSeconds"),
       judgeSeconds: int("judgeSeconds"),
       allowLateJoin: z.boolean(),
+      isPublic: z.boolean(),
+      maxSpectators: int("maxSpectators"),
     })
     .partial()
     .strict(),
@@ -125,6 +133,35 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
   const io = server as unknown as IO;
   const joinAttempts = new WindowCounter(30, 60_000);
   const passwordFailures = new WindowCounter(5, 10 * 60_000);
+
+  // ----- Public game list ----------------------------------------------
+
+  const LOBBY = "lobby";
+  const LIST_MAX = 100;
+  let lobbyTimer: ReturnType<typeof setTimeout> | null = null;
+
+  function listGames(): RoomListing[] {
+    const games: RoomListing[] = [];
+    for (const room of store.all()) {
+      if (room.closed) continue;
+      const { isPublic, ...summary } = room.game.summary();
+      if (!isPublic || !summary.hostName) continue;
+      games.push({ code: room.code, hasPassword: !!room.password, ...summary });
+    }
+    // Games that have not started come first, then the busiest games.
+    const order = (g: RoomListing) => (g.phase === "lobby" ? 0 : g.phase === "gameOver" ? 1 : 2);
+    games.sort((a, b) => order(a) - order(b) || b.players.length - a.players.length);
+    return games.slice(0, LIST_MAX);
+  }
+
+  /** Sends the game list to subscribers at most 4 times each second. */
+  function lobbyChanged(): void {
+    if (lobbyTimer) return;
+    lobbyTimer = setTimeout(() => {
+      lobbyTimer = null;
+      io.to(LOBBY).emit("lobby", { games: listGames() });
+    }, 250);
+  }
 
   // ----- Room lifecycle ------------------------------------------------
 
@@ -174,16 +211,19 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
       }
     }
     store.delete(room.code);
+    lobbyChanged();
   }
 
   function queueBroadcast(room: Room): void {
-    if (room.broadcastQueued || room.closed) return;
+    if (room.closed) return;
+    lobbyChanged();
+    if (room.broadcastQueued) return;
     room.broadcastQueued = true;
     queueMicrotask(() => {
       room.broadcastQueued = false;
       if (room.closed) return;
       for (const [playerId, ids] of room.sockets) {
-        if (!room.game.hasPlayer(playerId)) continue;
+        if (!room.game.hasMember(playerId)) continue;
         const view = { ...room.game.viewFor(playerId), code: room.code };
         for (const sid of ids) io.to(sid).emit("state", view);
       }
@@ -194,6 +234,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
 
   function attach(socket: Sock, room: Room, playerId: string): void {
     detach(socket);
+    void socket.leave(LOBBY);
     socket.data.code = room.code;
     socket.data.playerId = playerId;
     const set = room.sockets.get(playerId) ?? new Set();
@@ -221,7 +262,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
     set?.delete(socket.id);
     if (set && set.size > 0) return;
     room.sockets.delete(playerId);
-    if (!room.game.hasPlayer(playerId)) return;
+    if (!room.game.hasMember(playerId)) return;
     room.game.setConnected(playerId, false);
     room.removeTimers.set(
       playerId,
@@ -246,7 +287,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
   function current(socket: Sock): { room: Room; playerId: string } {
     const { code: roomCode, playerId } = socket.data;
     const room = roomCode ? store.get(roomCode) : undefined;
-    if (!room || !playerId || !room.game.hasPlayer(playerId)) throw new RequestError("NOT_IN_ROOM");
+    if (!room || !playerId || !room.game.hasMember(playerId)) throw new RequestError("NOT_IN_ROOM");
     room.lastActivity = Date.now();
     return { room, playerId };
   }
@@ -297,6 +338,15 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
     // 12 actions at once, then 4 each second.
     socket.data.bucket = new TokenBucket(12, 4);
 
+    on(socket, "lobby:subscribe", (s) => {
+      void s.join(LOBBY);
+      return { games: listGames() };
+    });
+
+    on(socket, "lobby:unsubscribe", (s) => {
+      void s.leave(LOBBY);
+    });
+
     on(socket, "room:info", (s, p) => {
       checkJoinRate(s);
       const { code: c } = schemas.info.parse(p);
@@ -306,11 +356,12 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
 
     on(socket, "room:create", (s, p) => {
       checkJoinRate(s);
-      const { name: n, password: pw, termsVersion } = schemas.create.parse(p);
+      const { name: n, password: pw, isPublic, termsVersion } = schemas.create.parse(p);
       requireTerms(termsVersion);
       const room = createRoom(pw);
       try {
         const playerId = room.game.addPlayer(n);
+        if (isPublic !== undefined) room.game.updateSettings(playerId, { isPublic });
         const token = issueToken(room, playerId);
         attach(s, room, playerId);
         return { code: room.code, token, playerId };
@@ -322,7 +373,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
 
     on(socket, "room:join", (s, p) => {
       checkJoinRate(s);
-      const { code: c, name: n, password: pw, termsVersion } = schemas.join.parse(p);
+      const { code: c, name: n, password: pw, as, termsVersion } = schemas.join.parse(p);
       requireTerms(termsVersion);
       const room = store.get(c);
       if (!room) throw new RequestError("ROOM_NOT_FOUND");
@@ -340,7 +391,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
           throw new RequestError("BAD_PASSWORD");
         }
       }
-      const playerId = room.game.addPlayer(n);
+      const playerId = as === "spectator" ? room.game.addSpectator(n) : room.game.addPlayer(n);
       const token = issueToken(room, playerId);
       attach(s, room, playerId);
       return { code: room.code, token, playerId };
@@ -352,7 +403,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
       const room = store.get(c);
       if (!room) throw new RequestError("ROOM_NOT_FOUND");
       const playerId = room.tokens.get(token);
-      if (!playerId || !room.game.hasPlayer(playerId)) throw new RequestError("SESSION_EXPIRED");
+      if (!playerId || !room.game.hasMember(playerId)) throw new RequestError("SESSION_EXPIRED");
       if (room.bans.has(token)) throw new RequestError("BANNED");
       attach(s, room, playerId);
       return { code: room.code, token, playerId };
@@ -408,11 +459,16 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
       room.game.markBack(playerId);
     });
 
+    on(socket, "player:play", (s) => {
+      const { room, playerId } = current(s);
+      room.game.promoteSpectator(playerId);
+    });
+
     on(socket, "player:kick", (s, p) => {
       const { room, playerId } = current(s);
       const { playerId: target, ban } = schemas.kick.parse(p);
       if (!room.game.isHost(playerId)) throw new GameError("NOT_HOST");
-      if (target === playerId || !room.game.humanIds().includes(target)) throw new GameError("UNKNOWN_PLAYER");
+      if (target === playerId || !room.game.memberIds().includes(target)) throw new GameError("UNKNOWN_PLAYER");
 
       if (ban) {
         const key = room.ipKeys.get(target);

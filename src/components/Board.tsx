@@ -53,7 +53,16 @@ function StatusBar({
 }) {
   const round = view.round!;
   let text: string;
-  if (view.phase === "submitting") {
+  if (view.youAreSpectator) {
+    text =
+      view.phase === "submitting"
+        ? "You are watching. The players are choosing their cards."
+        : view.phase === "judging"
+          ? `You are watching. ${nameOf(round.czarId)} is choosing the best answer.`
+          : round.end === "winner"
+            ? "Round over."
+            : "Round skipped.";
+  } else if (view.phase === "submitting") {
     text = isCzar
       ? "You are the Card Czar. Wait while the others play their cards."
       : view.mustSubmit
@@ -125,7 +134,7 @@ function Submitting({ view, isCzar, act }: { view: GameView; isCzar: boolean; ac
         <p className="text-center text-sm text-muted">Your answer is in. The Card Czar will see it without your name.</p>
       )}
 
-      <section>
+      {!view.youAreSpectator && <section>
         <h3 className="mb-2 text-sm font-bold text-muted">
           Your cards
           {isCzar && " (you do not play this round)"}
@@ -142,7 +151,7 @@ function Submitting({ view, isCzar, act }: { view: GameView; isCzar: boolean; ac
             />
           ))}
         </div>
-      </section>
+      </section>}
 
       {view.mustSubmit && (
         <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface/95 p-3 backdrop-blur lg:static lg:border-0 lg:bg-transparent lg:p-0">

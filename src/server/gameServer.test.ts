@@ -140,6 +140,37 @@ describe("game server", () => {
     expect((await b.emit("room:join", { code: created.code, name: "B" })).error).toBe("TERMS_REQUIRED");
   });
 
+  it("lists public rooms only, and lets people spectate", async () => {
+    const watcher = await client();
+    const first = await watcher.emit("lobby:subscribe");
+    expect(first.ok).toBe(true);
+
+    const a = await client();
+    const pub = await a.emit("room:create", { ...T, name: "PublicHost" });
+    const b = await client();
+    const priv = await b.emit("room:create", { ...T, name: "PrivateHost", isPublic: false });
+
+    const listed = await new Promise<any>((resolve) => {
+      watcher.s.on("lobby", (p: any) => {
+        if (p.games.some((g: any) => g.code === pub.code)) resolve(p);
+      });
+    });
+    const game = listed.games.find((g: any) => g.code === pub.code);
+    expect(game.hostName).toBe("PublicHost");
+    expect(game.phase).toBe("lobby");
+    expect(listed.games.some((g: any) => g.code === priv.code)).toBe(false);
+    // The list never contains session tokens or player ids.
+    expect(JSON.stringify(listed)).not.toContain(pub.token);
+    expect(JSON.stringify(listed)).not.toContain(pub.playerId);
+
+    const spec = await watcher.emit("room:join", { ...T, code: pub.code, name: "Watcher", as: "spectator" });
+    expect(spec.ok).toBe(true);
+    const view = await watcher.until((v) => v.youAreSpectator);
+    expect(view.spectators.map((s) => s.name)).toEqual(["Watcher"]);
+    expect((await watcher.emit("player:play")).ok).toBe(true);
+    await watcher.until((v) => !v.youAreSpectator && v.players.some((p) => p.name === "Watcher"));
+  });
+
   it("rejects malformed payloads and unknown settings", async () => {
     const a = await client();
     await a.emit("room:create", { ...T, name: "Host" });

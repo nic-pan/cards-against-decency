@@ -39,7 +39,10 @@ To test with friends on the same network, open `http://<your-computer-ip>:3000` 
 - Bots play random cards from their hand. They never judge, write cards, or chat.
 - A player who misses two rounds in a row becomes "away" and sits out. The player can come back.
 - A disconnected player keeps their seat for 90 seconds.
-- A room closes when the last human leaves, or after 2 hours with no activity.
+- A room closes when the last human player leaves, or after 2 hours with no activity.
+- Players must accept the current `TERMS_VERSION` before they create or join a room.
+- Only public rooms appear in the game list. The list never contains session tokens or player ids.
+- Spectators see the game without cards. The Card Czar's anonymity rules apply to them too.
 
 ## Assumptions in version 1
 
@@ -51,6 +54,8 @@ These are decisions that the brief did not specify. Change them if you want diff
 - When the Card Czar leaves, the round is cancelled.
 - Decks, bots and the points to win change only in the lobby. Time limits and late joining can change at any time.
 - Bans exist only while the room exists. A ban covers the player's session token and a hashed IP.
+- New rooms are public. The host can make a room private when they create it, or later in the lobby.
+- A spectator can start to play under the same rules as a late joiner.
 - In Phase 1, decks are JSON files. PostgreSQL is not used yet. Add it when Phase 2 needs saved custom decks.
 
 ## Card content
@@ -64,4 +69,4 @@ docker compose run --rm -v /path/to/folder:/src:ro app \
 
 ## Not in version 1
 
-Chat, the activity log, Player Cards, saved custom decks, public rooms, and community deck imports are planned for Phases 2–4 in the project brief.
+Chat, the activity log, Player Cards, saved custom decks, and community deck imports are planned for Phases 2–4 in the project brief. The public game list exists, but the extra moderation that the brief asks for with public games (Phase 4) does not exist yet.

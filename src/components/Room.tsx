@@ -129,6 +129,22 @@ export function Room({ code }: { code: string }) {
           </Button>
         </Banner>
       )}
+      {view.youAreSpectator && (
+        <Banner tone="accent">
+          <span>You are watching this game as a spectator.</span>
+          {canJoin(view) ? (
+            <Button className="ml-3 min-h-9" onClick={() => act("player:play")}>
+              Join the game
+            </Button>
+          ) : (
+            <span className="ml-2 font-normal text-muted">
+              {view.players.filter((p) => !p.isBot).length >= view.settings.maxPlayers
+                ? "The game is full."
+                : "The host does not allow joining during the game."}
+            </span>
+          )}
+        </Banner>
+      )}
       <Notice view={view} />
 
       <div className="mt-4 grid gap-6 lg:grid-cols-[17rem_1fr]">
@@ -156,7 +172,14 @@ export function Room({ code }: { code: string }) {
   );
 }
 
-export type Act = (event: Parameters<typeof call>[0], payload?: unknown) => Promise<boolean>;
+/** True when a spectator can become a player now. The server checks the same rules. */
+function canJoin(view: View): boolean {
+  const humans = view.players.filter((p) => !p.isBot).length;
+  const between = view.phase === "lobby" || view.phase === "gameOver";
+  return humans < view.settings.maxPlayers && (between || view.settings.allowLateJoin);
+}
+
+export type Act =(event: Parameters<typeof call>[0], payload?: unknown) => Promise<boolean>;
 
 function RoomHeader({ code, practice, onLeave }: { code: string; practice: boolean; onLeave: () => void }) {
   const [copied, setCopied] = useState(false);

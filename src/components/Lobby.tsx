@@ -95,6 +95,25 @@ export function Lobby({ view, isHost, act }: { view: GameView; isHost: boolean; 
             />
           </div>
 
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Select
+              label="Maximum spectators"
+              value={s.maxSpectators}
+              options={[0, 2, 5, 10, 15, 20].map((n) => [n, n === 0 ? "No spectators" : `${n} spectators`])}
+              onChange={(v) => set({ maxSpectators: v })}
+            />
+          </div>
+
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              className="h-4 w-4"
+              checked={s.isPublic}
+              onChange={(e) => set({ isPublic: e.target.checked })}
+            />
+            Show this game in the public game list. When this is off, only people with the link or code can join.
+          </label>
+
           <label className="flex items-center gap-2 text-sm">
             <input
               type="checkbox"

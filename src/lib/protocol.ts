@@ -1,7 +1,8 @@
 // Messages between the browser and the server. Shared types and constants, safe to import in the client.
-import type { GameView, Settings } from "../engine/game";
+import type { GameSummary, GameView, Settings } from "../engine/game";
 
-export type { GameView, Settings };
+export type { GameView, Settings, GameSummary };
+export type { SpectatorView } from "../engine/game";
 export type { PublicPlayer, SubmissionView, RoundView, PlayerStatus } from "../engine/game";
 export type { WhiteCard, BlackCard, DeckSummary } from "../engine/deck";
 
@@ -19,9 +20,19 @@ export interface JoinResult {
   playerId: string;
 }
 
+/** One public room in the game list. */
+export interface RoomListing extends Omit<GameSummary, "isPublic"> {
+  code: string;
+  hasPassword: boolean;
+}
+
+export type JoinAs = "player" | "spectator";
+
 export interface ClientToServer {
-  "room:create": (p: { name: string; password?: string; termsVersion: string }, ack: (r: Ack<JoinResult>) => void) => void;
-  "room:join": (p: { code: string; name: string; password?: string; termsVersion: string }, ack: (r: Ack<JoinResult>) => void) => void;
+  "lobby:subscribe": (ack: (r: Ack<{ games: RoomListing[] }>) => void) => void;
+  "lobby:unsubscribe": (ack: (r: Ack) => void) => void;
+  "room:create": (p: { name: string; password?: string; isPublic?: boolean; termsVersion: string }, ack: (r: Ack<JoinResult>) => void) => void;
+  "room:join": (p: { code: string; name: string; password?: string; as?: JoinAs; termsVersion: string }, ack: (r: Ack<JoinResult>) => void) => void;
   "room:resume": (p: { code: string; token: string }, ack: (r: Ack<JoinResult>) => void) => void;
   "room:leave": (ack: (r: Ack) => void) => void;
   "room:info": (p: { code: string }, ack: (r: Ack<{ exists: boolean; needsPassword: boolean }>) => void) => void;
@@ -32,10 +43,14 @@ export interface ClientToServer {
   "card:submit": (p: { cardIds: string[] }, ack: (r: Ack) => void) => void;
   "czar:pick": (p: { submissionId: string }, ack: (r: Ack) => void) => void;
   "player:back": (ack: (r: Ack) => void) => void;
+  /** A spectator starts to play. */
+  "player:play": (ack: (r: Ack) => void) => void;
   "player:kick": (p: { playerId: string; ban: boolean }, ack: (r: Ack) => void) => void;
 }
 
 export interface ServerToClient {
+  /** The public game list changed. Sent only to sockets that subscribed. */
+  lobby: (p: { games: RoomListing[] }) => void;
   state: (view: GameView & { code: string }) => void;
   /** You were removed from the room. */
   removed: (p: { reason: "kicked" | "banned" | "closed" }) => void;
@@ -66,5 +81,6 @@ export const ERROR_TEXT: Record<string, string> = {
   BAD_REQUEST: "That request was not valid.",
   NOT_IN_ROOM: "You are not in a room.",
   SESSION_EXPIRED: "Your session has expired. Join again.",
+  SPECTATORS_FULL: "This game has no free spectator seats.",
   TERMS_REQUIRED: "Accept the Terms of Use and the Privacy Notice to play.",
 };
