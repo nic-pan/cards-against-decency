@@ -26,7 +26,7 @@ type Status =
   | { kind: "connecting" }
   | { kind: "join"; needsPassword: boolean }
   | { kind: "in" }
-  | { kind: "gone"; message: string; idle?: boolean };
+  | { kind: "gone"; message: string; removed?: "idle" | "kicked" | "banned" };
 
 export function Room({ code }: { code: string }) {
   const [status, setStatus] = useState<Status>({ kind: "connecting" });
@@ -82,7 +82,9 @@ export function Room({ code }: { code: string }) {
       if (reason === "idle" || reason === "kicked" || reason === "banned") playEventSound("removed");
       session.clear(code);
       setView(null);
-      if (reason === "idle") return setStatus({ kind: "gone", message: "", idle: true });
+      if (reason === "idle" || reason === "kicked" || reason === "banned") {
+        return setStatus({ kind: "gone", message: "", removed: reason });
+      }
       setStatus({
         kind: "gone",
         message:
@@ -136,7 +138,8 @@ export function Room({ code }: { code: string }) {
   }
 
   if (status.kind === "connecting") return <Centered>Connecting…</Centered>;
-  if (status.kind === "gone" && status.idle) return <IdleRemoved />;
+  if (status.kind === "gone" && status.removed === "idle") return <IdleRemoved />;
+  if (status.kind === "gone" && status.removed) return <HostRemoved banned={status.removed === "banned"} />;
   if (status.kind === "gone")
     return (
       <Centered>
@@ -476,6 +479,28 @@ function Banner({ children, tone }: { children: React.ReactNode; tone: "accent" 
       }`}
     >
       {children}
+    </div>
+  );
+}
+
+/** Shown to a player whom the host removed, with or without a ban. In the page, not a browser pop-up. */
+function HostRemoved({ banned }: { banned: boolean }) {
+  return (
+    <div className="mx-auto max-w-md px-4 py-20">
+      <section role="alert" className="rounded-2xl border-2 border-danger bg-danger-soft p-6 text-center">
+        <p className="text-4xl" aria-hidden>
+          🚪
+        </p>
+        <h1 className="mt-3 text-xl font-black text-danger">The host removed you from this room.</h1>
+        <p className="mt-3 text-sm leading-relaxed text-ink">Take it up with management. There is no management.</p>
+        {banned && <p className="mt-3 text-sm font-semibold text-danger">You can&apos;t join this room again.</p>}
+        <Link
+          href="/"
+          className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg bg-ink px-5 text-sm font-bold text-paper"
+        >
+          Back to the game list
+        </Link>
+      </section>
     </div>
   );
 }
