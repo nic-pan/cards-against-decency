@@ -25,7 +25,7 @@ const httpServer = createServer((req, res) => {
   }
   // TEMPORARY: shows how many proxies are in front of the app, so we can check TRUST_PROXY.
   // It never shows IP addresses. Remove it after the check.
-  if (req.url === "/healthz/proxy") {
+  if (req.url === "/healthz/proxy" || req.url?.startsWith("/healthz/proxy?")) {
     res.writeHead(200, { "content-type": "application/json", "cache-control": "no-store" });
     res.end(JSON.stringify(proxyReport(req), null, 2));
     return;
