@@ -26,6 +26,9 @@ export function Room({ code }: { code: string }) {
   const [toast, setToast] = useState<string | null>(null);
   const clockOffset = useRef(0);
   useTurnAlert(view);
+  const phone = useIsPhone();
+  // On phones, keep the screen on during a game, so the connection and the turn reminders stay alive.
+  useWakeLock(phone && !!view && view.phase !== "lobby" && view.phase !== "gameOver" && !view.youAreSpectator);
 
   const resume = useCallback(async () => {
     const token = session.get(code);
@@ -134,6 +137,7 @@ export function Room({ code }: { code: string }) {
           </span>
         </Banner>
       )}
+      {phone && !view.youAreSpectator && <PhoneNotice />}
       {view.youAreSpectator && (
         <Banner tone="accent">
           <span>You are watching this game as a spectator.</span>
@@ -223,6 +227,76 @@ function useTurnAlert(view: View | null) {
       document.title = title;
     };
   }, [myTurn, key]);
+}
+
+/** True on touch devices such as phones and tablets. */
+function useIsPhone(): boolean {
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    try {
+      setPhone(window.matchMedia("(pointer: coarse)").matches);
+    } catch {}
+  }, []);
+  return phone;
+}
+
+/** Keeps the screen on while `enabled` is true. Browsers drop the lock when the tab is hidden, so take it again. */
+function useWakeLock(enabled: boolean) {
+  useEffect(() => {
+    if (!enabled || !("wakeLock" in navigator)) return;
+    let lock: WakeLockSentinel | null = null;
+    let stopped = false;
+    const take = async () => {
+      if (document.hidden || stopped) return;
+      try {
+        lock = await navigator.wakeLock.request("screen");
+      } catch {
+        // The browser can refuse, for example in battery saver mode. The game still works.
+      }
+    };
+    void take();
+    const onVisible = () => void take();
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      stopped = true;
+      document.removeEventListener("visibilitychange", onVisible);
+      void lock?.release().catch(() => {});
+    };
+  }, [enabled]);
+}
+
+const PHONE_NOTICE_KEY = "bs.phoneNotice";
+
+/** A one-time notice for phone players: their phone may not remind them when it is their turn. */
+function PhoneNotice() {
+  const [show, setShow] = useState(false);
+  useEffect(() => {
+    try {
+      setShow(localStorage.getItem(PHONE_NOTICE_KEY) !== "seen");
+    } catch {
+      setShow(true);
+    }
+  }, []);
+  if (!show) return null;
+  const dismiss = () => {
+    try {
+      localStorage.setItem(PHONE_NOTICE_KEY, "seen");
+    } catch {}
+    setShow(false);
+  };
+  return (
+    <div className="mt-3 rounded-lg border border-accent bg-accent-soft px-4 py-3 text-sm">
+      <p className="font-bold">📱 You are playing on a phone</p>
+      <p className="mt-1">
+        Phones often do not play sounds or show reminders when the game is not on the screen. When it is your turn,
+        everybody waits for you, and after 2 missed rounds the game removes you. Keep this page open while you play.
+      </p>
+      <p className="mt-1 text-muted">We keep your screen awake during the game, if your phone allows it.</p>
+      <button type="button" className="mt-2 text-sm font-bold text-accent underline" onClick={dismiss}>
+        Got it
+      </button>
+    </div>
+  );
 }
 
 const SOUND_LABELS: Record<SoundStyle, string> = { funny: "🤡 Funny", gentle: "🔔 Gentle", off: "🔇 Off" };
