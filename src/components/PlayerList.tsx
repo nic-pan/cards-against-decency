@@ -107,31 +107,17 @@ export function PlayerList({
                 </p>
               )}
               {menuFor === p.id && (
-                <div className="mt-2 flex gap-2 pl-4">
-                  {p.isBot ? (
-                    <button
-                      className="rounded border border-line px-2 py-1 text-xs font-semibold hover:bg-paper"
-                      onClick={() => act("bot:remove", { playerId: p.id }).then(() => setMenuFor(null))}
-                    >
-                      Remove bot
-                    </button>
-                  ) : (
-                    <>
-                      <button
-                        className="rounded border border-line px-2 py-1 text-xs font-semibold hover:bg-paper"
-                        onClick={() => act("player:kick", { playerId: p.id, ban: false }).then(() => setMenuFor(null))}
-                      >
-                        Remove
-                      </button>
-                      <button
-                        className="rounded border border-accent px-2 py-1 text-xs font-semibold text-accent hover:bg-accent-soft"
-                        onClick={() => act("player:kick", { playerId: p.id, ban: true }).then(() => setMenuFor(null))}
-                      >
-                        Remove and ban
-                      </button>
-                    </>
-                  )}
-                </div>
+                <HostMenu
+                  isBot={p.isBot}
+                  // During a game, a game needs 3 players. Ask first when a removal leaves fewer.
+                  playersLeft={inGame ? view.players.length - 1 : null}
+                  onRemove={(ban) =>
+                    (p.isBot
+                      ? act("bot:remove", { playerId: p.id })
+                      : act("player:kick", { playerId: p.id, ban })
+                    ).then(() => setMenuFor(null))
+                  }
+                />
               )}
             </li>
           );
@@ -211,5 +197,74 @@ export function PlayerList({
         </div>
       )}
     </section>
+  );
+}
+
+/** A game needs at least this many players, Card Czar included. Same rule as the server. */
+const MIN_PLAYERS = 3;
+
+/** The host's actions for one player or bot. Asks first when the removal would stop the game. */
+function HostMenu({
+  isBot,
+  playersLeft,
+  onRemove,
+}: {
+  isBot: boolean;
+  /** Players after the removal, during a game. Null in the lobby. */
+  playersLeft: number | null;
+  onRemove: (ban: boolean) => void;
+}) {
+  const [confirm, setConfirm] = useState<{ ban: boolean } | null>(null);
+  const stopsGame = playersLeft !== null && playersLeft < MIN_PLAYERS;
+  const ask = (ban: boolean) => (stopsGame ? setConfirm({ ban }) : onRemove(ban));
+
+  if (confirm) {
+    return (
+      <div role="alert" className="mt-2 ml-4 rounded-lg border border-danger bg-danger-soft p-2.5 text-xs">
+        <p className="font-bold text-danger">
+          Only {playersLeft} {playersLeft === 1 ? "player" : "players"} will be left.
+        </p>
+        <p className="mt-0.5 text-ink">The game stops after this round, and everybody goes back to the lobby. Remove anyway?</p>
+        <div className="mt-2 flex gap-2">
+          <button
+            className="rounded bg-danger px-2 py-1 font-semibold text-white hover:brightness-110"
+            onClick={() => onRemove(confirm.ban)}
+          >
+            Remove anyway
+          </button>
+          <button className="rounded border border-line px-2 py-1 font-semibold hover:bg-paper" onClick={() => setConfirm(null)}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-2 flex gap-2 pl-4">
+      {isBot ? (
+        <button
+          className="rounded border border-line px-2 py-1 text-xs font-semibold hover:bg-paper"
+          onClick={() => ask(false)}
+        >
+          Remove bot
+        </button>
+      ) : (
+        <>
+          <button
+            className="rounded border border-line px-2 py-1 text-xs font-semibold hover:bg-paper"
+            onClick={() => ask(false)}
+          >
+            Remove
+          </button>
+          <button
+            className="rounded border border-accent px-2 py-1 text-xs font-semibold text-accent hover:bg-accent-soft"
+            onClick={() => ask(true)}
+          >
+            Remove and ban
+          </button>
+        </>
+      )}
+    </div>
   );
 }
