@@ -1,4 +1,4 @@
-# Blank Slate (working title)
+# Cards Against Decency
 
 A browser party card game with fill-in-the-blank cards, for friends. It is a free, non-commercial project inspired by Pretend You're Xyzzy. It is not affiliated with Cards Against Humanity LLC or Pretend You're Xyzzy.
 

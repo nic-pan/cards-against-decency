@@ -1,8 +1,8 @@
 {
-  "name": "blank-slate",
+  "name": "cards-against-decency",
   "version": "0.1.0",
   "private": true,
-  "description": "A browser party card game for friends. Working title: Blank Slate.",
+  "description": "A free, fan-made browser party card game for friends.",
   "type": "module",
   "scripts": {
     "dev": "tsx watch --clear-screen=false server.ts",

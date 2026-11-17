@@ -35,7 +35,7 @@ export function BlackCardView({ card, answers, size = "lg" }: { card: Black; ans
         )}
       </p>
       <div className="mt-4 flex items-center justify-between text-xs font-semibold opacity-70">
-        <span>Blank Slate</span>
+        <span>Cards Against Decency</span>
         {card.pick > 1 && <span className="rounded-full bg-white px-2 py-0.5 text-card-black">Pick {card.pick}</span>}
       </div>
     </div>

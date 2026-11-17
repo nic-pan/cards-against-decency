@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata = { title: "Privacy · Blank Slate" };
+export const metadata = { title: "Privacy · Cards Against Decency" };
 
 export default function Privacy() {
   return (

@@ -199,7 +199,7 @@ function RoomHeader({ code, practice, onLeave }: { code: string; practice: boole
   return (
     <header className="flex flex-wrap items-center gap-x-4 gap-y-2">
       <Link href="/" className="text-lg font-black tracking-tight">
-        Blank Slate
+        Cards Against Decency
       </Link>
       <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-1.5">
         <span className="text-xs text-muted">Room</span>
@@ -286,7 +286,7 @@ function JoinForm({ code, needsPassword, onJoined }: { code: string; needsPasswo
   return (
     <main className="mx-auto max-w-md px-4 py-16">
       <Link href="/" className="text-lg font-black tracking-tight">
-        Blank Slate
+        Cards Against Decency
       </Link>
       <section className="mt-6 rounded-2xl border border-line bg-surface p-5 sm:p-6">
         <h1 className="mb-1 text-xl font-bold">

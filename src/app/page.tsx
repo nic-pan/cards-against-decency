@@ -21,7 +21,7 @@ export default function Home() {
       <main className="mx-auto max-w-6xl px-4 py-6">
         <header className="mb-5 flex items-center gap-3">
           <Logo />
-          <h1 className="text-2xl font-black tracking-tight">Blank Slate</h1>
+          <h1 className="text-2xl font-black tracking-tight">Cards Against Decency</h1>
         </header>
         <GameBrowser name={step.name} onChangeName={() => setStep({ kind: "profile" })} />
       </main>
@@ -33,7 +33,7 @@ export default function Home() {
       <header className="mb-8 text-center sm:mb-10">
         <div className="inline-flex items-center gap-3">
           <Logo />
-          <h1 className="text-3xl font-black tracking-tight sm:text-4xl">Blank Slate</h1>
+          <h1 className="text-3xl font-black tracking-tight sm:text-4xl">Cards Against Decency</h1>
         </div>
         <p className="mx-auto mt-3 max-w-xl text-lg text-muted">
           A fill-in-the-blank party card game. Play with friends in the browser. No accounts, no downloads.

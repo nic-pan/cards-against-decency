@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const metadata = { title: "Terms of Use · Blank Slate" };
+export const metadata = { title: "Terms of Use · Cards Against Decency" };
 
 // Placeholder. Write the real Terms of Use before a public launch, and then
 // change TERMS_VERSION in src/lib/protocol.ts so players accept the new text.

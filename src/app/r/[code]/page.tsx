@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { Room } from "@/components/Room";
 
-export const metadata = { title: "Room · Blank Slate" };
+export const metadata = { title: "Room · Cards Against Decency" };
 
 export default async function RoomPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
