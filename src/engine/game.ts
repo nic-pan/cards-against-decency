@@ -232,7 +232,7 @@ export interface GameOptions {
   /** Called when the last human leaves. The server closes the room. */
   onEmpty?: () => void;
   /** Called when the game removes a player. The server uses it to tell an idle player why. */
-  onRemoved?: (playerId: string, why: RemoveReason) => void;
+  onRemoved?: (playerId: string, why: RemoveReason, name: string) => void;
   idFactory?: () => string;
 }
 
@@ -268,7 +268,7 @@ export class Game {
   private readonly rng: Rng;
   private readonly onChange: () => void;
   private readonly onEmpty: () => void;
-  private readonly onRemoved: (playerId: string, why: RemoveReason) => void;
+  private readonly onRemoved: (playerId: string, why: RemoveReason, name: string) => void;
   /** Idle players to remove after the current phase change. */
   private pendingKicks: string[] = [];
   private readonly newId: () => string;
@@ -353,7 +353,7 @@ export class Game {
     this.players = this.players.filter((p) => p.id !== id);
     this.whitePile?.discard(player.hand);
     player.hand = [];
-    this.onRemoved(id, why);
+    this.onRemoved(id, why, player.name);
 
     if (this.humans().length === 0) {
       this.dispose();

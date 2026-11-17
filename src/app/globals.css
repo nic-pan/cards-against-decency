@@ -57,6 +57,33 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* A removed player's row: the red strikethrough shows at once, then the row fades
+   and closes over 1.75 s, the length of the thud sound. */
+@keyframes player-removed {
+  0% {
+    opacity: 1;
+    max-height: 5rem;
+  }
+  30% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 0;
+    max-height: 5rem;
+  }
+  100% {
+    opacity: 0;
+    max-height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+}
+
+.animate-player-removed {
+  overflow: hidden;
+  animation: player-removed 1.75s ease-in forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;

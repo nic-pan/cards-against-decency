@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { offences, type GameView, type PlayerStatus } from "@/lib/protocol";
-import type { Act } from "./Room";
+import type { Act, Ghost } from "./Room";
 import { Badge } from "./ui";
 
 const STATUS_TEXT: Record<PlayerStatus, string> = {
@@ -14,11 +14,25 @@ const STATUS_TEXT: Record<PlayerStatus, string> = {
   idle: "",
 };
 
-export function PlayerList({ view, isHost, act }: { view: GameView; isHost: boolean; act: Act }) {
+export function PlayerList({
+  view,
+  isHost,
+  act,
+  ghosts = [],
+}: {
+  view: GameView;
+  isHost: boolean;
+  act: Act;
+  ghosts?: Ghost[];
+}) {
   const [menuFor, setMenuFor] = useState<string | null>(null);
-  const players = [...view.players].sort((a, b) =>
-    view.phase === "lobby" ? 0 : b.score - a.score,
-  );
+  // Put each removed player back at their old place while their row fades out.
+  const rows: { p: GameView["players"][number]; ghost?: Ghost }[] = view.players.map((p) => ({ p }));
+  for (const g of [...ghosts].sort((a, b) => a.index - b.index)) {
+    if (view.players.some((p) => p.id === g.player.id)) continue;
+    rows.splice(Math.min(g.index, rows.length), 0, { p: g.player, ghost: g });
+  }
+  if (view.phase !== "lobby") rows.sort((a, b) => b.p.score - a.p.score);
   const humans = view.players.filter((p) => !p.isBot).length;
 
   return (
@@ -31,7 +45,25 @@ export function PlayerList({ view, isHost, act }: { view: GameView; isHost: bool
         </span>
       </div>
       <ul className="divide-y divide-line">
-        {players.map((p) => {
+        {rows.map(({ p, ghost }) => {
+          if (ghost) {
+            return (
+              <li key={`ghost-${p.id}`} className="animate-player-removed py-2" aria-label={`${p.name} was removed`}>
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-danger" />
+                  <span className="min-w-0 truncate font-semibold text-danger line-through decoration-danger decoration-2">
+                    {p.name}
+                  </span>
+                  {view.phase !== "lobby" && (
+                    <span className="ml-auto pl-2 text-lg font-black tabular-nums text-danger line-through">{p.score}</span>
+                  )}
+                </div>
+                <p className="pl-4 text-xs font-semibold text-danger">
+                  {ghost.reason === "idle" ? "Removed for being idle" : "Removed by the host"}
+                </p>
+              </li>
+            );
+          }
           const you = p.id === view.youId;
           const canManage = isHost && !you && !p.isBot;
           return (

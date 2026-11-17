@@ -207,7 +207,7 @@ describe("timeouts and inactive players", () => {
 
     playRound();
     expect(game.hasPlayer(idle)).toBe(false);
-    expect(onRemoved).toHaveBeenCalledWith(idle, "idle");
+    expect(onRemoved).toHaveBeenCalledWith(idle, "idle", expect.any(String));
     const removal = game.viewFor(host).notices.find((n) => n.text.includes("missing 2 rounds in a row"))!;
     expect(removal.tone).toBe("danger");
     // The round goes on for the others.
@@ -253,7 +253,7 @@ describe("timeouts and inactive players", () => {
     expect(game.viewFor(host).round!.czarId).toBe(nextCzar);
     submitAll(game, ids);
     vi.advanceTimersByTime(20_000);
-    expect(onRemoved).toHaveBeenCalledWith(nextCzar, "idle");
+    expect(onRemoved).toHaveBeenCalledWith(nextCzar, "idle", expect.any(String));
     expect(game.hasPlayer(nextCzar)).toBe(false);
     // Both events stay visible to the other players.
     const texts = game.viewFor(host).notices.map((n) => n.text).join(" | ");

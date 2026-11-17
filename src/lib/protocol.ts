@@ -76,6 +76,8 @@ export interface ServerToClient {
   /** The public game list changed. Sent only to sockets that subscribed. */
   lobby: (p: { games: RoomListing[] }) => void;
   state: (view: GameView & { code: string }) => void;
+  /** Another player was removed, by the host or for being idle. Everybody else sees and hears it. */
+  "player:removed": (p: { playerId: string; name: string; reason: "kicked" | "idle" }) => void;
   /** You were removed from the room. */
   removed: (p: { reason: "kicked" | "banned" | "closed" | "left" | "idle" }) => void;
 }

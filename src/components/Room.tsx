@@ -25,6 +25,8 @@ export function Room({ code }: { code: string }) {
   const [offline, setOffline] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const clockOffset = useRef(0);
+  const lastView = useRef<View | null>(null);
+  const [ghosts, setGhosts] = useState<Ghost[]>([]);
   useTurnAlert(view);
   useIdleWarningSound(view);
   useEffect(() => preloadSounds(), []);
@@ -48,9 +50,19 @@ export function Room({ code }: { code: string }) {
 
   useEffect(() => {
     const socket = getSocket();
+    const onPlayerRemoved = ({ playerId, reason }: { playerId: string; name: string; reason: "kicked" | "idle" }) => {
+      const last = lastView.current;
+      const index = last?.players.findIndex((p) => p.id === playerId) ?? -1;
+      if (!last || index < 0) return;
+      playEventSound("removed");
+      const ghost: Ghost = { player: last.players[index], index, reason };
+      setGhosts((g) => [...g.filter((x) => x.player.id !== playerId), ghost]);
+      setTimeout(() => setGhosts((g) => g.filter((x) => x !== ghost)), GHOST_MS);
+    };
     const onState = (v: View) => {
       if (v.code !== code) return;
       clockOffset.current = v.serverNow - Date.now();
+      lastView.current = v;
       setView(v);
     };
     const onRemoved = ({ reason }: { reason: string }) => {
@@ -78,12 +90,14 @@ export function Room({ code }: { code: string }) {
 
     socket.on("state", onState);
     socket.on("removed", onRemoved);
+    socket.on("player:removed", onPlayerRemoved);
     socket.on("connect", onConnect);
     socket.on("disconnect", onDisconnect);
     if (socket.connected) void resume();
     return () => {
       socket.off("state", onState);
       socket.off("removed", onRemoved);
+      socket.off("player:removed", onPlayerRemoved);
       socket.off("connect", onConnect);
       socket.off("disconnect", onDisconnect);
     };
@@ -161,7 +175,7 @@ export function Room({ code }: { code: string }) {
 
       <div className="mt-4 grid gap-6 lg:grid-cols-[17rem_1fr]">
         <aside className="order-2 lg:order-1">
-          <PlayerList view={view} isHost={isHost} act={act} />
+          <PlayerList view={view} isHost={isHost} act={act} ghosts={ghosts} />
         </aside>
         <main className="order-1 min-w-0 lg:order-2">
           {view.phase === "lobby" ? (
@@ -191,7 +205,12 @@ function canJoin(view: View): boolean {
   return humans < view.settings.maxPlayers && (between || view.settings.allowLateJoin);
 }
 
-export type Act =(event: Parameters<typeof call>[0], payload?: unknown) => Promise<boolean>;
+/** A removed player's row that stays visible while it fades out. */
+export type Ghost = { player: GameView["players"][number]; index: number; reason: "kicked" | "idle" };
+/** A little longer than the fade, so the row is gone before React removes it. */
+const GHOST_MS = 1900;
+
+export type Act = (event: Parameters<typeof call>[0], payload?: unknown) => Promise<boolean>;
 
 /**
  * Reminds the player when it is their turn: to play a card, or to choose as Card Czar.

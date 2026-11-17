@@ -220,7 +220,14 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       onChange: () => queueBroadcast(room),
       onEmpty: () => closeRoom(room, null),
       // The game removes players who miss too many rounds. Tell them why and end their session.
-      onRemoved: (playerId, why) => {
+      onRemoved: (playerId, why, name) => {
+        // Everybody else sees and hears a removal by the host or for being idle.
+        if (why === "idle" || why === "kicked") {
+          for (const [otherId, ids] of room.sockets) {
+            if (otherId === playerId) continue;
+            for (const sid of ids) io.to(sid).emit("player:removed", { playerId, name, reason: why });
+          }
+        }
         if (why !== "idle") return;
         for (const sid of room.sockets.get(playerId) ?? []) io.to(sid).emit("removed", { reason: "idle" });
         dropSeat(room, playerId);

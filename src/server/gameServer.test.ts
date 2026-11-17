@@ -277,6 +277,24 @@ describe("game server", () => {
     expect((await b.emit("room:resume", { code: room.code, token: joined.token })).ok).toBe(false);
   });
 
+  it("tells the other players when the host removes someone", async () => {
+    const host = await client();
+    const room = await host.emit("room:create", { ...T, name: nm("Boss") });
+    const b = await client();
+    await b.emit("room:join", { ...T, code: room.code, name: nm("Watcher") });
+    const c = await client();
+    const target = await c.emit("room:join", { ...T, code: room.code, name: "Troublemaker" });
+
+    const seenByB = new Promise((r) => b.s.once("player:removed", r));
+    let seenByTarget = false;
+    c.s.once("player:removed", () => (seenByTarget = true));
+    await host.emit("player:kick", { playerId: target.playerId, ban: false });
+
+    expect(await seenByB).toEqual({ playerId: target.playerId, name: "Troublemaker", reason: "kicked" });
+    await new Promise((r) => setTimeout(r, 100));
+    expect(seenByTarget).toBe(false);
+  });
+
   it("rejects malformed payloads and unknown settings", async () => {
     const a = await client();
     await a.emit("room:create", { ...T, name: nm("Host") });
