@@ -1,0 +1,6486 @@
+{
+ "id": "cah-base",
+ "name": "Classic Base Set",
+ "description": "Cards from the official Cards Against Humanity base game. Adult humour.",
+ "language": "en",
+ "category": "official",
+ "source": {
+  "name": "JSON Against Humanity",
+  "url": "https://github.com/crhallberg/json-against-humanity"
+ },
+ "license": {
+  "name": "CC BY-NC-SA 2.0",
+  "url": "https://creativecommons.org/licenses/by-nc-sa/2.0/"
+ },
+ "attribution": "Card text from Cards Against Humanity (CC BY-NC-SA 2.0), compiled by JSON Against Humanity (CC BY-NC-SA 4.0). Not affiliated with or endorsed by Cards Against Humanity LLC.",
+ "black": [
+  {
+   "id": "cah-base:b:0",
+   "text": "_ + _ = Hipsters",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:1",
+   "text": "_ is a sure sign of mankind's decline.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:2",
+   "text": "_ would only happen in my worst nightmares.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:3",
+   "text": "_: good to the last drop.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:4",
+   "text": "_: kid tested, mother approved.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:5",
+   "text": "_: kid-tested, mother-approved.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:6",
+   "text": "_: Once you pop, the fun don't stop!",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:7",
+   "text": "_? Oh yeah. There's porn about that.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:8",
+   "text": "_? There's an app for that.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:9",
+   "text": "_? Yeah, nah.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:10",
+   "text": "_. Awesome in theory, kind of a mess in practice.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:11",
+   "text": "_. Betcha can't have just one!",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:12",
+   "text": "_. High five, bro.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:13",
+   "text": "_. It's a trap!",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:14",
+   "text": "_. That was so metal.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:15",
+   "text": "_. That's how I want to die.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:16",
+   "text": "_. The best way to spice up your sex life.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:17",
+   "text": "★✰✰✰✰ Do NOT go here! Found _ in my Kung Pao chicken!",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:18",
+   "text": "50% of all marriages end in _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:19",
+   "text": "A recent laboratory study shows that undergraduates have 50% less sex after being exposed to _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:20",
+   "text": "A romantic candlelit dinner would be incomplete without _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:21",
+   "text": "A romantic, candlelit dinner would be incomplete without _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:22",
+   "text": "A successful job interview begins with a firm handshake and ends with _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:23",
+   "text": "ABC presents: \"_: The Story of _.\"",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:24",
+   "text": "After eight years in the White House, how is Obama finally letting loose?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:25",
+   "text": "After four platinum albums and three Grammys, it's time to get back to my roots, to what inspired me to make music in the first place: _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:26",
+   "text": "After Hurricane Katrina, Sean Penn brought _ to all the people of New Orleans.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:27",
+   "text": "After Hurricane Katrina, Sean Penn brought _ to the people of New Orleans.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:28",
+   "text": "After months of practice with _, I think I'm finally ready for _.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:29",
+   "text": "After the earthquake, Sean Penn brought _ to the people of Haiti.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:30",
+   "text": "Air Canada guidelines now prohibit _ on airplanes.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:31",
+   "text": "Airport security guidelines now prohibit _ on airplanes.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:32",
+   "text": "Alternative medicine is now embracing the curative powers of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:33",
+   "text": "And the Academy Award for _ goes to _.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:34",
+   "text": "And the BAFTA for _ goes to _.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:35",
+   "text": "And what did you bring for show and tell?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:36",
+   "text": "Anthropologists have recently discovered a primitive tribe that worships _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:37",
+   "text": "Arby's: We Have _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:38",
+   "text": "Are you thinking what I'm thinking, B1? I think I am, B2: it's _ time!",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:39",
+   "text": "As my New Year's resolution, I vow to give up _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:40",
+   "text": "As the mom of five rambunctious boys, I'm no stranger to _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:41",
+   "text": "As the mum of five rambunctious boys, I'm no stranger to _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:42",
+   "text": "Betcha can't have just one!",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:43",
+   "text": "BILLY MAYS HERE FOR _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:44",
+   "text": "Bravo's new reality show features eight washed-up celebrities living with _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:45",
+   "text": "Brought to you by Bud Light®, the Official Beer of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:46",
+   "text": "Brought to you by Molson Canadian, the Official Beer of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:47",
+   "text": "Brought to you by XXXX Gold, the Official Beer of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:48",
+   "text": "But before I kill you, Mr. Bond, I must show you _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:49",
+   "text": "CBC presents \"_: the Story of _.\"",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:50",
+   "text": "Channel 4 presents _, the story of _.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:51",
+   "text": "Channel 5's new reality show features eight washed-up celebrities living with _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:52",
+   "text": "Channel 9 is pleased to present its new variety show, \"Hey Hey It's _.\"",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:53",
+   "text": "Charlie and the chocolate _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:54",
+   "text": "Check me out, yo! I call this dance move \"_.\"",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:55",
+   "text": "Click Here for _!!!",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:56",
+   "text": "Coming this season, Samuel Beckett's classic existential play: Waiting for _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:57",
+   "text": "Coming to Broadway this season, _: The Musical.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:58",
+   "text": "Coming to theaters this holiday season, \"Star Wars: The Rise of _.\"",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:59",
+   "text": "Crikey! I've never seen _ like this before! Let's get a bit closer.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:60",
+   "text": "CTV presents \"_: the Story of _.\"",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:61",
+   "text": "Daddy, why is mommy crying?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:62",
+   "text": "Daddy, why is mummy crying?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:63",
+   "text": "Dear Abby, I'm having some trouble with _ and would like your advice.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:64",
+   "text": "Dear Agony Aunt, I'm having some trouble with _ and I need your advice.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:65",
+   "text": "Dear Sir or Madam, We regret to inform you that the Office of _ has denied your request for _.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:66",
+   "text": "Doctor, you've gone too far! The human body wasn't meant to withstand that amount of _!",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:67",
+   "text": "Dude, do not go in that bathroom. There's _ in there.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:68",
+   "text": "Dude, do not go in that washroom. There's _ in there.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:69",
+   "text": "Due to a PR fiasco, Walmart no longer offers _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:70",
+   "text": "During his childhood, Salvador Dali produced hundreds of paintings of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:71",
+   "text": "During his short-lived boxing career, the Messiah fought under the name Jesus \"_\" Christ.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:72",
+   "text": "During Picasso's often-overlooked Brown Period, he produced hundreds of paintings of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:73",
+   "text": "During sex, I like to think about _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:74",
+   "text": "Finally! A service that delivers _ right to your door.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:75",
+   "text": "For my turn, I will spend four gold and allocate all three workers to _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:76",
+   "text": "Fun tip! When your man asks you to go down on him, try surprising him with _ instead.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:77",
+   "text": "Future historians will agree that _ marked the beginning of America's decline.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:78",
+   "text": "Having problems with _? Try _!",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:79",
+   "text": "Here is the church Here is the steeple Open the doors And there is _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:80",
+   "text": "Hey guys, welcome to Boston Pizza! Would you like to start the night off right with _?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:81",
+   "text": "Hey guys, welcome to Chili's! Would you like to start the night off right with _?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:82",
+   "text": "Hey guys, welcome to Sizzler! Would you like to start the night off right with _?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:83",
+   "text": "Hey guys, welcome to TGIF! Would you like to start the night off right with _?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:84",
+   "text": "Hey Reddit! I'm _. Ask me anything.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:85",
+   "text": "How am I maintaining my relationship status?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:86",
+   "text": "How did I lose my virginity?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:87",
+   "text": "I do not know with what weapons World War III will be fought, but World War IV will be fought with _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:88",
+   "text": "I drink to forget _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:89",
+   "text": "I get by with a little help from _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:90",
+   "text": "I got 99 problems, but _ ain't one.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:91",
+   "text": "I know when that hotline bling, that can only mean one thing: _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:92",
+   "text": "I learned the hard way that you can't cheer up a grieving friend with _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:93",
+   "text": "I never truly understood _ until I encountered _.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:94",
+   "text": "I spy with my little eye _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:95",
+   "text": "I wish I hadn't lost the instruction manual for _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:96",
+   "text": "I'm going on a cleanse this week. Nothing but kale juice and _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:97",
+   "text": "I'm Lebron James, and when I'm not slamming dunks, I love _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:98",
+   "text": "I'm no doctor, but I'm pretty sure what you're suffering from is called \"_.\"",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:99",
+   "text": "I'm sorry, Professor, but I couldn't complete my homework because of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:100",
+   "text": "I'm sorry, Sir, but I couldn't complete my homework because of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:101",
+   "text": "I'm not like the rest of you. I'm too rich and busy for _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:102",
+   "text": "If you can't be with the one you love, love _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:103",
+   "text": "IF you like _, YOU MIGHT BE A REDNECK.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:104",
+   "text": "In 1,000 years, when paper money is a distant memory, how will we pay for goods and services?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:105",
+   "text": "In 1,000 years, when paper money is but a distant memory, _ will be our currency.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:106",
+   "text": "In a world ravaged by _ our only solace is _.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:107",
+   "text": "In a world ravaged by _, our only solace is _.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:108",
+   "text": "In an attempt to reach a wider audience, the National Museum of Australia has opened an interactive exhibit on _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:109",
+   "text": "In an attempt to reach a wider audience, the Smithsonian Museum of Natural History has opened an interactive exhibit on _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:110",
+   "text": "In Australia, _ is twice as big and twice as deadly.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:111",
+   "text": "In Belmarsh Prison, word is you can trade 200 cigarettes for _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:112",
+   "text": "In her latest feature-length film, Tracy Beaker struggles with _ for the first time.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:113",
+   "text": "In his new self-produced album, Kanye West raps over the sounds of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:114",
+   "text": "In his new summer comedy, Rob Schneider is _ trapped in the body of _.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:115",
+   "text": "In L.A. County Jail, word is you can trade 200 cigarettes for _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:116",
+   "text": "In M. Night Shyamalan's new movie, Bruce Willis discovers that _ had really been _ all along.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:117",
+   "text": "In Michael Jackson's final moments, he thought about _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:118",
+   "text": "In Rome, there are whisperings that the Vatican has a secret room devoted to _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:119",
+   "text": "In the new Disney Channel Original Movie, Hannah Montana struggles with _ for the first time.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:120",
+   "text": "In the seventh circle of Hell, sinners must endure _ for all eternity.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:121",
+   "text": "In your Best-Man speech, I'd talk about when we found ourselves _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:122",
+   "text": "Instead of coal, Father Christmas now gives the bad children _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:123",
+   "text": "Instead of coal, Santa now gives the bad children _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:124",
+   "text": "Introducing the amazing superhero/sidekick duo! It's _ and _!",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:125",
+   "text": "Introducing X-Treme Baseball! It's like baseball, but with _!",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:126",
+   "text": "It's a trap!",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:127",
+   "text": "It's not _ that puts strain on a relationship, it's _.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:128",
+   "text": "Just once, I'd like to hear you say \"Thanks, Mom. Thanks for _.\"",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:129",
+   "text": "Just once, I'd like to hear you say \"Thanks, Mum. Thanks for _.\"",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:130",
+   "text": "Just saw this upsetting video! Please retweet!! #stop_",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:131",
+   "text": "Kids, I don't need drugs to get high. I'm high on _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:132",
+   "text": "Life for Aboriginal people was forever changed when the white man introduced them to _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:133",
+   "text": "Life for American Indians was forever changed when the White Man introduced them to _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:134",
+   "text": "Life was difficult for cavemen before _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:135",
+   "text": "Lifetime® presents _: the Story of _.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:136",
+   "text": "Lifetime® presents \"_: the Story of _.\"",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:137",
+   "text": "Lovin' you is easy 'cause you're _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:138",
+   "text": "Major League Baseball has banned _ for giving players an unfair advantage.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:139",
+   "text": "Make a haiku.",
+   "pick": 3
+  },
+  {
+   "id": "cah-base:b:140",
+   "text": "Mate, do not go in that bathroom. There's _ in there.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:141",
+   "text": "Mate, do not go in that toilet. There's _ in there.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:142",
+   "text": "Maybe she's born with it. Maybe it's _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:143",
+   "text": "Men's Wearhouse: You're gonna like _. I guarantee it.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:144",
+   "text": "Military historians remember Alexander the Great for his brilliant use of _ against the Persians.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:145",
+   "text": "Money can't buy me love, but it can buy me _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:146",
+   "text": "Mr. and Mrs. Diaz, we called you in because we're concerned about Cynthia. Are you aware that your daughter is _?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:147",
+   "text": "MTV's new reality show features eight washed-up celebrities living with _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:148",
+   "text": "My fellow Americans: Before this decade is out, we will have _ on the moon!",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:149",
+   "text": "My mom is so happy when I visit, but I'm only there to be _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:150",
+   "text": "My plan for world domination begins with _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:151",
+   "text": "Next from J.K. Rowling: Harry Potter and the Chamber of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:152",
+   "text": "Next on ESPN2: The World Series of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:153",
+   "text": "Next on Eurosport: The World Championship of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:154",
+   "text": "Next on Nine's Wide World of Sports: The World Championship of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:155",
+   "text": "Next on Sky Sports: The World Champsion of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:156",
+   "text": "Next on TSN: The World Series of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:157",
+   "text": "Next up on Channel 4: Ramsay's _ Nightmares.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:158",
+   "text": "Nobody expects the Spanish Inquisition. Our chief weapons are fear, surprise, and _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:159",
+   "text": "Now at the National Museum of Australia: an interactive exhibit on _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:160",
+   "text": "Now at the Natural History Museum: an interactive exhibit on _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:161",
+   "text": "Now at the Royal Ontario Museum: an interactive exhibit on _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:162",
+   "text": "Now at the Smithsonian: an interactive exhibit on _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:163",
+   "text": "O Canada, we stand on guard for _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:164",
+   "text": "Oi! Show us _!",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:165",
+   "text": "Old MacDonald had _. E-I-E-I-O.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:166",
+   "text": "Only you can prevent _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:167",
+   "text": "Penalty! _: that's 5 minutes in the box!",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:168",
+   "text": "Qantas now prohibits _ on airplanes.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:169",
+   "text": "Rumor has it that Vladimir Putin's favorite dish is _ stuffed with _.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:170",
+   "text": "Science will never explain _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:171",
+   "text": "Skidamarink a dink a dink, skidamarink a doo, I love _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:172",
+   "text": "Sorry everyone, I just _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:173",
+   "text": "Step 1: _. Step 2: _. Step 3: Profit.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:174",
+   "text": "Studies show that lab rats navigate mazes 50% faster after being exposed to _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:175",
+   "text": "Thank God for alcohol and _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:176",
+   "text": "That's right, I killed _. How, you ask? _.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:177",
+   "text": "The blind date was going horribly until we discovered our shared interest in _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:178",
+   "text": "The class field trip was completely ruined by _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:179",
+   "text": "The Four Horsemen of the Apocalypse: Pestilence, War, Famine, and _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:180",
+   "text": "The hills are alive with the sound of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:181",
+   "text": "The neighborhood kid didn't use snow for their snowman, they used _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:182",
+   "text": "The new Chevy Tahoe. With the power and space to take _ everywhere you go.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:183",
+   "text": "The school excursion was completely ruined by _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:184",
+   "text": "The school field trip was completely ruined by _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:185",
+   "text": "The school trip was completely ruined by _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:186",
+   "text": "The secret to a lasting marriage is communication, communication, and _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:187",
+   "text": "The Smithsonian Museum of Natural History has just opened an interactive exhibit on _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:188",
+   "text": "The TFL apologizes for the delay in train service due to _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:189",
+   "text": "The theme for next year's Eurovision Song Contest is \"We are _.\"",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:190",
+   "text": "The U.S. has begun airdropping _ to the children of Afghanistan.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:191",
+   "text": "They said we were crazy. They said we couldn't put _ inside of _. They were wrong.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:192",
+   "text": "This is the way the world ends This is the way the world ends Not with a bang but with _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:193",
+   "text": "This is your pilot speaking. Please prepare for _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:194",
+   "text": "This season at Steppenwolf, Samuel Beckett's classic existential play: Waitng for _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:195",
+   "text": "This season at the old Vic, Samuel Beckett's classic existential play: Waitng for _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:196",
+   "text": "This season at the Princess of Wales Theatre, Samuel Beckett's classic existential play: Waiting for _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:197",
+   "text": "This season at the Sydney Opera House, Samuel Beckett's classic existential play: Waiting for _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:198",
+   "text": "Today on Jerry Springer: \"Help! My son is _!\"",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:199",
+   "text": "Today on Maury: \"Help! My son is _!\"",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:200",
+   "text": "Today on The Jeremy Kyle Show: \"Help! My son is _!\"",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:201",
+   "text": "Tonight's top story: What you don't know about _ could kill you.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:202",
+   "text": "TSA guidelines now prohibit _ on airplanes.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:203",
+   "text": "Turns out that _-Man was neither the hero we needed nor wanted.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:204",
+   "text": "Uh, hey guys, I know this was my idea, but I'm having serious doubts about _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:205",
+   "text": "UKIP: Putting _ First!",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:206",
+   "text": "War! What is it good for?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:207",
+   "text": "Well if you'll excuse me, gentlemen, I have a date with _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:208",
+   "text": "What am I giving up for Lent?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:209",
+   "text": "What are my parents hiding from me?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:210",
+   "text": "What are school administrators using to curb rampant teenage pregnancy?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:211",
+   "text": "What broke up the original Wiggles?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:212",
+   "text": "What brought the orgy to a grinding halt?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:213",
+   "text": "What did I bring back from Amsterdam?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:214",
+   "text": "What did I bring back from Bali?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:215",
+   "text": "What did I bring back from Mexico?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:216",
+   "text": "What did the US airdrop to the children of Afghanistan?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:217",
+   "text": "What did Vin Diesel eat for dinner?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:218",
+   "text": "What do old people smell like?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:219",
+   "text": "What does Dick Cheney prefer?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:220",
+   "text": "What don't you want to find in your Chinese food?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:221",
+   "text": "What don't you want to find in your doner kebab?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:222",
+   "text": "What don't you want to find in your Kung Pao chicken?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:223",
+   "text": "What don't you want to find in your Mongolian beef?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:224",
+   "text": "What ended my last relationship?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:225",
+   "text": "What gets better with age?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:226",
+   "text": "What gives me uncontrollable gas?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:227",
+   "text": "What has been making life difficult at the nudist colony?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:228",
+   "text": "What helps Barack Obama unwind?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:229",
+   "text": "What helps Obama unwind?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:230",
+   "text": "What is Batman's guilty pleasure?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:231",
+   "text": "What is George W. Bush thinking about right now?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:232",
+   "text": "What kept Margaret Thatcher busy in her waning years?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:233",
+   "text": "What left this stain on my couch?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:234",
+   "text": "What made my first kiss so awkward?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:235",
+   "text": "What makes life worth living?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:236",
+   "text": "What makes me a true blue Aussie?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:237",
+   "text": "What never fails to liven up the party?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:238",
+   "text": "What will always get you laid?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:239",
+   "text": "What will I bring back in time to convince people that I am a powerful wizard?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:240",
+   "text": "What would grandma find disturbing, yet oddly charming?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:241",
+   "text": "What's a girl's best friend?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:242",
+   "text": "What's my anti-drug?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:243",
+   "text": "What's my secret power?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:244",
+   "text": "What's Teach for America using to inspire inner city students to succeed?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:245",
+   "text": "What's that smell?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:246",
+   "text": "What's that sound?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:247",
+   "text": "What's the Canadian government using to inspire rural students to succeed?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:248",
+   "text": "What's the crustiest?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:249",
+   "text": "What's the most emo?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:250",
+   "text": "What's the new fad diet?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:251",
+   "text": "What's the next Happy Meal® toy?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:252",
+   "text": "What's the next superhero/sidekick duo?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:253",
+   "text": "What's there a ton of in heaven?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:254",
+   "text": "What's there a tonne of in heaven?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:255",
+   "text": "When all else fails, I can always masturbate to _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:256",
+   "text": "When I am a billionare, I shall erect a 20-meter statue to commemorate _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:257",
+   "text": "When I am a billionare, I shall erect a 20-metre statue to commemorate _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:258",
+   "text": "When I am a billionare, I shall erect a 50-foot statue to commemorate _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:259",
+   "text": "When I am President of the United States, I will create the Department of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:260",
+   "text": "When I am President, I will create the Department of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:261",
+   "text": "When I am Prime Minister of Canada, I will create the Department of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:262",
+   "text": "When I am Prime Minister of Canada, I will create the Ministry of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:263",
+   "text": "When I am Prime Minister, I will create the Department of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:264",
+   "text": "When I am Prime Minister, I will create the Ministry of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:265",
+   "text": "When I pooped, what came out of my butt?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:266",
+   "text": "When I was tripping on acid, _ turned into _.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:267",
+   "text": "When I'm pooping, I like to think about _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:268",
+   "text": "When Pharaoh remained unmoved, Moses called down a Plague of _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:269",
+   "text": "When you get right down to it, _ is just _.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:270",
+   "text": "While the United States raced the Soviet Union to the moon, the Mexican government funneled millions of pesos into research on _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:271",
+   "text": "White people like _.",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:272",
+   "text": "Who stole the cookies from the cookie jar?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:273",
+   "text": "Why am I sticky?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:274",
+   "text": "Why can't I sleep at night?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:275",
+   "text": "Why do I hurt all over?",
+   "pick": 1
+  },
+  {
+   "id": "cah-base:b:276",
+   "text": "With enough time and pressure, _ will turn into _.",
+   "pick": 2
+  },
+  {
+   "id": "cah-base:b:277",
+   "text": "Your security clearance has been suspended beause of your shameful past involving _.",
+   "pick": 1
+  }
+ ],
+ "white": [
+  {
+   "id": "cah-base:w:0",
+   "text": "\"Tweeting.\""
+  },
+  {
+   "id": "cah-base:w:1",
+   "text": "(I am doing Kegels right now.)"
+  },
+  {
+   "id": "cah-base:w:2",
+   "text": "10,000 Syrian refugees."
+  },
+  {
+   "id": "cah-base:w:3",
+   "text": "100% Pure New Zealand."
+  },
+  {
+   "id": "cah-base:w:4",
+   "text": "2 Girls 1 Cup."
+  },
+  {
+   "id": "cah-base:w:5",
+   "text": "400 years of colonial atrocities."
+  },
+  {
+   "id": "cah-base:w:6",
+   "text": "50 mg of Zoloft daily."
+  },
+  {
+   "id": "cah-base:w:7",
+   "text": "50,000 volts straight to the nipples."
+  },
+  {
+   "id": "cah-base:w:8",
+   "text": "72 virgins."
+  },
+  {
+   "id": "cah-base:w:9",
+   "text": "8 oz. of sweet Mexican black-tar heroin."
+  },
+  {
+   "id": "cah-base:w:10",
+   "text": "A bag of magic beans."
+  },
+  {
+   "id": "cah-base:w:11",
+   "text": "A balanced breakfast."
+  },
+  {
+   "id": "cah-base:w:12",
+   "text": "A ball of earwax, semen, and toenail clippings."
+  },
+  {
+   "id": "cah-base:w:13",
+   "text": "A big black dick."
+  },
+  {
+   "id": "cah-base:w:14",
+   "text": "A big hoopla about nothing."
+  },
+  {
+   "id": "cah-base:w:15",
+   "text": "A bird that shits human turds."
+  },
+  {
+   "id": "cah-base:w:16",
+   "text": "A bit of slap and tickle."
+  },
+  {
+   "id": "cah-base:w:17",
+   "text": "A bitch slap."
+  },
+  {
+   "id": "cah-base:w:18",
+   "text": "A bleached arsehole."
+  },
+  {
+   "id": "cah-base:w:19",
+   "text": "A bleached asshole."
+  },
+  {
+   "id": "cah-base:w:20",
+   "text": "A Bop It™."
+  },
+  {
+   "id": "cah-base:w:21",
+   "text": "A bowl of mayonnaise and human teeth."
+  },
+  {
+   "id": "cah-base:w:22",
+   "text": "A brain tumor."
+  },
+  {
+   "id": "cah-base:w:23",
+   "text": "A brain tumour."
+  },
+  {
+   "id": "cah-base:w:24",
+   "text": "A bucket of fish heads."
+  },
+  {
+   "id": "cah-base:w:25",
+   "text": "A can of whoop-ass."
+  },
+  {
+   "id": "cah-base:w:26",
+   "text": "A caress of the inner thigh."
+  },
+  {
+   "id": "cah-base:w:27",
+   "text": "A cartoon camel enjoying the smooth, refreshing taste of a cigarette."
+  },
+  {
+   "id": "cah-base:w:28",
+   "text": "A cat with... hands."
+  },
+  {
+   "id": "cah-base:w:29",
+   "text": "A cherry-wood spanking bench."
+  },
+  {
+   "id": "cah-base:w:30",
+   "text": "A Chinese tourist who wants something very badly but cannot communicate it."
+  },
+  {
+   "id": "cah-base:w:31",
+   "text": "A clandestine butt scratch."
+  },
+  {
+   "id": "cah-base:w:32",
+   "text": "A cooler full of organs."
+  },
+  {
+   "id": "cah-base:w:33",
+   "text": "A copy of Bedside Hitler."
+  },
+  {
+   "id": "cah-base:w:34",
+   "text": "A crucifixion."
+  },
+  {
+   "id": "cah-base:w:35",
+   "text": "A cute, fuzzy koala, but it has chlamydia."
+  },
+  {
+   "id": "cah-base:w:36",
+   "text": "A death ray."
+  },
+  {
+   "id": "cah-base:w:37",
+   "text": "A decent fucking Internet connection."
+  },
+  {
+   "id": "cah-base:w:38",
+   "text": "A defective condom."
+  },
+  {
+   "id": "cah-base:w:39",
+   "text": "A despondent Maple Leafs fan sitting all alone."
+  },
+  {
+   "id": "cah-base:w:40",
+   "text": "A didgeridildo."
+  },
+  {
+   "id": "cah-base:w:41",
+   "text": "A disappointing birthday party."
+  },
+  {
+   "id": "cah-base:w:42",
+   "text": "A drive-by shooting."
+  },
+  {
+   "id": "cah-base:w:43",
+   "text": "A fair go."
+  },
+  {
+   "id": "cah-base:w:44",
+   "text": "A falcon with a cap on its head."
+  },
+  {
+   "id": "cah-base:w:45",
+   "text": "A fanny fart."
+  },
+  {
+   "id": "cah-base:w:46",
+   "text": "A fart so powerful that it wakes the giants from their thousand-year slumber."
+  },
+  {
+   "id": "cah-base:w:47",
+   "text": "A fat bald man from the internet."
+  },
+  {
+   "id": "cah-base:w:48",
+   "text": "A fetus."
+  },
+  {
+   "id": "cah-base:w:49",
+   "text": "A five-litre goon bag."
+  },
+  {
+   "id": "cah-base:w:50",
+   "text": "A Fleshlight."
+  },
+  {
+   "id": "cah-base:w:51",
+   "text": "A Fleshlight®."
+  },
+  {
+   "id": "cah-base:w:52",
+   "text": "A foetus."
+  },
+  {
+   "id": "cah-base:w:53",
+   "text": "A foul mouth."
+  },
+  {
+   "id": "cah-base:w:54",
+   "text": "A fuck-ton of almonds."
+  },
+  {
+   "id": "cah-base:w:55",
+   "text": "A fuck-tonne of almonds."
+  },
+  {
+   "id": "cah-base:w:56",
+   "text": "A gassy antelope."
+  },
+  {
+   "id": "cah-base:w:57",
+   "text": "A gentle caress of the inner thigh."
+  },
+  {
+   "id": "cah-base:w:58",
+   "text": "A ginger's freckled ballsack."
+  },
+  {
+   "id": "cah-base:w:59",
+   "text": "A good sniff."
+  },
+  {
+   "id": "cah-base:w:60",
+   "text": "A good, strong gorilla."
+  },
+  {
+   "id": "cah-base:w:61",
+   "text": "A gossamer stream of jizz that catches the light as it arcs through the morning air."
+  },
+  {
+   "id": "cah-base:w:62",
+   "text": "A grande sugar-free iced soy caramel macchiato."
+  },
+  {
+   "id": "cah-base:w:63",
+   "text": "A Gypsy curse."
+  },
+  {
+   "id": "cah-base:w:64",
+   "text": "A hairless little shitstain named Callou."
+  },
+  {
+   "id": "cah-base:w:65",
+   "text": "A Halal Snack Pack."
+  },
+  {
+   "id": "cah-base:w:66",
+   "text": "A hen night in Slough."
+  },
+  {
+   "id": "cah-base:w:67",
+   "text": "A homoerotic volleyball montage."
+  },
+  {
+   "id": "cah-base:w:68",
+   "text": "A horde of Vikings."
+  },
+  {
+   "id": "cah-base:w:69",
+   "text": "A hot mess."
+  },
+  {
+   "id": "cah-base:w:70",
+   "text": "A Japanese tourist who wants something very badly but cannot communicate it."
+  },
+  {
+   "id": "cah-base:w:71",
+   "text": "A Japanese whaling operation."
+  },
+  {
+   "id": "cah-base:w:72",
+   "text": "A LAN party."
+  },
+  {
+   "id": "cah-base:w:73",
+   "text": "A lifetime of sadness."
+  },
+  {
+   "id": "cah-base:w:74",
+   "text": "A literal tornado of fire."
+  },
+  {
+   "id": "cah-base:w:75",
+   "text": "A little boy who won't shut the fuck up about dinosaurs."
+  },
+  {
+   "id": "cah-base:w:76",
+   "text": "A live studio audience."
+  },
+  {
+   "id": "cah-base:w:77",
+   "text": "A look-see."
+  },
+  {
+   "id": "cah-base:w:78",
+   "text": "A low standard of living."
+  },
+  {
+   "id": "cah-base:w:79",
+   "text": "A mad cow."
+  },
+  {
+   "id": "cah-base:w:80",
+   "text": "A madman who lives in a police box and kidnaps women."
+  },
+  {
+   "id": "cah-base:w:81",
+   "text": "A man of means by no means."
+  },
+  {
+   "id": "cah-base:w:82",
+   "text": "A man on the brink of orgasm."
+  },
+  {
+   "id": "cah-base:w:83",
+   "text": "A mating display."
+  },
+  {
+   "id": "cah-base:w:84",
+   "text": "A Mexican."
+  },
+  {
+   "id": "cah-base:w:85",
+   "text": "A micropenis."
+  },
+  {
+   "id": "cah-base:w:86",
+   "text": "A micropig wearing a tiny raincoat and booties."
+  },
+  {
+   "id": "cah-base:w:87",
+   "text": "A middle-aged man on roller skates."
+  },
+  {
+   "id": "cah-base:w:88",
+   "text": "A mime having a stroke."
+  },
+  {
+   "id": "cah-base:w:89",
+   "text": "A moment of silence."
+  },
+  {
+   "id": "cah-base:w:90",
+   "text": "A monkey smoking a cigar."
+  },
+  {
+   "id": "cah-base:w:91",
+   "text": "A mopey zoo lion."
+  },
+  {
+   "id": "cah-base:w:92",
+   "text": "A much younger woman."
+  },
+  {
+   "id": "cah-base:w:93",
+   "text": "A murder most foul."
+  },
+  {
+   "id": "cah-base:w:94",
+   "text": "A neglected Tamagotchi™."
+  },
+  {
+   "id": "cah-base:w:95",
+   "text": "A nice cup of tea."
+  },
+  {
+   "id": "cah-base:w:96",
+   "text": "A pangender octopus who roams the cosmos in search of love."
+  },
+  {
+   "id": "cah-base:w:97",
+   "text": "A pineapple with chlamydia."
+  },
+  {
+   "id": "cah-base:w:98",
+   "text": "A posh wank."
+  },
+  {
+   "id": "cah-base:w:99",
+   "text": "A prayer bouquet."
+  },
+  {
+   "id": "cah-base:w:100",
+   "text": "A pyramid of severed heads."
+  },
+  {
+   "id": "cah-base:w:101",
+   "text": "A really cool hat."
+  },
+  {
+   "id": "cah-base:w:102",
+   "text": "A robust mongoloid."
+  },
+  {
+   "id": "cah-base:w:103",
+   "text": "A sad god with a shit-covered pair of nipples."
+  },
+  {
+   "id": "cah-base:w:104",
+   "text": "A sad handjob."
+  },
+  {
+   "id": "cah-base:w:105",
+   "text": "A salad for men that's made of metal."
+  },
+  {
+   "id": "cah-base:w:106",
+   "text": "A salty surprise."
+  },
+  {
+   "id": "cah-base:w:107",
+   "text": "A sassy black woman."
+  },
+  {
+   "id": "cah-base:w:108",
+   "text": "A sausage festival."
+  },
+  {
+   "id": "cah-base:w:109",
+   "text": "A saxophone solo."
+  },
+  {
+   "id": "cah-base:w:110",
+   "text": "A sea of troubles."
+  },
+  {
+   "id": "cah-base:w:111",
+   "text": "A shark!"
+  },
+  {
+   "id": "cah-base:w:112",
+   "text": "A sick burnout."
+  },
+  {
+   "id": "cah-base:w:113",
+   "text": "A sick wombat."
+  },
+  {
+   "id": "cah-base:w:114",
+   "text": "A sickly child-king."
+  },
+  {
+   "id": "cah-base:w:115",
+   "text": "A six-point plan to stop the boats."
+  },
+  {
+   "id": "cah-base:w:116",
+   "text": "A slab of VB and a pack of durries."
+  },
+  {
+   "id": "cah-base:w:117",
+   "text": "a slightly used tampon"
+  },
+  {
+   "id": "cah-base:w:118",
+   "text": "A snapping turtle biting the tip of your penis."
+  },
+  {
+   "id": "cah-base:w:119",
+   "text": "A sober Irishman who doesn't care for potatoes."
+  },
+  {
+   "id": "cah-base:w:120",
+   "text": "A soggy Sao."
+  },
+  {
+   "id": "cah-base:w:121",
+   "text": "A spastic nerd."
+  },
+  {
+   "id": "cah-base:w:122",
+   "text": "A stingray barb through the chest."
+  },
+  {
+   "id": "cah-base:w:123",
+   "text": "A stray pube."
+  },
+  {
+   "id": "cah-base:w:124",
+   "text": "A subscription to Men's Fitness."
+  },
+  {
+   "id": "cah-base:w:125",
+   "text": "A Super Soaker™ full of cat pee."
+  },
+  {
+   "id": "cah-base:w:126",
+   "text": "A surprisingly low amount of prison rape."
+  },
+  {
+   "id": "cah-base:w:127",
+   "text": "A swift hoog to the face."
+  },
+  {
+   "id": "cah-base:w:128",
+   "text": "A thermonuclear detonation."
+  },
+  {
+   "id": "cah-base:w:129",
+   "text": "A thousand Scottish warriors lifting their kilts in unison."
+  },
+  {
+   "id": "cah-base:w:130",
+   "text": "A three-way with my wife and Shaquille O'Neal."
+  },
+  {
+   "id": "cah-base:w:131",
+   "text": "A Tim Hortons franchise."
+  },
+  {
+   "id": "cah-base:w:132",
+   "text": "A time travel paradox."
+  },
+  {
+   "id": "cah-base:w:133",
+   "text": "A tiny horse."
+  },
+  {
+   "id": "cah-base:w:134",
+   "text": "A tiny, gay guitar called a ukulele."
+  },
+  {
+   "id": "cah-base:w:135",
+   "text": "A tribe of warrior women."
+  },
+  {
+   "id": "cah-base:w:136",
+   "text": "A vagina that tastes like the bathroom floors at Tom's Diner."
+  },
+  {
+   "id": "cah-base:w:137",
+   "text": "A vajazzled vagina."
+  },
+  {
+   "id": "cah-base:w:138",
+   "text": "A vastly superior healthcare system."
+  },
+  {
+   "id": "cah-base:w:139",
+   "text": "A vindaloo poo."
+  },
+  {
+   "id": "cah-base:w:140",
+   "text": "A web of lies."
+  },
+  {
+   "id": "cah-base:w:141",
+   "text": "A wheelchair death race."
+  },
+  {
+   "id": "cah-base:w:142",
+   "text": "A white ethnostate."
+  },
+  {
+   "id": "cah-base:w:143",
+   "text": "A white van man."
+  },
+  {
+   "id": "cah-base:w:144",
+   "text": "A whole thing of butter."
+  },
+  {
+   "id": "cah-base:w:145",
+   "text": "A windmill full of corpses."
+  },
+  {
+   "id": "cah-base:w:146",
+   "text": "A wisecracking terrorist."
+  },
+  {
+   "id": "cah-base:w:147",
+   "text": "A zesty breakfast burrito."
+  },
+  {
+   "id": "cah-base:w:148",
+   "text": "Aaron Burr."
+  },
+  {
+   "id": "cah-base:w:149",
+   "text": "Abstinence."
+  },
+  {
+   "id": "cah-base:w:150",
+   "text": "Academy Award winner Meryl Streep."
+  },
+  {
+   "id": "cah-base:w:151",
+   "text": "Accepting the way things are."
+  },
+  {
+   "id": "cah-base:w:152",
+   "text": "Accidentally slipping yourself a roofie."
+  },
+  {
+   "id": "cah-base:w:153",
+   "text": "Active listening."
+  },
+  {
+   "id": "cah-base:w:154",
+   "text": "Actually giving a shit"
+  },
+  {
+   "id": "cah-base:w:155",
+   "text": "Actually taking candy from a baby."
+  },
+  {
+   "id": "cah-base:w:156",
+   "text": "Adderall™."
+  },
+  {
+   "id": "cah-base:w:157",
+   "text": "Adult Friendfinder."
+  },
+  {
+   "id": "cah-base:w:158",
+   "text": "Advice from a wise, old black man."
+  },
+  {
+   "id": "cah-base:w:159",
+   "text": "African children."
+  },
+  {
+   "id": "cah-base:w:160",
+   "text": "Agriculture."
+  },
+  {
+   "id": "cah-base:w:161",
+   "text": "AIDS."
+  },
+  {
+   "id": "cah-base:w:162",
+   "text": "Alcohol poisoning."
+  },
+  {
+   "id": "cah-base:w:163",
+   "text": "Alcoholism."
+  },
+  {
+   "id": "cah-base:w:164",
+   "text": "Alexandria Ocasio-Cortez."
+  },
+  {
+   "id": "cah-base:w:165",
+   "text": "All four prongs of an echidna's penis."
+  },
+  {
+   "id": "cah-base:w:166",
+   "text": "All my gentleman suitors."
+  },
+  {
+   "id": "cah-base:w:167",
+   "text": "all pants are half off today"
+  },
+  {
+   "id": "cah-base:w:168",
+   "text": "All the dudes I've fucked."
+  },
+  {
+   "id": "cah-base:w:169",
+   "text": "All-you-can-eat shrimp for $4.99."
+  },
+  {
+   "id": "cah-base:w:170",
+   "text": "All-you-can-eat shrimp for $8.99."
+  },
+  {
+   "id": "cah-base:w:171",
+   "text": "Altar boys."
+  },
+  {
+   "id": "cah-base:w:172",
+   "text": "America."
+  },
+  {
+   "id": "cah-base:w:173",
+   "text": "American Gladiators."
+  },
+  {
+   "id": "cah-base:w:174",
+   "text": "Americanization."
+  },
+  {
+   "id": "cah-base:w:175",
+   "text": "Amputees."
+  },
+  {
+   "id": "cah-base:w:176",
+   "text": "An AK-47 assault rifle."
+  },
+  {
+   "id": "cah-base:w:177",
+   "text": "An AK-47."
+  },
+  {
+   "id": "cah-base:w:178",
+   "text": "An AR-15 assault rifle."
+  },
+  {
+   "id": "cah-base:w:179",
+   "text": "An argument with Richard Dawkins."
+  },
+  {
+   "id": "cah-base:w:180",
+   "text": "An Army of smack heads with HIV infected needles."
+  },
+  {
+   "id": "cah-base:w:181",
+   "text": "An ass like two football helmets."
+  },
+  {
+   "id": "cah-base:w:182",
+   "text": "An asymmetric boob job."
+  },
+  {
+   "id": "cah-base:w:183",
+   "text": "An endless stream of diarrhea."
+  },
+  {
+   "id": "cah-base:w:184",
+   "text": "An endless stream of diarrhoea."
+  },
+  {
+   "id": "cah-base:w:185",
+   "text": "An entrenched class system."
+  },
+  {
+   "id": "cah-base:w:186",
+   "text": "An erection that lasts longer than four hours."
+  },
+  {
+   "id": "cah-base:w:187",
+   "text": "An Evening with Michael Buble."
+  },
+  {
+   "id": "cah-base:w:188",
+   "text": "An evil man in evil clothes."
+  },
+  {
+   "id": "cah-base:w:189",
+   "text": "An honest cop with nothing left to lose."
+  },
+  {
+   "id": "cah-base:w:190",
+   "text": "An icepick lobotomy."
+  },
+  {
+   "id": "cah-base:w:191",
+   "text": "An icy handjob from an Edmonton hooker."
+  },
+  {
+   "id": "cah-base:w:192",
+   "text": "An M. Night Shyamalan plot twist."
+  },
+  {
+   "id": "cah-base:w:193",
+   "text": "An M16 assault rifle."
+  },
+  {
+   "id": "cah-base:w:194",
+   "text": "An octopus giving seven handjobs and smoking a cigarette."
+  },
+  {
+   "id": "cah-base:w:195",
+   "text": "An Oedipus complex."
+  },
+  {
+   "id": "cah-base:w:196",
+   "text": "An old guy who's almost dead."
+  },
+  {
+   "id": "cah-base:w:197",
+   "text": "An older woman who knows her way around the penis."
+  },
+  {
+   "id": "cah-base:w:198",
+   "text": "An oversized lollipop."
+  },
+  {
+   "id": "cah-base:w:199",
+   "text": "An ugly face."
+  },
+  {
+   "id": "cah-base:w:200",
+   "text": "An unsurprising rash."
+  },
+  {
+   "id": "cah-base:w:201",
+   "text": "An unwanted pregnancy."
+  },
+  {
+   "id": "cah-base:w:202",
+   "text": "An uppercut."
+  },
+  {
+   "id": "cah-base:w:203",
+   "text": "Anal beads."
+  },
+  {
+   "id": "cah-base:w:204",
+   "text": "Announcing that I am about to cum."
+  },
+  {
+   "id": "cah-base:w:205",
+   "text": "Another goddamn vampire movie."
+  },
+  {
+   "id": "cah-base:w:206",
+   "text": "Another surprising Osprey crash."
+  },
+  {
+   "id": "cah-base:w:207",
+   "text": "Anything that comes out of Prince Philip's mouth."
+  },
+  {
+   "id": "cah-base:w:208",
+   "text": "Apologizing."
+  },
+  {
+   "id": "cah-base:w:209",
+   "text": "Arnold Vosloo."
+  },
+  {
+   "id": "cah-base:w:210",
+   "text": "Asians who aren't good at math."
+  },
+  {
+   "id": "cah-base:w:211",
+   "text": "Assless chaps."
+  },
+  {
+   "id": "cah-base:w:212",
+   "text": "Attitude."
+  },
+  {
+   "id": "cah-base:w:213",
+   "text": "Auschwitz."
+  },
+  {
+   "id": "cah-base:w:214",
+   "text": "Australia."
+  },
+  {
+   "id": "cah-base:w:215",
+   "text": "Authentic Mexican cuisine."
+  },
+  {
+   "id": "cah-base:w:216",
+   "text": "Autocannibalism."
+  },
+  {
+   "id": "cah-base:w:217",
+   "text": "AXE Body Spray."
+  },
+  {
+   "id": "cah-base:w:218",
+   "text": "Badger culling."
+  },
+  {
+   "id": "cah-base:w:219",
+   "text": "Ball-by-ball commentary from Richie Benaud."
+  },
+  {
+   "id": "cah-base:w:220",
+   "text": "Balls. Big balls. Really big balls."
+  },
+  {
+   "id": "cah-base:w:221",
+   "text": "Bananas in Pajamas."
+  },
+  {
+   "id": "cah-base:w:222",
+   "text": "Bananas."
+  },
+  {
+   "id": "cah-base:w:223",
+   "text": "Barack Obama."
+  },
+  {
+   "id": "cah-base:w:224",
+   "text": "Barely making $25,000 a year."
+  },
+  {
+   "id": "cah-base:w:225",
+   "text": "Basic trainees."
+  },
+  {
+   "id": "cah-base:w:226",
+   "text": "BATMAN!"
+  },
+  {
+   "id": "cah-base:w:227",
+   "text": "BATMAN!!!"
+  },
+  {
+   "id": "cah-base:w:228",
+   "text": "Battlefield amputations."
+  },
+  {
+   "id": "cah-base:w:229",
+   "text": "Becoming a blueberry."
+  },
+  {
+   "id": "cah-base:w:230",
+   "text": "Bees?"
+  },
+  {
+   "id": "cah-base:w:231",
+   "text": "Being a busy adult with many important things to do."
+  },
+  {
+   "id": "cah-base:w:232",
+   "text": "Being a dick to children."
+  },
+  {
+   "id": "cah-base:w:233",
+   "text": "Being a dinosaur."
+  },
+  {
+   "id": "cah-base:w:234",
+   "text": "Being a hideous beast that no one could love."
+  },
+  {
+   "id": "cah-base:w:235",
+   "text": "Being a motherfucking sorcerer."
+  },
+  {
+   "id": "cah-base:w:236",
+   "text": "Being a woman."
+  },
+  {
+   "id": "cah-base:w:237",
+   "text": "Being able to talk to elephants."
+  },
+  {
+   "id": "cah-base:w:238",
+   "text": "Being back-to-back World War Champions!"
+  },
+  {
+   "id": "cah-base:w:239",
+   "text": "Being black."
+  },
+  {
+   "id": "cah-base:w:240",
+   "text": "Being Canadian."
+  },
+  {
+   "id": "cah-base:w:241",
+   "text": "Being fabulous."
+  },
+  {
+   "id": "cah-base:w:242",
+   "text": "Being fat and stupid."
+  },
+  {
+   "id": "cah-base:w:243",
+   "text": "Being hunted like a fox."
+  },
+  {
+   "id": "cah-base:w:244",
+   "text": "Being marginalised."
+  },
+  {
+   "id": "cah-base:w:245",
+   "text": "Being marginalized."
+  },
+  {
+   "id": "cah-base:w:246",
+   "text": "Being on fire."
+  },
+  {
+   "id": "cah-base:w:247",
+   "text": "Being rich."
+  },
+  {
+   "id": "cah-base:w:248",
+   "text": "Being white."
+  },
+  {
+   "id": "cah-base:w:249",
+   "text": "Benedict Cumberbatch."
+  },
+  {
+   "id": "cah-base:w:250",
+   "text": "Bestiality."
+  },
+  {
+   "id": "cah-base:w:251",
+   "text": "Bill Nye the Science Guy."
+  },
+  {
+   "id": "cah-base:w:252",
+   "text": "Bingeing and purging."
+  },
+  {
+   "id": "cah-base:w:253",
+   "text": "Bio-engineered assault turtles with acid breath."
+  },
+  {
+   "id": "cah-base:w:254",
+   "text": "Bisexuality."
+  },
+  {
+   "id": "cah-base:w:255",
+   "text": "Bitches."
+  },
+  {
+   "id": "cah-base:w:256",
+   "text": "Black people."
+  },
+  {
+   "id": "cah-base:w:257",
+   "text": "Bling."
+  },
+  {
+   "id": "cah-base:w:258",
+   "text": "Blood fisting"
+  },
+  {
+   "id": "cah-base:w:259",
+   "text": "Blood, toil, tears, and sweat."
+  },
+  {
+   "id": "cah-base:w:260",
+   "text": "Blowing my boyfriend so hard he shits."
+  },
+  {
+   "id": "cah-base:w:261",
+   "text": "Blowing up Parliament."
+  },
+  {
+   "id": "cah-base:w:262",
+   "text": "Boat people; half boat, half human."
+  },
+  {
+   "id": "cah-base:w:263",
+   "text": "Bogies."
+  },
+  {
+   "id": "cah-base:w:264",
+   "text": "Bond, James Bond."
+  },
+  {
+   "id": "cah-base:w:265",
+   "text": "Bono."
+  },
+  {
+   "id": "cah-base:w:266",
+   "text": "Booby-trapping the house to foil burglars."
+  },
+  {
+   "id": "cah-base:w:267",
+   "text": "Boogers."
+  },
+  {
+   "id": "cah-base:w:268",
+   "text": "Bosnian chicken farmers."
+  },
+  {
+   "id": "cah-base:w:269",
+   "text": "Braiding three penises into a Curly Wurly."
+  },
+  {
+   "id": "cah-base:w:270",
+   "text": "Braiding three penises into a licorice twist."
+  },
+  {
+   "id": "cah-base:w:271",
+   "text": "Braiding three penises into a Twizzler."
+  },
+  {
+   "id": "cah-base:w:272",
+   "text": "Breaking out into song and dance."
+  },
+  {
+   "id": "cah-base:w:273",
+   "text": "Brexit."
+  },
+  {
+   "id": "cah-base:w:274",
+   "text": "Britney Spears at 55."
+  },
+  {
+   "id": "cah-base:w:275",
+   "text": "Brown people."
+  },
+  {
+   "id": "cah-base:w:276",
+   "text": "Bubble butt bottom boys."
+  },
+  {
+   "id": "cah-base:w:277",
+   "text": "Buckfast Tonic Wine."
+  },
+  {
+   "id": "cah-base:w:278",
+   "text": "Bullshitting my ass off."
+  },
+  {
+   "id": "cah-base:w:279",
+   "text": "Burning down the White House."
+  },
+  {
+   "id": "cah-base:w:280",
+   "text": "Buying the right toothbrush cup for my lifestyle."
+  },
+  {
+   "id": "cah-base:w:281",
+   "text": "Canada: America's Hat."
+  },
+  {
+   "id": "cah-base:w:282",
+   "text": "Canadian Netflix."
+  },
+  {
+   "id": "cah-base:w:283",
+   "text": "Canned tuna with extra dolphin."
+  },
+  {
+   "id": "cah-base:w:284",
+   "text": "Capturing Newt Gingrich and forcing him to dance in a monkey suit."
+  },
+  {
+   "id": "cah-base:w:285",
+   "text": "Cardi B."
+  },
+  {
+   "id": "cah-base:w:286",
+   "text": "Cards Against Humanity."
+  },
+  {
+   "id": "cah-base:w:287",
+   "text": "Cashed-up bogans."
+  },
+  {
+   "id": "cah-base:w:288",
+   "text": "Casually suggesting a threesome."
+  },
+  {
+   "id": "cah-base:w:289",
+   "text": "Catapults."
+  },
+  {
+   "id": "cah-base:w:290",
+   "text": "Centaurs."
+  },
+  {
+   "id": "cah-base:w:291",
+   "text": "Chainsaws for hands."
+  },
+  {
+   "id": "cah-base:w:292",
+   "text": "Charisma."
+  },
+  {
+   "id": "cah-base:w:293",
+   "text": "Cheating in the Paralympics."
+  },
+  {
+   "id": "cah-base:w:294",
+   "text": "Cheating in the Special Olympics."
+  },
+  {
+   "id": "cah-base:w:295",
+   "text": "Cheeky bum sex."
+  },
+  {
+   "id": "cah-base:w:296",
+   "text": "Chemical weapons."
+  },
+  {
+   "id": "cah-base:w:297",
+   "text": "Child abuse."
+  },
+  {
+   "id": "cah-base:w:298",
+   "text": "Child beauty pageants."
+  },
+  {
+   "id": "cah-base:w:299",
+   "text": "Children on leashes."
+  },
+  {
+   "id": "cah-base:w:300",
+   "text": "Chivalry."
+  },
+  {
+   "id": "cah-base:w:301",
+   "text": "Christopher Walken."
+  },
+  {
+   "id": "cah-base:w:302",
+   "text": "Chundering into a kangaroo's pouch."
+  },
+  {
+   "id": "cah-base:w:303",
+   "text": "Chunks of dead backpacker."
+  },
+  {
+   "id": "cah-base:w:304",
+   "text": "Chunks of dead hitchhiker."
+  },
+  {
+   "id": "cah-base:w:305",
+   "text": "Chunks of dead prostitute."
+  },
+  {
+   "id": "cah-base:w:306",
+   "text": "Chutzpah."
+  },
+  {
+   "id": "cah-base:w:307",
+   "text": "Civilian casualties."
+  },
+  {
+   "id": "cah-base:w:308",
+   "text": "Classist undertones."
+  },
+  {
+   "id": "cah-base:w:309",
+   "text": "Clive Palmer's soft, shitty body."
+  },
+  {
+   "id": "cah-base:w:310",
+   "text": "Clubbing baby seals."
+  },
+  {
+   "id": "cah-base:w:311",
+   "text": "Coat hanger abortions."
+  },
+  {
+   "id": "cah-base:w:312",
+   "text": "Cockasaurus rex: the horniest dinosaur of them all."
+  },
+  {
+   "id": "cah-base:w:313",
+   "text": "Cockfights."
+  },
+  {
+   "id": "cah-base:w:314",
+   "text": "College."
+  },
+  {
+   "id": "cah-base:w:315",
+   "text": "Committing suicide."
+  },
+  {
+   "id": "cah-base:w:316",
+   "text": "Completely unwarranted confidence."
+  },
+  {
+   "id": "cah-base:w:317",
+   "text": "Concealing a boner."
+  },
+  {
+   "id": "cah-base:w:318",
+   "text": "Concealing an erection."
+  },
+  {
+   "id": "cah-base:w:319",
+   "text": "Consensual sex."
+  },
+  {
+   "id": "cah-base:w:320",
+   "text": "Consultants."
+  },
+  {
+   "id": "cah-base:w:321",
+   "text": "Contagious face cancer."
+  },
+  {
+   "id": "cah-base:w:322",
+   "text": "Converting to Islam."
+  },
+  {
+   "id": "cah-base:w:323",
+   "text": "Cookie Monster devouring the Eucharist wafers."
+  },
+  {
+   "id": "cah-base:w:324",
+   "text": "Copping a feel."
+  },
+  {
+   "id": "cah-base:w:325",
+   "text": "Cottaging."
+  },
+  {
+   "id": "cah-base:w:326",
+   "text": "Count Chocula."
+  },
+  {
+   "id": "cah-base:w:327",
+   "text": "Court-ordered rehab."
+  },
+  {
+   "id": "cah-base:w:328",
+   "text": "Covering myself with Parmesan cheese and chili flakes because I am pizza."
+  },
+  {
+   "id": "cah-base:w:329",
+   "text": "Crazy hot cousin sex."
+  },
+  {
+   "id": "cah-base:w:330",
+   "text": "Creed."
+  },
+  {
+   "id": "cah-base:w:331",
+   "text": "Crippling debt."
+  },
+  {
+   "id": "cah-base:w:332",
+   "text": "Crucifixion."
+  },
+  {
+   "id": "cah-base:w:333",
+   "text": "Crumbs all over the bloody carpet."
+  },
+  {
+   "id": "cah-base:w:334",
+   "text": "Crumbs all over the god damn carpet."
+  },
+  {
+   "id": "cah-base:w:335",
+   "text": "Crumpets with the Queen."
+  },
+  {
+   "id": "cah-base:w:336",
+   "text": "Crystal meth."
+  },
+  {
+   "id": "cah-base:w:337",
+   "text": "Cuddling."
+  },
+  {
+   "id": "cah-base:w:338",
+   "text": "Cumming deep inside my best bro."
+  },
+  {
+   "id": "cah-base:w:339",
+   "text": "Customer service representatives."
+  },
+  {
+   "id": "cah-base:w:340",
+   "text": "Cybernetic enhancements."
+  },
+  {
+   "id": "cah-base:w:341",
+   "text": "Dad's funny balls."
+  },
+  {
+   "id": "cah-base:w:342",
+   "text": "Daddies Brown Sauce"
+  },
+  {
+   "id": "cah-base:w:343",
+   "text": "Daddies® Brown Sauce."
+  },
+  {
+   "id": "cah-base:w:344",
+   "text": "Daddy issues."
+  },
+  {
+   "id": "cah-base:w:345",
+   "text": "Daddy's credit card."
+  },
+  {
+   "id": "cah-base:w:346",
+   "text": "Daniel Radcliffe's delicious arsehole."
+  },
+  {
+   "id": "cah-base:w:347",
+   "text": "Daniel Radcliffe's delicious asshole."
+  },
+  {
+   "id": "cah-base:w:348",
+   "text": "Danny DeVito."
+  },
+  {
+   "id": "cah-base:w:349",
+   "text": "Dark and mysterious forces beyond our control."
+  },
+  {
+   "id": "cah-base:w:350",
+   "text": "Darth Vader."
+  },
+  {
+   "id": "cah-base:w:351",
+   "text": "Date rape."
+  },
+  {
+   "id": "cah-base:w:352",
+   "text": "Dave Matthews Band."
+  },
+  {
+   "id": "cah-base:w:353",
+   "text": "David Bowie flying in on a tiger made of lightning."
+  },
+  {
+   "id": "cah-base:w:354",
+   "text": "David Cameron."
+  },
+  {
+   "id": "cah-base:w:355",
+   "text": "Dead babies."
+  },
+  {
+   "id": "cah-base:w:356",
+   "text": "Dead birds everywhere."
+  },
+  {
+   "id": "cah-base:w:357",
+   "text": "Dead parents."
+  },
+  {
+   "id": "cah-base:w:358",
+   "text": "Deflowering the princess."
+  },
+  {
+   "id": "cah-base:w:359",
+   "text": "Dental dams."
+  },
+  {
+   "id": "cah-base:w:360",
+   "text": "Denying sex to play video games."
+  },
+  {
+   "id": "cah-base:w:361",
+   "text": "Destroying the evidence."
+  },
+  {
+   "id": "cah-base:w:362",
+   "text": "Dick Cheney."
+  },
+  {
+   "id": "cah-base:w:363",
+   "text": "Dick fingers."
+  },
+  {
+   "id": "cah-base:w:364",
+   "text": "Dick pics."
+  },
+  {
+   "id": "cah-base:w:365",
+   "text": "Dining with cardboard cutouts of the cast of Friends."
+  },
+  {
+   "id": "cah-base:w:366",
+   "text": "Dirty nappies."
+  },
+  {
+   "id": "cah-base:w:367",
+   "text": "Disco Inferno."
+  },
+  {
+   "id": "cah-base:w:368",
+   "text": "Diversity."
+  },
+  {
+   "id": "cah-base:w:369",
+   "text": "Dogging."
+  },
+  {
+   "id": "cah-base:w:370",
+   "text": "Doin' it in the butt."
+  },
+  {
+   "id": "cah-base:w:371",
+   "text": "Doin' it up the bum."
+  },
+  {
+   "id": "cah-base:w:372",
+   "text": "Doing a shit in Pudsey Bear's eyehole."
+  },
+  {
+   "id": "cah-base:w:373",
+   "text": "Doing crimes."
+  },
+  {
+   "id": "cah-base:w:374",
+   "text": "Doing it in the butt."
+  },
+  {
+   "id": "cah-base:w:375",
+   "text": "Doing the right thing."
+  },
+  {
+   "id": "cah-base:w:376",
+   "text": "Domino's™ Oreo™ Dessert Pizza."
+  },
+  {
+   "id": "cah-base:w:377",
+   "text": "Don Cherry's wardrobe."
+  },
+  {
+   "id": "cah-base:w:378",
+   "text": "Donald J. Trump."
+  },
+  {
+   "id": "cah-base:w:379",
+   "text": "Donald Trump's deleted tweets."
+  },
+  {
+   "id": "cah-base:w:380",
+   "text": "Double rainbows."
+  },
+  {
+   "id": "cah-base:w:381",
+   "text": "Douchebags on their iPhones."
+  },
+  {
+   "id": "cah-base:w:382",
+   "text": "Dr. Martin Luther King, Jr."
+  },
+  {
+   "id": "cah-base:w:383",
+   "text": "Drinking alone."
+  },
+  {
+   "id": "cah-base:w:384",
+   "text": "Drinking out of the toilet and eating garbage."
+  },
+  {
+   "id": "cah-base:w:385",
+   "text": "Drinking out of the toilet and eating rubbish."
+  },
+  {
+   "id": "cah-base:w:386",
+   "text": "Dropping a baby down the dunny."
+  },
+  {
+   "id": "cah-base:w:387",
+   "text": "Dropping a chandelier on your enemies and riding the rope up."
+  },
+  {
+   "id": "cah-base:w:388",
+   "text": "Drowning the kids in the bathtub."
+  },
+  {
+   "id": "cah-base:w:389",
+   "text": "Druids."
+  },
+  {
+   "id": "cah-base:w:390",
+   "text": "Drum circles."
+  },
+  {
+   "id": "cah-base:w:391",
+   "text": "Dry heaving."
+  },
+  {
+   "id": "cah-base:w:392",
+   "text": "Dwarf tossing."
+  },
+  {
+   "id": "cah-base:w:393",
+   "text": "Dwayne \"The Rock\" Johnson."
+  },
+  {
+   "id": "cah-base:w:394",
+   "text": "Dying but miraculously getting brought back to life."
+  },
+  {
+   "id": "cah-base:w:395",
+   "text": "Dying of dysentery."
+  },
+  {
+   "id": "cah-base:w:396",
+   "text": "Dying."
+  },
+  {
+   "id": "cah-base:w:397",
+   "text": "Eastern European Turbo-Folk music."
+  },
+  {
+   "id": "cah-base:w:398",
+   "text": "Eating a hard boiled egg out of my husband's arsehole."
+  },
+  {
+   "id": "cah-base:w:399",
+   "text": "Eating a hard boiled egg out of my husband's asshole."
+  },
+  {
+   "id": "cah-base:w:400",
+   "text": "Eating all of the cookies before the AIDS bake-sale."
+  },
+  {
+   "id": "cah-base:w:401",
+   "text": "Eating an albino."
+  },
+  {
+   "id": "cah-base:w:402",
+   "text": "Eating the last known bison."
+  },
+  {
+   "id": "cah-base:w:403",
+   "text": "Eating too much of a lamp."
+  },
+  {
+   "id": "cah-base:w:404",
+   "text": "Ecstasy."
+  },
+  {
+   "id": "cah-base:w:405",
+   "text": "Ed Balls."
+  },
+  {
+   "id": "cah-base:w:406",
+   "text": "Edible underpants."
+  },
+  {
+   "id": "cah-base:w:407",
+   "text": "Edible underwear."
+  },
+  {
+   "id": "cah-base:w:408",
+   "text": "Egging an MP."
+  },
+  {
+   "id": "cah-base:w:409",
+   "text": "Elderly Japanese men."
+  },
+  {
+   "id": "cah-base:w:410",
+   "text": "Electricity."
+  },
+  {
+   "id": "cah-base:w:411",
+   "text": "Embryonic stem cells."
+  },
+  {
+   "id": "cah-base:w:412",
+   "text": "Emerging from the sea and rampaging through Tokyo."
+  },
+  {
+   "id": "cah-base:w:413",
+   "text": "Emma Watson."
+  },
+  {
+   "id": "cah-base:w:414",
+   "text": "Emotions."
+  },
+  {
+   "id": "cah-base:w:415",
+   "text": "England."
+  },
+  {
+   "id": "cah-base:w:416",
+   "text": "Erectile dysfunction."
+  },
+  {
+   "id": "cah-base:w:417",
+   "text": "Establishing dominance."
+  },
+  {
+   "id": "cah-base:w:418",
+   "text": "Eternal awesomeness."
+  },
+  {
+   "id": "cah-base:w:419",
+   "text": "Ethnic cleansing."
+  },
+  {
+   "id": "cah-base:w:420",
+   "text": "Eugenics."
+  },
+  {
+   "id": "cah-base:w:421",
+   "text": "Euphoria™ by Calvin Klein."
+  },
+  {
+   "id": "cah-base:w:422",
+   "text": "Exactly what you'd expect."
+  },
+  {
+   "id": "cah-base:w:423",
+   "text": "Excalibur."
+  },
+  {
+   "id": "cah-base:w:424",
+   "text": "Exchanging pleasantries."
+  },
+  {
+   "id": "cah-base:w:425",
+   "text": "Executing a hostage every hour."
+  },
+  {
+   "id": "cah-base:w:426",
+   "text": "Existentialists."
+  },
+  {
+   "id": "cah-base:w:427",
+   "text": "Exorcism."
+  },
+  {
+   "id": "cah-base:w:428",
+   "text": "Expecting a burp and vomiting on the floor."
+  },
+  {
+   "id": "cah-base:w:429",
+   "text": "Explaining how vaginas work."
+  },
+  {
+   "id": "cah-base:w:430",
+   "text": "Explosions."
+  },
+  {
+   "id": "cah-base:w:431",
+   "text": "Extremely tight jeans."
+  },
+  {
+   "id": "cah-base:w:432",
+   "text": "Extremely tight pants."
+  },
+  {
+   "id": "cah-base:w:433",
+   "text": "Extremely tight trousers."
+  },
+  {
+   "id": "cah-base:w:434",
+   "text": "Facebook."
+  },
+  {
+   "id": "cah-base:w:435",
+   "text": "Fading away into nothingness."
+  },
+  {
+   "id": "cah-base:w:436",
+   "text": "Faffing about."
+  },
+  {
+   "id": "cah-base:w:437",
+   "text": "Faith healing."
+  },
+  {
+   "id": "cah-base:w:438",
+   "text": "Fake tits."
+  },
+  {
+   "id": "cah-base:w:439",
+   "text": "FALCON PUNCH!!!"
+  },
+  {
+   "id": "cah-base:w:440",
+   "text": "Famine."
+  },
+  {
+   "id": "cah-base:w:441",
+   "text": "Fancy Feast®."
+  },
+  {
+   "id": "cah-base:w:442",
+   "text": "Farting and walking away."
+  },
+  {
+   "id": "cah-base:w:443",
+   "text": "Farting into your petticoats and wafting it at Lord Gregory."
+  },
+  {
+   "id": "cah-base:w:444",
+   "text": "Fear itself."
+  },
+  {
+   "id": "cah-base:w:445",
+   "text": "Feeding Rosie O'Donnell."
+  },
+  {
+   "id": "cah-base:w:446",
+   "text": "Fellowship in Christ."
+  },
+  {
+   "id": "cah-base:w:447",
+   "text": "Fiery poops."
+  },
+  {
+   "id": "cah-base:w:448",
+   "text": "Fiery poos."
+  },
+  {
+   "id": "cah-base:w:449",
+   "text": "Figgy pudding."
+  },
+  {
+   "id": "cah-base:w:450",
+   "text": "Filling my briefcase with business stuff."
+  },
+  {
+   "id": "cah-base:w:451",
+   "text": "Filling my son with spaghetti."
+  },
+  {
+   "id": "cah-base:w:452",
+   "text": "Filling Sean Hannity with helium and watching him float away."
+  },
+  {
+   "id": "cah-base:w:453",
+   "text": "Finger painting."
+  },
+  {
+   "id": "cah-base:w:454",
+   "text": "Fingering."
+  },
+  {
+   "id": "cah-base:w:455",
+   "text": "Firing a rifle into the air while balls deep in a squealing hog."
+  },
+  {
+   "id": "cah-base:w:456",
+   "text": "Fitting all your blongings into a seabag."
+  },
+  {
+   "id": "cah-base:w:457",
+   "text": "Five litres of Special Brew."
+  },
+  {
+   "id": "cah-base:w:458",
+   "text": "Five-Dollar Footlongs™."
+  },
+  {
+   "id": "cah-base:w:459",
+   "text": "Flash flooding."
+  },
+  {
+   "id": "cah-base:w:460",
+   "text": "Flavored condoms."
+  },
+  {
+   "id": "cah-base:w:461",
+   "text": "Flesh-eating bacteria."
+  },
+  {
+   "id": "cah-base:w:462",
+   "text": "Flightless birds."
+  },
+  {
+   "id": "cah-base:w:463",
+   "text": "Flying saucers"
+  },
+  {
+   "id": "cah-base:w:464",
+   "text": "Flying sex snakes."
+  },
+  {
+   "id": "cah-base:w:465",
+   "text": "Forced sterilisation."
+  },
+  {
+   "id": "cah-base:w:466",
+   "text": "Forced sterilization."
+  },
+  {
+   "id": "cah-base:w:467",
+   "text": "Foreskin."
+  },
+  {
+   "id": "cah-base:w:468",
+   "text": "Forgetting the Alamo."
+  },
+  {
+   "id": "cah-base:w:469",
+   "text": "Former President George W. Bush."
+  },
+  {
+   "id": "cah-base:w:470",
+   "text": "Four Loko."
+  },
+  {
+   "id": "cah-base:w:471",
+   "text": "Fox News."
+  },
+  {
+   "id": "cah-base:w:472",
+   "text": "Fragile masculinity."
+  },
+  {
+   "id": "cah-base:w:473",
+   "text": "Free samples."
+  },
+  {
+   "id": "cah-base:w:474",
+   "text": "Friction."
+  },
+  {
+   "id": "cah-base:w:475",
+   "text": "Friendly fire."
+  },
+  {
+   "id": "cah-base:w:476",
+   "text": "Friends who eat all the snacks."
+  },
+  {
+   "id": "cah-base:w:477",
+   "text": "Friends who eat all your snacks."
+  },
+  {
+   "id": "cah-base:w:478",
+   "text": "Friends with benefits."
+  },
+  {
+   "id": "cah-base:w:479",
+   "text": "Frolicking."
+  },
+  {
+   "id": "cah-base:w:480",
+   "text": "Front butt."
+  },
+  {
+   "id": "cah-base:w:481",
+   "text": "Fucking my sister."
+  },
+  {
+   "id": "cah-base:w:482",
+   "text": "Fucking the weatherman on live television."
+  },
+  {
+   "id": "cah-base:w:483",
+   "text": "Full frontal nudity."
+  },
+  {
+   "id": "cah-base:w:484",
+   "text": "Funky fresh rhymes."
+  },
+  {
+   "id": "cah-base:w:485",
+   "text": "Gandalf."
+  },
+  {
+   "id": "cah-base:w:486",
+   "text": "Gandhi."
+  },
+  {
+   "id": "cah-base:w:487",
+   "text": "Garth Brooks."
+  },
+  {
+   "id": "cah-base:w:488",
+   "text": "Gary Coleman."
+  },
+  {
+   "id": "cah-base:w:489",
+   "text": "Gary Glitter."
+  },
+  {
+   "id": "cah-base:w:490",
+   "text": "Gay animals."
+  },
+  {
+   "id": "cah-base:w:491",
+   "text": "Gay conversion therapy."
+  },
+  {
+   "id": "cah-base:w:492",
+   "text": "Geese."
+  },
+  {
+   "id": "cah-base:w:493",
+   "text": "Genetically engineered super-soldiers."
+  },
+  {
+   "id": "cah-base:w:494",
+   "text": "Genghis Khan."
+  },
+  {
+   "id": "cah-base:w:495",
+   "text": "Genital piercings."
+  },
+  {
+   "id": "cah-base:w:496",
+   "text": "Gentleman's Relish®."
+  },
+  {
+   "id": "cah-base:w:497",
+   "text": "Genuine human connection."
+  },
+  {
+   "id": "cah-base:w:498",
+   "text": "German Chancellor Angela Merkel."
+  },
+  {
+   "id": "cah-base:w:499",
+   "text": "German dungeon porn."
+  },
+  {
+   "id": "cah-base:w:500",
+   "text": "Germans on holiday."
+  },
+  {
+   "id": "cah-base:w:501",
+   "text": "Getting a DUI on a Zamboni."
+  },
+  {
+   "id": "cah-base:w:502",
+   "text": "Getting crushed by a vending machine."
+  },
+  {
+   "id": "cah-base:w:503",
+   "text": "Getting cummed on."
+  },
+  {
+   "id": "cah-base:w:504",
+   "text": "Getting drugs off the street and into my body."
+  },
+  {
+   "id": "cah-base:w:505",
+   "text": "Getting drunk on mouthwash."
+  },
+  {
+   "id": "cah-base:w:506",
+   "text": "Getting fingered."
+  },
+  {
+   "id": "cah-base:w:507",
+   "text": "Getting into a pretty bad car accident."
+  },
+  {
+   "id": "cah-base:w:508",
+   "text": "Getting married, having a few kids, buying some stuff, retiring to Florida, and dying."
+  },
+  {
+   "id": "cah-base:w:509",
+   "text": "Getting married, having a few kids, buying some stuff, retiring to Queensland, and dying."
+  },
+  {
+   "id": "cah-base:w:510",
+   "text": "Getting married, having a few kids, buying some stuff, retiring to the south of France, and dying."
+  },
+  {
+   "id": "cah-base:w:511",
+   "text": "Getting naked and watching CBeebies."
+  },
+  {
+   "id": "cah-base:w:512",
+   "text": "Getting naked and watching Nickelodeon."
+  },
+  {
+   "id": "cah-base:w:513",
+   "text": "Getting naked and watching Play School."
+  },
+  {
+   "id": "cah-base:w:514",
+   "text": "Getting pregnant again."
+  },
+  {
+   "id": "cah-base:w:515",
+   "text": "Getting really high."
+  },
+  {
+   "id": "cah-base:w:516",
+   "text": "Getting so angry that you pop a boner."
+  },
+  {
+   "id": "cah-base:w:517",
+   "text": "Getting so angry that you pop a stiffy."
+  },
+  {
+   "id": "cah-base:w:518",
+   "text": "Getting wed, having a few kids, taking some pictures, retiring to the south of France, and dying."
+  },
+  {
+   "id": "cah-base:w:519",
+   "text": "Ghosts."
+  },
+  {
+   "id": "cah-base:w:520",
+   "text": "Girls who shouldn't go wild."
+  },
+  {
+   "id": "cah-base:w:521",
+   "text": "Girls."
+  },
+  {
+   "id": "cah-base:w:522",
+   "text": "Giving 110%."
+  },
+  {
+   "id": "cah-base:w:523",
+   "text": "Giving birth to the Antichrist."
+  },
+  {
+   "id": "cah-base:w:524",
+   "text": "Gladiatorial combat."
+  },
+  {
+   "id": "cah-base:w:525",
+   "text": "Glassing a wanker."
+  },
+  {
+   "id": "cah-base:w:526",
+   "text": "Glenn Beck being harried by a swarm of buzzards."
+  },
+  {
+   "id": "cah-base:w:527",
+   "text": "Glenn Beck catching his scrotum on a curtain hook."
+  },
+  {
+   "id": "cah-base:w:528",
+   "text": "Glenn Beck convulsively vomiting as a brood of crab spiders hatches in his brain and erupts from his tear ducts."
+  },
+  {
+   "id": "cah-base:w:529",
+   "text": "Glenn Beck."
+  },
+  {
+   "id": "cah-base:w:530",
+   "text": "Global warming."
+  },
+  {
+   "id": "cah-base:w:531",
+   "text": "Gloryholes."
+  },
+  {
+   "id": "cah-base:w:532",
+   "text": "Goats eating cans."
+  },
+  {
+   "id": "cah-base:w:533",
+   "text": "Goblins."
+  },
+  {
+   "id": "cah-base:w:534",
+   "text": "God."
+  },
+  {
+   "id": "cah-base:w:535",
+   "text": "GoGurt®."
+  },
+  {
+   "id": "cah-base:w:536",
+   "text": "Going an entire day without masturbating."
+  },
+  {
+   "id": "cah-base:w:537",
+   "text": "Going around sniffing people's armpits."
+  },
+  {
+   "id": "cah-base:w:538",
+   "text": "Golden showers."
+  },
+  {
+   "id": "cah-base:w:539",
+   "text": "Good-natured, fun-loving Aussie racism."
+  },
+  {
+   "id": "cah-base:w:540",
+   "text": "Grandma."
+  },
+  {
+   "id": "cah-base:w:541",
+   "text": "Grandpa's bald spot."
+  },
+  {
+   "id": "cah-base:w:542",
+   "text": "Grassroots support"
+  },
+  {
+   "id": "cah-base:w:543",
+   "text": "Grave robbing."
+  },
+  {
+   "id": "cah-base:w:544",
+   "text": "Growing a pair."
+  },
+  {
+   "id": "cah-base:w:545",
+   "text": "Guys who don't call."
+  },
+  {
+   "id": "cah-base:w:546",
+   "text": "Haggis."
+  },
+  {
+   "id": "cah-base:w:547",
+   "text": "Half a kilo of pure China White heroin."
+  },
+  {
+   "id": "cah-base:w:548",
+   "text": "Half-assed foreplay."
+  },
+  {
+   "id": "cah-base:w:549",
+   "text": "Harry Potter erotica."
+  },
+  {
+   "id": "cah-base:w:550",
+   "text": "Have some more kugel."
+  },
+  {
+   "id": "cah-base:w:551",
+   "text": "Having a Golden Gaytime."
+  },
+  {
+   "id": "cah-base:w:552",
+   "text": "Having a penis."
+  },
+  {
+   "id": "cah-base:w:553",
+   "text": "Having a shag in the back of a ute."
+  },
+  {
+   "id": "cah-base:w:554",
+   "text": "Having anuses for eyes."
+  },
+  {
+   "id": "cah-base:w:555",
+   "text": "Having big dreams but no realistic way to achieve them."
+  },
+  {
+   "id": "cah-base:w:556",
+   "text": "Having sex for the first time."
+  },
+  {
+   "id": "cah-base:w:557",
+   "text": "Having sex too soon after giving birth."
+  },
+  {
+   "id": "cah-base:w:558",
+   "text": "Having sex with every man in Winnipeg."
+  },
+  {
+   "id": "cah-base:w:559",
+   "text": "Having sloppy sex as your dog watches."
+  },
+  {
+   "id": "cah-base:w:560",
+   "text": "Heartwarming orphans."
+  },
+  {
+   "id": "cah-base:w:561",
+   "text": "Heath Ledger."
+  },
+  {
+   "id": "cah-base:w:562",
+   "text": "Helplessly giggling at the mention of Hutus and Tutsis."
+  },
+  {
+   "id": "cah-base:w:563",
+   "text": "Her Majesty, Queen Elizabeth II."
+  },
+  {
+   "id": "cah-base:w:564",
+   "text": "Her Royal Highness, Queen Elizabeth II."
+  },
+  {
+   "id": "cah-base:w:565",
+   "text": "Heritage minutes."
+  },
+  {
+   "id": "cah-base:w:566",
+   "text": "hermaphroditical Italian pictures"
+  },
+  {
+   "id": "cah-base:w:567",
+   "text": "Heroin."
+  },
+  {
+   "id": "cah-base:w:568",
+   "text": "Heteronormativity."
+  },
+  {
+   "id": "cah-base:w:569",
+   "text": "Hillary Clinton's favorite nipple clamps"
+  },
+  {
+   "id": "cah-base:w:570",
+   "text": "Hip hop jewels."
+  },
+  {
+   "id": "cah-base:w:571",
+   "text": "Hipsters."
+  },
+  {
+   "id": "cah-base:w:572",
+   "text": "Historically black colleges."
+  },
+  {
+   "id": "cah-base:w:573",
+   "text": "Hobos."
+  },
+  {
+   "id": "cah-base:w:574",
+   "text": "Holding down a child and farting all over him."
+  },
+  {
+   "id": "cah-base:w:575",
+   "text": "Home video of Oprah sobbing into a Lean Cuisine®."
+  },
+  {
+   "id": "cah-base:w:576",
+   "text": "Homeless people."
+  },
+  {
+   "id": "cah-base:w:577",
+   "text": "Homo milk."
+  },
+  {
+   "id": "cah-base:w:578",
+   "text": "Hooning."
+  },
+  {
+   "id": "cah-base:w:579",
+   "text": "Hope."
+  },
+  {
+   "id": "cah-base:w:580",
+   "text": "Hormone injections."
+  },
+  {
+   "id": "cah-base:w:581",
+   "text": "Horrifying laser hair removal accidents."
+  },
+  {
+   "id": "cah-base:w:582",
+   "text": "Horse meat."
+  },
+  {
+   "id": "cah-base:w:583",
+   "text": "Hospice care."
+  },
+  {
+   "id": "cah-base:w:584",
+   "text": "Hot cheese."
+  },
+  {
+   "id": "cah-base:w:585",
+   "text": "Hot people."
+  },
+  {
+   "id": "cah-base:w:586",
+   "text": "Hot Pockets®."
+  },
+  {
+   "id": "cah-base:w:587",
+   "text": "How amazing it is to be on mushrooms."
+  },
+  {
+   "id": "cah-base:w:588",
+   "text": "How awesome it is to be white."
+  },
+  {
+   "id": "cah-base:w:589",
+   "text": "How bad my daughter fucked up her dance recital."
+  },
+  {
+   "id": "cah-base:w:590",
+   "text": "How far I can get my own penis up my butt."
+  },
+  {
+   "id": "cah-base:w:591",
+   "text": "How wet my pussy is."
+  },
+  {
+   "id": "cah-base:w:592",
+   "text": "However much weed $20 can buy."
+  },
+  {
+   "id": "cah-base:w:593",
+   "text": "However much weed £20 can buy."
+  },
+  {
+   "id": "cah-base:w:594",
+   "text": "Huffing spray paint."
+  },
+  {
+   "id": "cah-base:w:595",
+   "text": "Huge biceps."
+  },
+  {
+   "id": "cah-base:w:596",
+   "text": "Hulk Hogan."
+  },
+  {
+   "id": "cah-base:w:597",
+   "text": "Hunting \"accidents\"."
+  },
+  {
+   "id": "cah-base:w:598",
+   "text": "Hunting accidents."
+  },
+  {
+   "id": "cah-base:w:599",
+   "text": "Hurling one's body down a hill in pursuit of a wheel of cheese."
+  },
+  {
+   "id": "cah-base:w:600",
+   "text": "Hurricane Katrina."
+  },
+  {
+   "id": "cah-base:w:601",
+   "text": "Hurting those closest to me."
+  },
+  {
+   "id": "cah-base:w:602",
+   "text": "I'm friends with your dad on Facebook."
+  },
+  {
+   "id": "cah-base:w:603",
+   "text": "Ice."
+  },
+  {
+   "id": "cah-base:w:604",
+   "text": "Illegal immigrants."
+  },
+  {
+   "id": "cah-base:w:605",
+   "text": "Impotence."
+  },
+  {
+   "id": "cah-base:w:606",
+   "text": "Improvised explosive devices."
+  },
+  {
+   "id": "cah-base:w:607",
+   "text": "Inappropriate yodeling."
+  },
+  {
+   "id": "cah-base:w:608",
+   "text": "Incest."
+  },
+  {
+   "id": "cah-base:w:609",
+   "text": "Indian burns."
+  },
+  {
+   "id": "cah-base:w:610",
+   "text": "Inserting a jam jar into my anus."
+  },
+  {
+   "id": "cah-base:w:611",
+   "text": "Inserting a Mason jar into my anus."
+  },
+  {
+   "id": "cah-base:w:612",
+   "text": "Intelligent design."
+  },
+  {
+   "id": "cah-base:w:613",
+   "text": "intolerably vivid dreams"
+  },
+  {
+   "id": "cah-base:w:614",
+   "text": "Invading Poland."
+  },
+  {
+   "id": "cah-base:w:615",
+   "text": "Irritable Bowel Syndrome."
+  },
+  {
+   "id": "cah-base:w:616",
+   "text": "Italians."
+  },
+  {
+   "id": "cah-base:w:617",
+   "text": "Itchy pussy."
+  },
+  {
+   "id": "cah-base:w:618",
+   "text": "J.D. Power and his associates."
+  },
+  {
+   "id": "cah-base:w:619",
+   "text": "Jade Goody's cancerous remains."
+  },
+  {
+   "id": "cah-base:w:620",
+   "text": "Jedward."
+  },
+  {
+   "id": "cah-base:w:621",
+   "text": "Jehovah's Witnesses."
+  },
+  {
+   "id": "cah-base:w:622",
+   "text": "Jennifer Lawrence."
+  },
+  {
+   "id": "cah-base:w:623",
+   "text": "Jerking off into a pool of children's tears."
+  },
+  {
+   "id": "cah-base:w:624",
+   "text": "Jesus."
+  },
+  {
+   "id": "cah-base:w:625",
+   "text": "Jew-fros."
+  },
+  {
+   "id": "cah-base:w:626",
+   "text": "Jewish fraternities."
+  },
+  {
+   "id": "cah-base:w:627",
+   "text": "Jews, gypsies, and homosexuals."
+  },
+  {
+   "id": "cah-base:w:628",
+   "text": "Jibber-jabber."
+  },
+  {
+   "id": "cah-base:w:629",
+   "text": "Jimmy Savile."
+  },
+  {
+   "id": "cah-base:w:630",
+   "text": "Jobs."
+  },
+  {
+   "id": "cah-base:w:631",
+   "text": "Joe Biden."
+  },
+  {
+   "id": "cah-base:w:632",
+   "text": "John Howard's eyebrows."
+  },
+  {
+   "id": "cah-base:w:633",
+   "text": "John Wilkes Booth."
+  },
+  {
+   "id": "cah-base:w:634",
+   "text": "Judge Judy."
+  },
+  {
+   "id": "cah-base:w:635",
+   "text": "Judging everyone."
+  },
+  {
+   "id": "cah-base:w:636",
+   "text": "Just touching David Beckham's hair."
+  },
+  {
+   "id": "cah-base:w:637",
+   "text": "Justin Bieber's favorite burger joint."
+  },
+  {
+   "id": "cah-base:w:638",
+   "text": "Justin Trudeau."
+  },
+  {
+   "id": "cah-base:w:639",
+   "text": "Juuling."
+  },
+  {
+   "id": "cah-base:w:640",
+   "text": "Kamikaze pilots."
+  },
+  {
+   "id": "cah-base:w:641",
+   "text": "Kanye West."
+  },
+  {
+   "id": "cah-base:w:642",
+   "text": "Keanu Reeves."
+  },
+  {
+   "id": "cah-base:w:643",
+   "text": "Keeping Christ in Christmas."
+  },
+  {
+   "id": "cah-base:w:644",
+   "text": "Kegel Balls"
+  },
+  {
+   "id": "cah-base:w:645",
+   "text": "Kibbles 'n Bits™."
+  },
+  {
+   "id": "cah-base:w:646",
+   "text": "Kibbles n' Bits."
+  },
+  {
+   "id": "cah-base:w:647",
+   "text": "Kids with ass cancer."
+  },
+  {
+   "id": "cah-base:w:648",
+   "text": "Kids with bum cancer."
+  },
+  {
+   "id": "cah-base:w:649",
+   "text": "Kim Jong-il."
+  },
+  {
+   "id": "cah-base:w:650",
+   "text": "Kim Jong-un."
+  },
+  {
+   "id": "cah-base:w:651",
+   "text": "Kissing grandma on the forehead and turning off her life support."
+  },
+  {
+   "id": "cah-base:w:652",
+   "text": "Kissing nan on the forehead and turning off her life support."
+  },
+  {
+   "id": "cah-base:w:653",
+   "text": "Knife crime."
+  },
+  {
+   "id": "cah-base:w:654",
+   "text": "Kourtney, Kim, Khloe, Kendall, and Kylie."
+  },
+  {
+   "id": "cah-base:w:655",
+   "text": "Ladies, gentlemen, and the undecided."
+  },
+  {
+   "id": "cah-base:w:656",
+   "text": "Lads."
+  },
+  {
+   "id": "cah-base:w:657",
+   "text": "Lady Gaga."
+  },
+  {
+   "id": "cah-base:w:658",
+   "text": "Lance Armstrong's missing testicle."
+  },
+  {
+   "id": "cah-base:w:659",
+   "text": "Land mines."
+  },
+  {
+   "id": "cah-base:w:660",
+   "text": "Laying an egg."
+  },
+  {
+   "id": "cah-base:w:661",
+   "text": "Leaked footage of Kate Middleton's colonoscopy."
+  },
+  {
+   "id": "cah-base:w:662",
+   "text": "Leaving an awkward voicemail."
+  },
+  {
+   "id": "cah-base:w:663",
+   "text": "Lena Dunham."
+  },
+  {
+   "id": "cah-base:w:664",
+   "text": "Leprosy."
+  },
+  {
+   "id": "cah-base:w:665",
+   "text": "Letting Gemma collins squirt on your face"
+  },
+  {
+   "id": "cah-base:w:666",
+   "text": "Letting yourself go."
+  },
+  {
+   "id": "cah-base:w:667",
+   "text": "Leveling up."
+  },
+  {
+   "id": "cah-base:w:668",
+   "text": "Liberals."
+  },
+  {
+   "id": "cah-base:w:669",
+   "text": "Licking things to claim them as your own."
+  },
+  {
+   "id": "cah-base:w:670",
+   "text": "Listening to her problems without trying to solve them."
+  },
+  {
+   "id": "cah-base:w:671",
+   "text": "Literally eating shit."
+  },
+  {
+   "id": "cah-base:w:672",
+   "text": "Little boy penises."
+  },
+  {
+   "id": "cah-base:w:673",
+   "text": "Living in a trash can."
+  },
+  {
+   "id": "cah-base:w:674",
+   "text": "Living in Yellowknife."
+  },
+  {
+   "id": "cah-base:w:675",
+   "text": "Lockjaw."
+  },
+  {
+   "id": "cah-base:w:676",
+   "text": "Lokking for your Dad's porn stash"
+  },
+  {
+   "id": "cah-base:w:677",
+   "text": "Looking in the mirror, applying lipstick, and whispering \"tonight, you will have sex with Tom Cruise.\""
+  },
+  {
+   "id": "cah-base:w:678",
+   "text": "Loose lips."
+  },
+  {
+   "id": "cah-base:w:679",
+   "text": "Lumberjack fantasies."
+  },
+  {
+   "id": "cah-base:w:680",
+   "text": "Lunchables™."
+  },
+  {
+   "id": "cah-base:w:681",
+   "text": "LYNX® Body Spray."
+  },
+  {
+   "id": "cah-base:w:682",
+   "text": "Mad cow disease."
+  },
+  {
+   "id": "cah-base:w:683",
+   "text": "Madeleine McCann."
+  },
+  {
+   "id": "cah-base:w:684",
+   "text": "Magnets."
+  },
+  {
+   "id": "cah-base:w:685",
+   "text": "Making a list of people to kill."
+  },
+  {
+   "id": "cah-base:w:686",
+   "text": "Making a pouty face."
+  },
+  {
+   "id": "cah-base:w:687",
+   "text": "Making sex at her."
+  },
+  {
+   "id": "cah-base:w:688",
+   "text": "Making the penises kiss."
+  },
+  {
+   "id": "cah-base:w:689",
+   "text": "Making up for centuries of oppression with one day of apologising."
+  },
+  {
+   "id": "cah-base:w:690",
+   "text": "Man meat."
+  },
+  {
+   "id": "cah-base:w:691",
+   "text": "Mansplaining."
+  },
+  {
+   "id": "cah-base:w:692",
+   "text": "Many bats."
+  },
+  {
+   "id": "cah-base:w:693",
+   "text": "Marky Mark and the Funky Bunch."
+  },
+  {
+   "id": "cah-base:w:694",
+   "text": "Martha Stewart's gold plated vagina."
+  },
+  {
+   "id": "cah-base:w:695",
+   "text": "Massive, widespread drought."
+  },
+  {
+   "id": "cah-base:w:696",
+   "text": "Masturbating."
+  },
+  {
+   "id": "cah-base:w:697",
+   "text": "Masturbation."
+  },
+  {
+   "id": "cah-base:w:698",
+   "text": "Mathletes."
+  },
+  {
+   "id": "cah-base:w:699",
+   "text": "Maureen of Blackpool, Reader's Wife of the Year 1988."
+  },
+  {
+   "id": "cah-base:w:700",
+   "text": "Me time."
+  },
+  {
+   "id": "cah-base:w:701",
+   "text": "Mean people"
+  },
+  {
+   "id": "cah-base:w:702",
+   "text": "MechaHitler."
+  },
+  {
+   "id": "cah-base:w:703",
+   "text": "Memes."
+  },
+  {
+   "id": "cah-base:w:704",
+   "text": "Men discussing their feelings in an emotionally healthy way."
+  },
+  {
+   "id": "cah-base:w:705",
+   "text": "Men."
+  },
+  {
+   "id": "cah-base:w:706",
+   "text": "Menstrual rage."
+  },
+  {
+   "id": "cah-base:w:707",
+   "text": "Mensturation porn"
+  },
+  {
+   "id": "cah-base:w:708",
+   "text": "Meth."
+  },
+  {
+   "id": "cah-base:w:709",
+   "text": "Michael Jackson."
+  },
+  {
+   "id": "cah-base:w:710",
+   "text": "Michelle Obama's arms."
+  },
+  {
+   "id": "cah-base:w:711",
+   "text": "Mike Pence."
+  },
+  {
+   "id": "cah-base:w:712",
+   "text": "Mild racism and extreme homophobia"
+  },
+  {
+   "id": "cah-base:w:713",
+   "text": "Miley Cyrus at 55."
+  },
+  {
+   "id": "cah-base:w:714",
+   "text": "Miley Cyrus."
+  },
+  {
+   "id": "cah-base:w:715",
+   "text": "Millions of cane toads."
+  },
+  {
+   "id": "cah-base:w:716",
+   "text": "Millwall fans."
+  },
+  {
+   "id": "cah-base:w:717",
+   "text": "Mining accidents."
+  },
+  {
+   "id": "cah-base:w:718",
+   "text": "Mistaking a retarded person for someone who's merely deaf."
+  },
+  {
+   "id": "cah-base:w:719",
+   "text": "Mom."
+  },
+  {
+   "id": "cah-base:w:720",
+   "text": "Moon a Prime Minister."
+  },
+  {
+   "id": "cah-base:w:721",
+   "text": "Moral ambiguity."
+  },
+  {
+   "id": "cah-base:w:722",
+   "text": "More elephant cock than I bargained for."
+  },
+  {
+   "id": "cah-base:w:723",
+   "text": "Morgan Freeman's voice."
+  },
+  {
+   "id": "cah-base:w:724",
+   "text": "Mountain Dew Code Red."
+  },
+  {
+   "id": "cah-base:w:725",
+   "text": "Mouth herpes."
+  },
+  {
+   "id": "cah-base:w:726",
+   "text": "Mr. Clean, right behind you."
+  },
+  {
+   "id": "cah-base:w:727",
+   "text": "Mr. Dressup."
+  },
+  {
+   "id": "cah-base:w:728",
+   "text": "Mr. Froto's ring"
+  },
+  {
+   "id": "cah-base:w:729",
+   "text": "Mr. Snuffleupagus."
+  },
+  {
+   "id": "cah-base:w:730",
+   "text": "Mr. Squiggle, the Man from the Moon."
+  },
+  {
+   "id": "cah-base:w:731",
+   "text": "Muhammad (Peace Be Upon Him)."
+  },
+  {
+   "id": "cah-base:w:732",
+   "text": "Muhammad (Praise Be Unto Him)."
+  },
+  {
+   "id": "cah-base:w:733",
+   "text": "multiple personality disorder"
+  },
+  {
+   "id": "cah-base:w:734",
+   "text": "Multiple stab wounds."
+  },
+  {
+   "id": "cah-base:w:735",
+   "text": "Murdering our parents."
+  },
+  {
+   "id": "cah-base:w:736",
+   "text": "Mutually assured destruction."
+  },
+  {
+   "id": "cah-base:w:737",
+   "text": "Mutually-assured destruction."
+  },
+  {
+   "id": "cah-base:w:738",
+   "text": "Muzzy."
+  },
+  {
+   "id": "cah-base:w:739",
+   "text": "My abusive boyfriend who really isn't so bad once you get to know him."
+  },
+  {
+   "id": "cah-base:w:740",
+   "text": "My balls on your face."
+  },
+  {
+   "id": "cah-base:w:741",
+   "text": "My black ass."
+  },
+  {
+   "id": "cah-base:w:742",
+   "text": "My bright pink fuckhole."
+  },
+  {
+   "id": "cah-base:w:743",
+   "text": "My cheating prick of a husband."
+  },
+  {
+   "id": "cah-base:w:744",
+   "text": "My cheating son-of-a-bitch husband."
+  },
+  {
+   "id": "cah-base:w:745",
+   "text": "My collection of high-tech sex toys."
+  },
+  {
+   "id": "cah-base:w:746",
+   "text": "My collection of Japanese sex toys."
+  },
+  {
+   "id": "cah-base:w:747",
+   "text": "My ex-wife."
+  },
+  {
+   "id": "cah-base:w:748",
+   "text": "My fat daughter."
+  },
+  {
+   "id": "cah-base:w:749",
+   "text": "My father, who died when I was seven."
+  },
+  {
+   "id": "cah-base:w:750",
+   "text": "My first kiss."
+  },
+  {
+   "id": "cah-base:w:751",
+   "text": "My genitals."
+  },
+  {
+   "id": "cah-base:w:752",
+   "text": "My good bra."
+  },
+  {
+   "id": "cah-base:w:753",
+   "text": "My humps."
+  },
+  {
+   "id": "cah-base:w:754",
+   "text": "My inner demons."
+  },
+  {
+   "id": "cah-base:w:755",
+   "text": "My little boner."
+  },
+  {
+   "id": "cah-base:w:756",
+   "text": "My machete."
+  },
+  {
+   "id": "cah-base:w:757",
+   "text": "My mate Dave."
+  },
+  {
+   "id": "cah-base:w:758",
+   "text": "My neck, my back, my pussy, and my crack."
+  },
+  {
+   "id": "cah-base:w:759",
+   "text": "My relationship status."
+  },
+  {
+   "id": "cah-base:w:760",
+   "text": "My sex life."
+  },
+  {
+   "id": "cah-base:w:761",
+   "text": "My soul."
+  },
+  {
+   "id": "cah-base:w:762",
+   "text": "My Uber driver, Pavel."
+  },
+  {
+   "id": "cah-base:w:763",
+   "text": "My ugly face and bad personality."
+  },
+  {
+   "id": "cah-base:w:764",
+   "text": "my vintage trucker hat collection"
+  },
+  {
+   "id": "cah-base:w:765",
+   "text": "Nachos for the table."
+  },
+  {
+   "id": "cah-base:w:766",
+   "text": "Naked News."
+  },
+  {
+   "id": "cah-base:w:767",
+   "text": "Natalie Portman."
+  },
+  {
+   "id": "cah-base:w:768",
+   "text": "Natural male enhancement."
+  },
+  {
+   "id": "cah-base:w:769",
+   "text": "Natural selection."
+  },
+  {
+   "id": "cah-base:w:770",
+   "text": "Nazis."
+  },
+  {
+   "id": "cah-base:w:771",
+   "text": "NBA superstar LeBron James."
+  },
+  {
+   "id": "cah-base:w:772",
+   "text": "Necrophilia."
+  },
+  {
+   "id": "cah-base:w:773",
+   "text": "New Age music."
+  },
+  {
+   "id": "cah-base:w:774",
+   "text": "Newfies."
+  },
+  {
+   "id": "cah-base:w:775",
+   "text": "Newly incorporated kamikaze tactics."
+  },
+  {
+   "id": "cah-base:w:776",
+   "text": "Nickelback."
+  },
+  {
+   "id": "cah-base:w:777",
+   "text": "Nicolas Cage."
+  },
+  {
+   "id": "cah-base:w:778",
+   "text": "Nip slips."
+  },
+  {
+   "id": "cah-base:w:779",
+   "text": "Nippers."
+  },
+  {
+   "id": "cah-base:w:780",
+   "text": "Nipple blades."
+  },
+  {
+   "id": "cah-base:w:781",
+   "text": "Nocturnal emissions."
+  },
+  {
+   "id": "cah-base:w:782",
+   "text": "Not covering your mouth when you sneeze"
+  },
+  {
+   "id": "cah-base:w:783",
+   "text": "Not giving a shit about the Third World."
+  },
+  {
+   "id": "cah-base:w:784",
+   "text": "Not having silly talk."
+  },
+  {
+   "id": "cah-base:w:785",
+   "text": "Not reciprocating oral sex."
+  },
+  {
+   "id": "cah-base:w:786",
+   "text": "Not vaccinating my children because I am stupid."
+  },
+  {
+   "id": "cah-base:w:787",
+   "text": "Not wearing pants."
+  },
+  {
+   "id": "cah-base:w:788",
+   "text": "Not wearing trousers."
+  },
+  {
+   "id": "cah-base:w:789",
+   "text": "Nothing but sand."
+  },
+  {
+   "id": "cah-base:w:790",
+   "text": "Nothing. Absolutely nothing."
+  },
+  {
+   "id": "cah-base:w:791",
+   "text": "Nunchucks."
+  },
+  {
+   "id": "cah-base:w:792",
+   "text": "Obesity."
+  },
+  {
+   "id": "cah-base:w:793",
+   "text": "Object permanence."
+  },
+  {
+   "id": "cah-base:w:794",
+   "text": "Oestrogen."
+  },
+  {
+   "id": "cah-base:w:795",
+   "text": "Old-people smell."
+  },
+  {
+   "id": "cah-base:w:796",
+   "text": "Ominous background music."
+  },
+  {
+   "id": "cah-base:w:797",
+   "text": "One Direction's supple, hairless bodies."
+  },
+  {
+   "id": "cah-base:w:798",
+   "text": "One rude motherfucker"
+  },
+  {
+   "id": "cah-base:w:799",
+   "text": "One titty hanging out."
+  },
+  {
+   "id": "cah-base:w:800",
+   "text": "One trillion dollars."
+  },
+  {
+   "id": "cah-base:w:801",
+   "text": "Only dating Asian women."
+  },
+  {
+   "id": "cah-base:w:802",
+   "text": "Oompa-Loompas."
+  },
+  {
+   "id": "cah-base:w:803",
+   "text": "Opposable thumbs."
+  },
+  {
+   "id": "cah-base:w:804",
+   "text": "Optimus Prime having sex with a dishwasher."
+  },
+  {
+   "id": "cah-base:w:805",
+   "text": "Our first chimpanzee President."
+  },
+  {
+   "id": "cah-base:w:806",
+   "text": "Our first chimpanzee Prime Minister."
+  },
+  {
+   "id": "cah-base:w:807",
+   "text": "Overcompensation."
+  },
+  {
+   "id": "cah-base:w:808",
+   "text": "Overpowering your father."
+  },
+  {
+   "id": "cah-base:w:809",
+   "text": "Oversized lollipops."
+  },
+  {
+   "id": "cah-base:w:810",
+   "text": "Owning and operating a Chili's franchise."
+  },
+  {
+   "id": "cah-base:w:811",
+   "text": "Pabst Blue Ribbon."
+  },
+  {
+   "id": "cah-base:w:812",
+   "text": "Pac-Man uncontrollably guzzling cum."
+  },
+  {
+   "id": "cah-base:w:813",
+   "text": "Paedophiles."
+  },
+  {
+   "id": "cah-base:w:814",
+   "text": "Panda sex."
+  },
+  {
+   "id": "cah-base:w:815",
+   "text": "Paris Hilton."
+  },
+  {
+   "id": "cah-base:w:816",
+   "text": "Parting the Red Sea."
+  },
+  {
+   "id": "cah-base:w:817",
+   "text": "Party poopers."
+  },
+  {
+   "id": "cah-base:w:818",
+   "text": "Passable transvestites."
+  },
+  {
+   "id": "cah-base:w:819",
+   "text": "Passing a kidney stone."
+  },
+  {
+   "id": "cah-base:w:820",
+   "text": "Passive-aggression."
+  },
+  {
+   "id": "cah-base:w:821",
+   "text": "Passive-aggressive Post-it notes."
+  },
+  {
+   "id": "cah-base:w:822",
+   "text": "Pauline Hanson."
+  },
+  {
+   "id": "cah-base:w:823",
+   "text": "PCP."
+  },
+  {
+   "id": "cah-base:w:824",
+   "text": "Peanut Butter Jelly Time."
+  },
+  {
+   "id": "cah-base:w:825",
+   "text": "Pedophiles."
+  },
+  {
+   "id": "cah-base:w:826",
+   "text": "Peeing a little bit."
+  },
+  {
+   "id": "cah-base:w:827",
+   "text": "Penis breath."
+  },
+  {
+   "id": "cah-base:w:828",
+   "text": "Penis envy."
+  },
+  {
+   "id": "cah-base:w:829",
+   "text": "People who smell their own socks."
+  },
+  {
+   "id": "cah-base:w:830",
+   "text": "Perfunctory foreplay."
+  },
+  {
+   "id": "cah-base:w:831",
+   "text": "Permanent Orgasm-Face Disorder."
+  },
+  {
+   "id": "cah-base:w:832",
+   "text": "Picking up girls at the abortion clinic."
+  },
+  {
+   "id": "cah-base:w:833",
+   "text": "Pictures of boobs."
+  },
+  {
+   "id": "cah-base:w:834",
+   "text": "Pikies."
+  },
+  {
+   "id": "cah-base:w:835",
+   "text": "Pingers."
+  },
+  {
+   "id": "cah-base:w:836",
+   "text": "Pixelated bukkake."
+  },
+  {
+   "id": "cah-base:w:837",
+   "text": "Playing silly buggers."
+  },
+  {
+   "id": "cah-base:w:838",
+   "text": "Police brutality."
+  },
+  {
+   "id": "cah-base:w:839",
+   "text": "Polish People."
+  },
+  {
+   "id": "cah-base:w:840",
+   "text": "Pooping back and forth. Forever."
+  },
+  {
+   "id": "cah-base:w:841",
+   "text": "Pooping in a laptop and closing it."
+  },
+  {
+   "id": "cah-base:w:842",
+   "text": "Pooping in the soup."
+  },
+  {
+   "id": "cah-base:w:843",
+   "text": "Poopy diapers."
+  },
+  {
+   "id": "cah-base:w:844",
+   "text": "Poor life choices."
+  },
+  {
+   "id": "cah-base:w:845",
+   "text": "Poor personal hygiene"
+  },
+  {
+   "id": "cah-base:w:846",
+   "text": "Poorly-timed Holocaust jokes."
+  },
+  {
+   "id": "cah-base:w:847",
+   "text": "Popped collars."
+  },
+  {
+   "id": "cah-base:w:848",
+   "text": "Porn stars."
+  },
+  {
+   "id": "cah-base:w:849",
+   "text": "Poutine."
+  },
+  {
+   "id": "cah-base:w:850",
+   "text": "Poverty."
+  },
+  {
+   "id": "cah-base:w:851",
+   "text": "Powerful allergies"
+  },
+  {
+   "id": "cah-base:w:852",
+   "text": "Powerful thighs."
+  },
+  {
+   "id": "cah-base:w:853",
+   "text": "Prancing."
+  },
+  {
+   "id": "cah-base:w:854",
+   "text": "Praying the gay away."
+  },
+  {
+   "id": "cah-base:w:855",
+   "text": "Prescription pain killers."
+  },
+  {
+   "id": "cah-base:w:856",
+   "text": "Preteens."
+  },
+  {
+   "id": "cah-base:w:857",
+   "text": "Pretending to care."
+  },
+  {
+   "id": "cah-base:w:858",
+   "text": "Profound respect and appreciation for indigenous culture."
+  },
+  {
+   "id": "cah-base:w:859",
+   "text": "Pronouncing the names of northern Welsh towns."
+  },
+  {
+   "id": "cah-base:w:860",
+   "text": "Prosti-tots."
+  },
+  {
+   "id": "cah-base:w:861",
+   "text": "Pterodactyl eggs."
+  },
+  {
+   "id": "cah-base:w:862",
+   "text": "PTSD."
+  },
+  {
+   "id": "cah-base:w:863",
+   "text": "Puberty."
+  },
+  {
+   "id": "cah-base:w:864",
+   "text": "Public ridicule."
+  },
+  {
+   "id": "cah-base:w:865",
+   "text": "Pulling pits."
+  },
+  {
+   "id": "cah-base:w:866",
+   "text": "Pumpkin spice flavored condoms."
+  },
+  {
+   "id": "cah-base:w:867",
+   "text": "Punching a congressman in the face."
+  },
+  {
+   "id": "cah-base:w:868",
+   "text": "Punching an MP in the face."
+  },
+  {
+   "id": "cah-base:w:869",
+   "text": "Puppies!"
+  },
+  {
+   "id": "cah-base:w:870",
+   "text": "Pussy Galore."
+  },
+  {
+   "id": "cah-base:w:871",
+   "text": "Putting things where they go."
+  },
+  {
+   "id": "cah-base:w:872",
+   "text": "Queefing."
+  },
+  {
+   "id": "cah-base:w:873",
+   "text": "Queen Elizabeth's immaculate anus."
+  },
+  {
+   "id": "cah-base:w:874",
+   "text": "Queuing."
+  },
+  {
+   "id": "cah-base:w:875",
+   "text": "Racially-biased SAT questions."
+  },
+  {
+   "id": "cah-base:w:876",
+   "text": "Racist Christmas Present"
+  },
+  {
+   "id": "cah-base:w:877",
+   "text": "Radical Islamic terrorism."
+  },
+  {
+   "id": "cah-base:w:878",
+   "text": "Rap music."
+  },
+  {
+   "id": "cah-base:w:879",
+   "text": "Raping and pillaging."
+  },
+  {
+   "id": "cah-base:w:880",
+   "text": "Raptor attacks."
+  },
+  {
+   "id": "cah-base:w:881",
+   "text": "Re-gifting."
+  },
+  {
+   "id": "cah-base:w:882",
+   "text": "Rectangles."
+  },
+  {
+   "id": "cah-base:w:883",
+   "text": "Rehab."
+  },
+  {
+   "id": "cah-base:w:884",
+   "text": "Repression."
+  },
+  {
+   "id": "cah-base:w:885",
+   "text": "reputation, reputation, reputation"
+  },
+  {
+   "id": "cah-base:w:886",
+   "text": "Reverse gentrification."
+  },
+  {
+   "id": "cah-base:w:887",
+   "text": "Rich people."
+  },
+  {
+   "id": "cah-base:w:888",
+   "text": "Riding off into the sunset."
+  },
+  {
+   "id": "cah-base:w:889",
+   "text": "Ring Pops."
+  },
+  {
+   "id": "cah-base:w:890",
+   "text": "Ring Pops™."
+  },
+  {
+   "id": "cah-base:w:891",
+   "text": "Rip Torn dropkicking anti-Semitic lesbians."
+  },
+  {
+   "id": "cah-base:w:892",
+   "text": "Ripping off the Beatles."
+  },
+  {
+   "id": "cah-base:w:893",
+   "text": "Ripping open a man's chest and pulling out his still-beating heart."
+  },
+  {
+   "id": "cah-base:w:894",
+   "text": "Rising sea levels consistent with scientific predictions."
+  },
+  {
+   "id": "cah-base:w:895",
+   "text": "Road head."
+  },
+  {
+   "id": "cah-base:w:896",
+   "text": "Rob Ford."
+  },
+  {
+   "id": "cah-base:w:897",
+   "text": "Robbing a sperm bank."
+  },
+  {
+   "id": "cah-base:w:898",
+   "text": "Robert Downey Jr."
+  },
+  {
+   "id": "cah-base:w:899",
+   "text": "Robert Downey, Jr."
+  },
+  {
+   "id": "cah-base:w:900",
+   "text": "RoboCop."
+  },
+  {
+   "id": "cah-base:w:901",
+   "text": "Rohypnol."
+  },
+  {
+   "id": "cah-base:w:902",
+   "text": "Roofied Punch"
+  },
+  {
+   "id": "cah-base:w:903",
+   "text": "Roofies."
+  },
+  {
+   "id": "cah-base:w:904",
+   "text": "Rubbing Boris Johnson's belly until he falls asleep."
+  },
+  {
+   "id": "cah-base:w:905",
+   "text": "Running naked through sprinklers."
+  },
+  {
+   "id": "cah-base:w:906",
+   "text": "Running out of semen."
+  },
+  {
+   "id": "cah-base:w:907",
+   "text": "Rupert Murdoch."
+  },
+  {
+   "id": "cah-base:w:908",
+   "text": "Rush Limbaugh's soft, shitty body."
+  },
+  {
+   "id": "cah-base:w:909",
+   "text": "Ruth Bader Ginsburg brutally gaveling your penis."
+  },
+  {
+   "id": "cah-base:w:910",
+   "text": "Ryan Gosling riding in on a white horse."
+  },
+  {
+   "id": "cah-base:w:911",
+   "text": "Same-sex ice dancing."
+  },
+  {
+   "id": "cah-base:w:912",
+   "text": "Sanctimommies"
+  },
+  {
+   "id": "cah-base:w:913",
+   "text": "Santa Claus."
+  },
+  {
+   "id": "cah-base:w:914",
+   "text": "Sarah Palin's crazy pills."
+  },
+  {
+   "id": "cah-base:w:915",
+   "text": "Saxophone solos."
+  },
+  {
+   "id": "cah-base:w:916",
+   "text": "Saying \"I love you.\""
+  },
+  {
+   "id": "cah-base:w:917",
+   "text": "Scalping the Milkybar Kid."
+  },
+  {
+   "id": "cah-base:w:918",
+   "text": "Scalping."
+  },
+  {
+   "id": "cah-base:w:919",
+   "text": "Schmirler the Curler."
+  },
+  {
+   "id": "cah-base:w:920",
+   "text": "Science."
+  },
+  {
+   "id": "cah-base:w:921",
+   "text": "Scientology."
+  },
+  {
+   "id": "cah-base:w:922",
+   "text": "Scousers."
+  },
+  {
+   "id": "cah-base:w:923",
+   "text": "Screaming Orgasm"
+  },
+  {
+   "id": "cah-base:w:924",
+   "text": "Scrotum tickling."
+  },
+  {
+   "id": "cah-base:w:925",
+   "text": "Scrubbing under the folds."
+  },
+  {
+   "id": "cah-base:w:926",
+   "text": "Sean Connery."
+  },
+  {
+   "id": "cah-base:w:927",
+   "text": "Sean Penn."
+  },
+  {
+   "id": "cah-base:w:928",
+   "text": "Seduction."
+  },
+  {
+   "id": "cah-base:w:929",
+   "text": "Seeing Grandma naked."
+  },
+  {
+   "id": "cah-base:w:930",
+   "text": "Seeing Granny naked."
+  },
+  {
+   "id": "cah-base:w:931",
+   "text": "Seeing my father cry."
+  },
+  {
+   "id": "cah-base:w:932",
+   "text": "Seeing what happens when you lock people in a room with hungry seagulls."
+  },
+  {
+   "id": "cah-base:w:933",
+   "text": "Seething with quiet resentment."
+  },
+  {
+   "id": "cah-base:w:934",
+   "text": "Self-folding lundry."
+  },
+  {
+   "id": "cah-base:w:935",
+   "text": "Self-loathing."
+  },
+  {
+   "id": "cah-base:w:936",
+   "text": "Selling crack to children."
+  },
+  {
+   "id": "cah-base:w:937",
+   "text": "Selling ice to children."
+  },
+  {
+   "id": "cah-base:w:938",
+   "text": "Seppuku."
+  },
+  {
+   "id": "cah-base:w:939",
+   "text": "Serfdom."
+  },
+  {
+   "id": "cah-base:w:940",
+   "text": "Seven dead and three in critical condition."
+  },
+  {
+   "id": "cah-base:w:941",
+   "text": "Sex with animals."
+  },
+  {
+   "id": "cah-base:w:942",
+   "text": "Sex with Patrick Stewart."
+  },
+  {
+   "id": "cah-base:w:943",
+   "text": "Sexting."
+  },
+  {
+   "id": "cah-base:w:944",
+   "text": "Sexual humiliation."
+  },
+  {
+   "id": "cah-base:w:945",
+   "text": "Sexual peeing."
+  },
+  {
+   "id": "cah-base:w:946",
+   "text": "Sexual tension."
+  },
+  {
+   "id": "cah-base:w:947",
+   "text": "Sexy pillow fights."
+  },
+  {
+   "id": "cah-base:w:948",
+   "text": "Shaking a baby until it stops crying."
+  },
+  {
+   "id": "cah-base:w:949",
+   "text": "Shapeshifters."
+  },
+  {
+   "id": "cah-base:w:950",
+   "text": "Shaquille O'Neal's acting career."
+  },
+  {
+   "id": "cah-base:w:951",
+   "text": "Sharing needles."
+  },
+  {
+   "id": "cah-base:w:952",
+   "text": "Shiny objects."
+  },
+  {
+   "id": "cah-base:w:953",
+   "text": "Shipping convicts to Australia."
+  },
+  {
+   "id": "cah-base:w:954",
+   "text": "Shitting out a perfect Cumberland sausage."
+  },
+  {
+   "id": "cah-base:w:955",
+   "text": "Shitting out a screaming face."
+  },
+  {
+   "id": "cah-base:w:956",
+   "text": "Shorties and blunts."
+  },
+  {
+   "id": "cah-base:w:957",
+   "text": "Showing up to an orgy for the food."
+  },
+  {
+   "id": "cah-base:w:958",
+   "text": "Shutting up so I can watch the game."
+  },
+  {
+   "id": "cah-base:w:959",
+   "text": "Shutting up so I can watch the match."
+  },
+  {
+   "id": "cah-base:w:960",
+   "text": "Sideboob."
+  },
+  {
+   "id": "cah-base:w:961",
+   "text": "Silence."
+  },
+  {
+   "id": "cah-base:w:962",
+   "text": "Sipping artificial popcorn butter."
+  },
+  {
+   "id": "cah-base:w:963",
+   "text": "Sitting on my face and telling me I'm garbage."
+  },
+  {
+   "id": "cah-base:w:964",
+   "text": "Sitting on my face."
+  },
+  {
+   "id": "cah-base:w:965",
+   "text": "Sitting on someone's face."
+  },
+  {
+   "id": "cah-base:w:966",
+   "text": "Skeletor."
+  },
+  {
+   "id": "cah-base:w:967",
+   "text": "Skippy the Bush Kangaroo."
+  },
+  {
+   "id": "cah-base:w:968",
+   "text": "Slapping a biscuit out of an orphan's mouth."
+  },
+  {
+   "id": "cah-base:w:969",
+   "text": "Slapping Nigel Farage over and over."
+  },
+  {
+   "id": "cah-base:w:970",
+   "text": "Slaughtering innocent civilians."
+  },
+  {
+   "id": "cah-base:w:971",
+   "text": "Slavs."
+  },
+  {
+   "id": "cah-base:w:972",
+   "text": "Smallpox blankets."
+  },
+  {
+   "id": "cah-base:w:973",
+   "text": "Smegma."
+  },
+  {
+   "id": "cah-base:w:974",
+   "text": "SNES cartridge cleaning fluid."
+  },
+  {
+   "id": "cah-base:w:975",
+   "text": "Sniffing and kissing my feet."
+  },
+  {
+   "id": "cah-base:w:976",
+   "text": "Sniffing glue."
+  },
+  {
+   "id": "cah-base:w:977",
+   "text": "Snotsicles."
+  },
+  {
+   "id": "cah-base:w:978",
+   "text": "Sobbing into a Hungry-Man™ Frozen Dinner."
+  },
+  {
+   "id": "cah-base:w:979",
+   "text": "Soft, kissy missionary sex."
+  },
+  {
+   "id": "cah-base:w:980",
+   "text": "Soiling oneself."
+  },
+  {
+   "id": "cah-base:w:981",
+   "text": "Solving problems with violence."
+  },
+  {
+   "id": "cah-base:w:982",
+   "text": "Somali pirates."
+  },
+  {
+   "id": "cah-base:w:983",
+   "text": "Some bloody peace and quiet."
+  },
+  {
+   "id": "cah-base:w:984",
+   "text": "Some douchebag yelling \"More Cowbell.\""
+  },
+  {
+   "id": "cah-base:w:985",
+   "text": "Some foundation, mascara, and a touch of blush."
+  },
+  {
+   "id": "cah-base:w:986",
+   "text": "Some god damn peace and quiet."
+  },
+  {
+   "id": "cah-base:w:987",
+   "text": "Some guy."
+  },
+  {
+   "id": "cah-base:w:988",
+   "text": "Some kind of bird man."
+  },
+  {
+   "id": "cah-base:w:989",
+   "text": "Some of the best rappers in the game."
+  },
+  {
+   "id": "cah-base:w:990",
+   "text": "Some punk kid who stole my turkey sandwich."
+  },
+  {
+   "id": "cah-base:w:991",
+   "text": "Some really sticky Kentucky Durban."
+  },
+  {
+   "id": "cah-base:w:992",
+   "text": "Sorry, this content cannot be viewed in your region."
+  },
+  {
+   "id": "cah-base:w:993",
+   "text": "Soup that is too hot."
+  },
+  {
+   "id": "cah-base:w:994",
+   "text": "Spaghetti? Again?"
+  },
+  {
+   "id": "cah-base:w:995",
+   "text": "Spaniards."
+  },
+  {
+   "id": "cah-base:w:996",
+   "text": "Spectacular abs."
+  },
+  {
+   "id": "cah-base:w:997",
+   "text": "Spending my parent's hard-earned money."
+  },
+  {
+   "id": "cah-base:w:998",
+   "text": "Sperm whales."
+  },
+  {
+   "id": "cah-base:w:999",
+   "text": "Spirit Airlines."
+  },
+  {
+   "id": "cah-base:w:1000",
+   "text": "Spontaneous human combustion."
+  },
+  {
+   "id": "cah-base:w:1001",
+   "text": "Stalin."
+  },
+  {
+   "id": "cah-base:w:1002",
+   "text": "Staring at a painting and going \"hmmmmmmm...\""
+  },
+  {
+   "id": "cah-base:w:1003",
+   "text": "Stephen Harper."
+  },
+  {
+   "id": "cah-base:w:1004",
+   "text": "Stephen Hawking"
+  },
+  {
+   "id": "cah-base:w:1005",
+   "text": "Stephen Hawking talking dirty."
+  },
+  {
+   "id": "cah-base:w:1006",
+   "text": "Steve Bannon."
+  },
+  {
+   "id": "cah-base:w:1007",
+   "text": "Steve Irwin."
+  },
+  {
+   "id": "cah-base:w:1008",
+   "text": "Stifling a giggle at the mention of Hutus and Tutsis."
+  },
+  {
+   "id": "cah-base:w:1009",
+   "text": "Still being a virgin."
+  },
+  {
+   "id": "cah-base:w:1010",
+   "text": "Stockholm Syndrome."
+  },
+  {
+   "id": "cah-base:w:1011",
+   "text": "Stormtroopers."
+  },
+  {
+   "id": "cah-base:w:1012",
+   "text": "Stranger Danger."
+  },
+  {
+   "id": "cah-base:w:1013",
+   "text": "Strong female characters."
+  },
+  {
+   "id": "cah-base:w:1014",
+   "text": "Stunt doubles."
+  },
+  {
+   "id": "cah-base:w:1015",
+   "text": "Substitute teachers."
+  },
+  {
+   "id": "cah-base:w:1016",
+   "text": "Sucking some dicks to not get drafted."
+  },
+  {
+   "id": "cah-base:w:1017",
+   "text": "Sudden Poop Explosion Disease."
+  },
+  {
+   "id": "cah-base:w:1018",
+   "text": "Suicidal thoughts."
+  },
+  {
+   "id": "cah-base:w:1019",
+   "text": "Summoning Harold Holt from the sea in a time of great need."
+  },
+  {
+   "id": "cah-base:w:1020",
+   "text": "Sunshine and rainbows."
+  },
+  {
+   "id": "cah-base:w:1021",
+   "text": "Surprise sex!"
+  },
+  {
+   "id": "cah-base:w:1022",
+   "text": "Swag."
+  },
+  {
+   "id": "cah-base:w:1023",
+   "text": "Sweet, sweet vengeance."
+  },
+  {
+   "id": "cah-base:w:1024",
+   "text": "Switching to Geico®."
+  },
+  {
+   "id": "cah-base:w:1025",
+   "text": "Swooping."
+  },
+  {
+   "id": "cah-base:w:1026",
+   "text": "Synergistic management solutions."
+  },
+  {
+   "id": "cah-base:w:1027",
+   "text": "Syrupy sex with a maple tree."
+  },
+  {
+   "id": "cah-base:w:1028",
+   "text": "Take-backsies."
+  },
+  {
+   "id": "cah-base:w:1029",
+   "text": "Taking a minute to really unpack what Shakespeare is getting at in this scene."
+  },
+  {
+   "id": "cah-base:w:1030",
+   "text": "Taking a sheep-wife."
+  },
+  {
+   "id": "cah-base:w:1031",
+   "text": "Taking off your shirt."
+  },
+  {
+   "id": "cah-base:w:1032",
+   "text": "Tangled Slinkys."
+  },
+  {
+   "id": "cah-base:w:1033",
+   "text": "Tap dancing like there's no tomorrow."
+  },
+  {
+   "id": "cah-base:w:1034",
+   "text": "Tasteful sideboob."
+  },
+  {
+   "id": "cah-base:w:1035",
+   "text": "Teaching a robot to love."
+  },
+  {
+   "id": "cah-base:w:1036",
+   "text": "Team building exercises."
+  },
+  {
+   "id": "cah-base:w:1037",
+   "text": "Team-building exercises."
+  },
+  {
+   "id": "cah-base:w:1038",
+   "text": "Tearing that ass up like wrapping paper on Christmas morning."
+  },
+  {
+   "id": "cah-base:w:1039",
+   "text": "Teenage pregnancy."
+  },
+  {
+   "id": "cah-base:w:1040",
+   "text": "Telling a shitty story that goes nowhere."
+  },
+  {
+   "id": "cah-base:w:1041",
+   "text": "Tentacle porn."
+  },
+  {
+   "id": "cah-base:w:1042",
+   "text": "Terrorists."
+  },
+  {
+   "id": "cah-base:w:1043",
+   "text": "Terry Fox's prosthetic leg."
+  },
+  {
+   "id": "cah-base:w:1044",
+   "text": "Testicular torsion."
+  },
+  {
+   "id": "cah-base:w:1045",
+   "text": "That awkward family who thinks it's \"cybersex Monday.\""
+  },
+  {
+   "id": "cah-base:w:1046",
+   "text": "That one gay Teletubby."
+  },
+  {
+   "id": "cah-base:w:1047",
+   "text": "That thing that electrocutes your abs."
+  },
+  {
+   "id": "cah-base:w:1048",
+   "text": "The American Dream."
+  },
+  {
+   "id": "cah-base:w:1049",
+   "text": "The Amish."
+  },
+  {
+   "id": "cah-base:w:1050",
+   "text": "The arrival of the pizza."
+  },
+  {
+   "id": "cah-base:w:1051",
+   "text": "The art of seduction."
+  },
+  {
+   "id": "cah-base:w:1052",
+   "text": "The baby that ruined my pussy."
+  },
+  {
+   "id": "cah-base:w:1053",
+   "text": "The Bachelorette season finale."
+  },
+  {
+   "id": "cah-base:w:1054",
+   "text": "The Big Bang."
+  },
+  {
+   "id": "cah-base:w:1055",
+   "text": "The big fucking hole in the ozone layer."
+  },
+  {
+   "id": "cah-base:w:1056",
+   "text": "The Black Death."
+  },
+  {
+   "id": "cah-base:w:1057",
+   "text": "The Blood of Christ."
+  },
+  {
+   "id": "cah-base:w:1058",
+   "text": "The bloody Welsh."
+  },
+  {
+   "id": "cah-base:w:1059",
+   "text": "The BNP."
+  },
+  {
+   "id": "cah-base:w:1060",
+   "text": "The bombing of Nagasaki."
+  },
+  {
+   "id": "cah-base:w:1061",
+   "text": "The boners of the elderly."
+  },
+  {
+   "id": "cah-base:w:1062",
+   "text": "The Boy Scouts of America."
+  },
+  {
+   "id": "cah-base:w:1063",
+   "text": "The bush."
+  },
+  {
+   "id": "cah-base:w:1064",
+   "text": "The Care Bear Stare."
+  },
+  {
+   "id": "cah-base:w:1065",
+   "text": "The Chinese gymnastics team."
+  },
+  {
+   "id": "cah-base:w:1066",
+   "text": "The chronic."
+  },
+  {
+   "id": "cah-base:w:1067",
+   "text": "The clitoris."
+  },
+  {
+   "id": "cah-base:w:1068",
+   "text": "The cool, refreshing taste of Coca-Cola®."
+  },
+  {
+   "id": "cah-base:w:1069",
+   "text": "The cool, refreshing taste of Pepsi."
+  },
+  {
+   "id": "cah-base:w:1070",
+   "text": "The cool, refreshing taste of Pepsi®."
+  },
+  {
+   "id": "cah-base:w:1071",
+   "text": "The crazy, ball-slapping sex your parents are having right now."
+  },
+  {
+   "id": "cah-base:w:1072",
+   "text": "The Daily Mail."
+  },
+  {
+   "id": "cah-base:w:1073",
+   "text": "The Dalai Lama."
+  },
+  {
+   "id": "cah-base:w:1074",
+   "text": "The Dance of the Sugar Plum Fairy."
+  },
+  {
+   "id": "cah-base:w:1075",
+   "text": "The deformed."
+  },
+  {
+   "id": "cah-base:w:1076",
+   "text": "The Devil Himself."
+  },
+  {
+   "id": "cah-base:w:1077",
+   "text": "The Donald Trump Seal of Approval.™"
+  },
+  {
+   "id": "cah-base:w:1078",
+   "text": "The drama club."
+  },
+  {
+   "id": "cah-base:w:1079",
+   "text": "The economy."
+  },
+  {
+   "id": "cah-base:w:1080",
+   "text": "The EDL."
+  },
+  {
+   "id": "cah-base:w:1081",
+   "text": "The end of days."
+  },
+  {
+   "id": "cah-base:w:1082",
+   "text": "The entire cast of Downton Abbey."
+  },
+  {
+   "id": "cah-base:w:1083",
+   "text": "The entire Mormon Tabernacle Chior."
+  },
+  {
+   "id": "cah-base:w:1084",
+   "text": "The entire Mormon Tabernacle Choir."
+  },
+  {
+   "id": "cah-base:w:1085",
+   "text": "The female orgasm."
+  },
+  {
+   "id": "cah-base:w:1086",
+   "text": "The FLQ."
+  },
+  {
+   "id": "cah-base:w:1087",
+   "text": "The flute."
+  },
+  {
+   "id": "cah-base:w:1088",
+   "text": "The folly of man."
+  },
+  {
+   "id": "cah-base:w:1089",
+   "text": "The forbidden fruit."
+  },
+  {
+   "id": "cah-base:w:1090",
+   "text": "The Force."
+  },
+  {
+   "id": "cah-base:w:1091",
+   "text": "The French."
+  },
+  {
+   "id": "cah-base:w:1092",
+   "text": "The gays."
+  },
+  {
+   "id": "cah-base:w:1093",
+   "text": "The glass ceiling."
+  },
+  {
+   "id": "cah-base:w:1094",
+   "text": "The Great Depression."
+  },
+  {
+   "id": "cah-base:w:1095",
+   "text": "The Great Emu War."
+  },
+  {
+   "id": "cah-base:w:1096",
+   "text": "The Gulags."
+  },
+  {
+   "id": "cah-base:w:1097",
+   "text": "The guys from Queer Eye."
+  },
+  {
+   "id": "cah-base:w:1098",
+   "text": "The Hamburglar."
+  },
+  {
+   "id": "cah-base:w:1099",
+   "text": "The hardworking Mexican."
+  },
+  {
+   "id": "cah-base:w:1100",
+   "text": "the heat of a luxurious bed"
+  },
+  {
+   "id": "cah-base:w:1101",
+   "text": "The Hemsworth brothers."
+  },
+  {
+   "id": "cah-base:w:1102",
+   "text": "The hiccups."
+  },
+  {
+   "id": "cah-base:w:1103",
+   "text": "The Hillsborough Disaster."
+  },
+  {
+   "id": "cah-base:w:1104",
+   "text": "The Holy Bible."
+  },
+  {
+   "id": "cah-base:w:1105",
+   "text": "The homosexual agenda."
+  },
+  {
+   "id": "cah-base:w:1106",
+   "text": "The homosexual lifestyle."
+  },
+  {
+   "id": "cah-base:w:1107",
+   "text": "The Honey Monster."
+  },
+  {
+   "id": "cah-base:w:1108",
+   "text": "The Human Centipede: infinity edition."
+  },
+  {
+   "id": "cah-base:w:1109",
+   "text": "The Hustle."
+  },
+  {
+   "id": "cah-base:w:1110",
+   "text": "The illusion of choice in a late-stage capitalist society."
+  },
+  {
+   "id": "cah-base:w:1111",
+   "text": "The inevitable heat death of the universe."
+  },
+  {
+   "id": "cah-base:w:1112",
+   "text": "The invisible hand."
+  },
+  {
+   "id": "cah-base:w:1113",
+   "text": "The Jews."
+  },
+  {
+   "id": "cah-base:w:1114",
+   "text": "The KKK."
+  },
+  {
+   "id": "cah-base:w:1115",
+   "text": "The Kool-Aid Man."
+  },
+  {
+   "id": "cah-base:w:1116",
+   "text": "The land of chocolate."
+  },
+  {
+   "id": "cah-base:w:1117",
+   "text": "The light of a billion suns."
+  },
+  {
+   "id": "cah-base:w:1118",
+   "text": "The Little Engine That Could."
+  },
+  {
+   "id": "cah-base:w:1119",
+   "text": "The magic of live theatre."
+  },
+  {
+   "id": "cah-base:w:1120",
+   "text": "The Make-A-Wish Foundation."
+  },
+  {
+   "id": "cah-base:w:1121",
+   "text": "The Make-A-Wish® Foundation."
+  },
+  {
+   "id": "cah-base:w:1122",
+   "text": "The milk man."
+  },
+  {
+   "id": "cah-base:w:1123",
+   "text": "The milkman."
+  },
+  {
+   "id": "cah-base:w:1124",
+   "text": "The miracle of childbirth."
+  },
+  {
+   "id": "cah-base:w:1125",
+   "text": "The morbidly obese."
+  },
+  {
+   "id": "cah-base:w:1126",
+   "text": "The North."
+  },
+  {
+   "id": "cah-base:w:1127",
+   "text": "The Official Languages Act. La Loi sur les langues officielles."
+  },
+  {
+   "id": "cah-base:w:1128",
+   "text": "The only gay person in a hundred kilometers."
+  },
+  {
+   "id": "cah-base:w:1129",
+   "text": "The only gay person in a hundred miles."
+  },
+  {
+   "id": "cah-base:w:1130",
+   "text": "The opioid epidemic."
+  },
+  {
+   "id": "cah-base:w:1131",
+   "text": "The past."
+  },
+  {
+   "id": "cah-base:w:1132",
+   "text": "The Patriarchy."
+  },
+  {
+   "id": "cah-base:w:1133",
+   "text": "The penny whistle solo from \"My Heart Will Go On.\""
+  },
+  {
+   "id": "cah-base:w:1134",
+   "text": "The People's Elbow."
+  },
+  {
+   "id": "cah-base:w:1135",
+   "text": "The petty troubles of the landed gentry."
+  },
+  {
+   "id": "cah-base:w:1136",
+   "text": "The pirate's life."
+  },
+  {
+   "id": "cah-base:w:1137",
+   "text": "The placenta."
+  },
+  {
+   "id": "cah-base:w:1138",
+   "text": "The plot of a Michael Bay movie."
+  },
+  {
+   "id": "cah-base:w:1139",
+   "text": "The Pope."
+  },
+  {
+   "id": "cah-base:w:1140",
+   "text": "The profoundly handicapped."
+  },
+  {
+   "id": "cah-base:w:1141",
+   "text": "The prunes I've been saving for you in my armpits."
+  },
+  {
+   "id": "cah-base:w:1142",
+   "text": "The Rapture."
+  },
+  {
+   "id": "cah-base:w:1143",
+   "text": "The Red Hot Chili Peppers."
+  },
+  {
+   "id": "cah-base:w:1144",
+   "text": "The Red Menace."
+  },
+  {
+   "id": "cah-base:w:1145",
+   "text": "The Rev. Dr. Martin Luther King, Jr."
+  },
+  {
+   "id": "cah-base:w:1146",
+   "text": "The rhythms of Africa."
+  },
+  {
+   "id": "cah-base:w:1147",
+   "text": "The Royal Canadian Mounted Police."
+  },
+  {
+   "id": "cah-base:w:1148",
+   "text": "The Russians."
+  },
+  {
+   "id": "cah-base:w:1149",
+   "text": "The Scouts."
+  },
+  {
+   "id": "cah-base:w:1150",
+   "text": "The screams...the terrible screams."
+  },
+  {
+   "id": "cah-base:w:1151",
+   "text": "The Smell of Primark."
+  },
+  {
+   "id": "cah-base:w:1152",
+   "text": "The South."
+  },
+  {
+   "id": "cah-base:w:1153",
+   "text": "The Stig."
+  },
+  {
+   "id": "cah-base:w:1154",
+   "text": "The Strictly Come Dancing season finale."
+  },
+  {
+   "id": "cah-base:w:1155",
+   "text": "The sudden appearance of the Go Compare man."
+  },
+  {
+   "id": "cah-base:w:1156",
+   "text": "The Superdome."
+  },
+  {
+   "id": "cah-base:w:1157",
+   "text": "The taint; the grundle; the fleshy fun-bridge."
+  },
+  {
+   "id": "cah-base:w:1158",
+   "text": "The Tempur-Pedic® Swedish Sleep System™."
+  },
+  {
+   "id": "cah-base:w:1159",
+   "text": "The terrorists."
+  },
+  {
+   "id": "cah-base:w:1160",
+   "text": "The Thong Song."
+  },
+  {
+   "id": "cah-base:w:1161",
+   "text": "The Three-Fifths compromise."
+  },
+  {
+   "id": "cah-base:w:1162",
+   "text": "The token minority."
+  },
+  {
+   "id": "cah-base:w:1163",
+   "text": "The total collapse of the global financial system."
+  },
+  {
+   "id": "cah-base:w:1164",
+   "text": "The Trail of Tears."
+  },
+  {
+   "id": "cah-base:w:1165",
+   "text": "The true meaning of Christmas."
+  },
+  {
+   "id": "cah-base:w:1166",
+   "text": "The Ubermensch."
+  },
+  {
+   "id": "cah-base:w:1167",
+   "text": "The Underground Railroad."
+  },
+  {
+   "id": "cah-base:w:1168",
+   "text": "The unstoppable tide of Islam."
+  },
+  {
+   "id": "cah-base:w:1169",
+   "text": "The violation of our most basic human rights."
+  },
+  {
+   "id": "cah-base:w:1170",
+   "text": "The Virginia Tech Massacre."
+  },
+  {
+   "id": "cah-base:w:1171",
+   "text": "The way James Bond treats women."
+  },
+  {
+   "id": "cah-base:w:1172",
+   "text": "The White Australia Policy."
+  },
+  {
+   "id": "cah-base:w:1173",
+   "text": "The wifi password."
+  },
+  {
+   "id": "cah-base:w:1174",
+   "text": "The wonders of the Orient."
+  },
+  {
+   "id": "cah-base:w:1175",
+   "text": "The World of Warcraft."
+  },
+  {
+   "id": "cah-base:w:1176",
+   "text": "The wrath of Vladimir Putin."
+  },
+  {
+   "id": "cah-base:w:1177",
+   "text": "Therapy."
+  },
+  {
+   "id": "cah-base:w:1178",
+   "text": "Theresa May."
+  },
+  {
+   "id": "cah-base:w:1179",
+   "text": "These hoes."
+  },
+  {
+   "id": "cah-base:w:1180",
+   "text": "Third base."
+  },
+  {
+   "id": "cah-base:w:1181",
+   "text": "This answer is postmodern."
+  },
+  {
+   "id": "cah-base:w:1182",
+   "text": "This month's mass shooting."
+  },
+  {
+   "id": "cah-base:w:1183",
+   "text": "This year's mass shooting."
+  },
+  {
+   "id": "cah-base:w:1184",
+   "text": "Those times when you get sand in your vagina."
+  },
+  {
+   "id": "cah-base:w:1185",
+   "text": "Three dicks at the same time."
+  },
+  {
+   "id": "cah-base:w:1186",
+   "text": "Throwing a virgin into a volcano."
+  },
+  {
+   "id": "cah-base:w:1187",
+   "text": "Throwing grapes at a man until he loses touch with reality."
+  },
+  {
+   "id": "cah-base:w:1188",
+   "text": "Tickle Me Elmo."
+  },
+  {
+   "id": "cah-base:w:1189",
+   "text": "Tickle Me Elmo™."
+  },
+  {
+   "id": "cah-base:w:1190",
+   "text": "Tickling Sean Hannity, even after he tells you to stop."
+  },
+  {
+   "id": "cah-base:w:1191",
+   "text": "Tiger Woods."
+  },
+  {
+   "id": "cah-base:w:1192",
+   "text": "Tiny terrorists"
+  },
+  {
+   "id": "cah-base:w:1193",
+   "text": "Tom Cruise."
+  },
+  {
+   "id": "cah-base:w:1194",
+   "text": "Tongueing a balloon knot arsehole"
+  },
+  {
+   "id": "cah-base:w:1195",
+   "text": "Toni Morrison's vagina."
+  },
+  {
+   "id": "cah-base:w:1196",
+   "text": "Tony Abbott in budgie smugglers."
+  },
+  {
+   "id": "cah-base:w:1197",
+   "text": "Too much hair gel."
+  },
+  {
+   "id": "cah-base:w:1198",
+   "text": "Tories."
+  },
+  {
+   "id": "cah-base:w:1199",
+   "text": "Total control of the media."
+  },
+  {
+   "id": "cah-base:w:1200",
+   "text": "Touching a pug right on his penis."
+  },
+  {
+   "id": "cah-base:w:1201",
+   "text": "Trench foot."
+  },
+  {
+   "id": "cah-base:w:1202",
+   "text": "Tripping balls."
+  },
+  {
+   "id": "cah-base:w:1203",
+   "text": "Tweeting."
+  },
+  {
+   "id": "cah-base:w:1204",
+   "text": "Twenty tonnes of bat shit."
+  },
+  {
+   "id": "cah-base:w:1205",
+   "text": "Twinkies®."
+  },
+  {
+   "id": "cah-base:w:1206",
+   "text": "Two midgets shitting into a bucket."
+  },
+  {
+   "id": "cah-base:w:1207",
+   "text": "Unfathomable stupidity."
+  },
+  {
+   "id": "cah-base:w:1208",
+   "text": "Uppercuts."
+  },
+  {
+   "id": "cah-base:w:1209",
+   "text": "Used knickers."
+  },
+  {
+   "id": "cah-base:w:1210",
+   "text": "Used panties."
+  },
+  {
+   "id": "cah-base:w:1211",
+   "text": "Vegemite™."
+  },
+  {
+   "id": "cah-base:w:1212",
+   "text": "Vehicular homicide."
+  },
+  {
+   "id": "cah-base:w:1213",
+   "text": "Vehicular manslaughter."
+  },
+  {
+   "id": "cah-base:w:1214",
+   "text": "Viagra®."
+  },
+  {
+   "id": "cah-base:w:1215",
+   "text": "Vigilante justice."
+  },
+  {
+   "id": "cah-base:w:1216",
+   "text": "Vigorous jazz hands."
+  },
+  {
+   "id": "cah-base:w:1217",
+   "text": "Vikings."
+  },
+  {
+   "id": "cah-base:w:1218",
+   "text": "Vladimir Putin."
+  },
+  {
+   "id": "cah-base:w:1219",
+   "text": "Vomiting into a kangaroo's pouch."
+  },
+  {
+   "id": "cah-base:w:1220",
+   "text": "Vomiting seafood and bleeding anally."
+  },
+  {
+   "id": "cah-base:w:1221",
+   "text": "Waiting 'til marriage."
+  },
+  {
+   "id": "cah-base:w:1222",
+   "text": "Waiting till marriage."
+  },
+  {
+   "id": "cah-base:w:1223",
+   "text": "Waking up half-naked in a Denny's parking lot."
+  },
+  {
+   "id": "cah-base:w:1224",
+   "text": "Waking up half-naked in a Little Chef car park."
+  },
+  {
+   "id": "cah-base:w:1225",
+   "text": "Waking up half-naked in a Macca's car park."
+  },
+  {
+   "id": "cah-base:w:1226",
+   "text": "Waking up in Idris Elba's arms."
+  },
+  {
+   "id": "cah-base:w:1227",
+   "text": "Walking in on Dad peeing into Mom's mouth."
+  },
+  {
+   "id": "cah-base:w:1228",
+   "text": "Wanking into a pool of children's tears."
+  },
+  {
+   "id": "cah-base:w:1229",
+   "text": "Waterboarding."
+  },
+  {
+   "id": "cah-base:w:1230",
+   "text": "Wear lip gloss on my anus."
+  },
+  {
+   "id": "cah-base:w:1231",
+   "text": "Wearing Blues under your Klan robe."
+  },
+  {
+   "id": "cah-base:w:1232",
+   "text": "Wearing underwear inside out to avoid doing laundry."
+  },
+  {
+   "id": "cah-base:w:1233",
+   "text": "Wearing underwear inside-out to avoid doing laundry."
+  },
+  {
+   "id": "cah-base:w:1234",
+   "text": "Wet dreams."
+  },
+  {
+   "id": "cah-base:w:1235",
+   "text": "What that mouth do."
+  },
+  {
+   "id": "cah-base:w:1236",
+   "text": "What's left of the Great Barrier Reef."
+  },
+  {
+   "id": "cah-base:w:1237",
+   "text": "When you fart and a little bit comes out."
+  },
+  {
+   "id": "cah-base:w:1238",
+   "text": "Whining until you get your way."
+  },
+  {
+   "id": "cah-base:w:1239",
+   "text": "Whipping it out."
+  },
+  {
+   "id": "cah-base:w:1240",
+   "text": "Whiskas® Catmilk."
+  },
+  {
+   "id": "cah-base:w:1241",
+   "text": "White people."
+  },
+  {
+   "id": "cah-base:w:1242",
+   "text": "White power."
+  },
+  {
+   "id": "cah-base:w:1243",
+   "text": "White privilege."
+  },
+  {
+   "id": "cah-base:w:1244",
+   "text": "White-man scalps."
+  },
+  {
+   "id": "cah-base:w:1245",
+   "text": "Whoever the Prime Minister is these days."
+  },
+  {
+   "id": "cah-base:w:1246",
+   "text": "Wifely duties."
+  },
+  {
+   "id": "cah-base:w:1247",
+   "text": "Will Smith."
+  },
+  {
+   "id": "cah-base:w:1248",
+   "text": "William Shatner."
+  },
+  {
+   "id": "cah-base:w:1249",
+   "text": "Winking at old people."
+  },
+  {
+   "id": "cah-base:w:1250",
+   "text": "Wiping her bum."
+  },
+  {
+   "id": "cah-base:w:1251",
+   "text": "Wiping her butt."
+  },
+  {
+   "id": "cah-base:w:1252",
+   "text": "Wizard music."
+  },
+  {
+   "id": "cah-base:w:1253",
+   "text": "Women in yoghurt adverts."
+  },
+  {
+   "id": "cah-base:w:1254",
+   "text": "Women in yoghurt commercials."
+  },
+  {
+   "id": "cah-base:w:1255",
+   "text": "Women in yogurt commercials."
+  },
+  {
+   "id": "cah-base:w:1256",
+   "text": "Women of color."
+  },
+  {
+   "id": "cah-base:w:1257",
+   "text": "Women of colour."
+  },
+  {
+   "id": "cah-base:w:1258",
+   "text": "Women voting."
+  },
+  {
+   "id": "cah-base:w:1259",
+   "text": "Women's undies."
+  },
+  {
+   "id": "cah-base:w:1260",
+   "text": "Wondering if it's possible to get some of that salsa to go."
+  },
+  {
+   "id": "cah-base:w:1261",
+   "text": "Words."
+  },
+  {
+   "id": "cah-base:w:1262",
+   "text": "World peace."
+  },
+  {
+   "id": "cah-base:w:1263",
+   "text": "Worshipping that pussy."
+  },
+  {
+   "id": "cah-base:w:1264",
+   "text": "Xenophobia."
+  },
+  {
+   "id": "cah-base:w:1265",
+   "text": "Yelling \"BABY KILLERS\" at boots in an airport terminal."
+  },
+  {
+   "id": "cah-base:w:1266",
+   "text": "YOU MUST CONSTRUCT ADDITIONAL PYLONS."
+  },
+  {
+   "id": "cah-base:w:1267",
+   "text": "Your mum."
+  },
+  {
+   "id": "cah-base:w:1268",
+   "text": "Your weird brother."
+  }
+ ]
+}
