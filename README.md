@@ -27,7 +27,7 @@ Add fake human players to a local room, to test with more people:
 docker compose exec app npm run dev:players -- <ROOM CODE> [count] [--idle] [--password=...]
 ```
 
-- The players are called "Tester Ana", "Tester Bo", and so on. The game treats them as people, not bots.
+- The players are called "Tester Ana", "Tester Bo", and so on. If a name is in use, the script adds a number. The game treats them as people, not bots.
 - Without `--idle`, they play random cards and choose random answers as Card Czar.
 - Press Ctrl+C to remove them from the room.
 - The script refuses to run when `NODE_ENV` is `production`.
@@ -56,6 +56,10 @@ docker compose exec app npm run dev:players -- <ROOM CODE> [count] [--idle] [--p
 - Players must accept the current `TERMS_VERSION` before they create or join a room.
 - Only public rooms appear in the game list. The list never contains session tokens or player ids.
 - Spectators see the game without cards. The Card Czar's anonymity rules apply to them too.
+- Names are unique on the whole server, without case differences. Names like "Bot 1" are for bots only.
+- When the host leaves, the human player who joined earliest becomes host. A room with only bots closes.
+- Leaving the room screen in the app (the logo or the back button) keeps the seat for 90 seconds. The game list then shows "You are still in a game" with "Back to game" and "Leave game".
+- Creating or joining another game leaves the previous one at once. "Log out" also leaves it.
 
 ## Assumptions in version 1
 

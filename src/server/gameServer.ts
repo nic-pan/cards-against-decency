@@ -2,7 +2,7 @@ import { randomBytes, randomInt, scryptSync, timingSafeEqual } from "node:crypto
 import type { Server, Socket } from "socket.io";
 import { z, ZodError } from "zod";
 import { DeckRegistry } from "../engine/deck";
-import { Game, GameError, LIMITS, NAME_MAX } from "../engine/game";
+import { Game, GameError, LIMITS, NAME_MAX, isReservedName, nameKey } from "../engine/game";
 import { TERMS_VERSION, type ClientToServer, type RoomListing, type ServerToClient } from "../lib/protocol";
 import { TokenBucket, WindowCounter } from "./rateLimit";
 import { ipKey, securityLog } from "./securityLog";
@@ -81,13 +81,20 @@ const id = z.string().min(1).max(64);
 const int = (k: keyof typeof LIMITS) => z.number().int().min(LIMITS[k].min).max(LIMITS[k].max);
 
 const schemas = {
-  create: z.object({ name, password, isPublic: z.boolean().optional(), termsVersion: z.string().max(40).optional() }),
+  create: z.object({
+    name,
+    password,
+    isPublic: z.boolean().optional(),
+    termsVersion: z.string().max(40).optional(),
+    previous: z.object({ code, token: z.string().min(20).max(100) }).optional(),
+  }),
   join: z.object({
     code,
     name,
     password,
     as: z.enum(["player", "spectator"]).default("player"),
     termsVersion: z.string().max(40).optional(),
+    previous: z.object({ code, token: z.string().min(20).max(100) }).optional(),
   }),
   resume: z.object({ code, token: z.string().min(20).max(100) }),
   info: z.object({ code }),
@@ -109,6 +116,7 @@ const schemas = {
   pick: z.object({ submissionId: id }),
   kick: z.object({ playerId: id, ban: z.boolean() }),
   deckAdd: z.object({ code: z.string().max(20) }),
+  nameCheck: z.object({ name }),
   deckRemove: z.object({ deckId: id }),
 };
 
@@ -132,9 +140,16 @@ interface SocketData {
 type IO = Server<ClientToServer, ServerToClient, Record<string, never>, SocketData>;
 type Sock = Socket<ClientToServer, ServerToClient, Record<string, never>, SocketData>;
 
-export function attachGameServer(server: Server, decks: DeckRegistry, store: RoomStore = new MemoryRoomStore()) {
+export interface GameServerOptions {
+  store?: RoomStore;
+  /** Create, join, resume, name check and leave actions each minute from one IP address. */
+  joinsPerMinute?: number;
+}
+
+export function attachGameServer(server: Server, decks: DeckRegistry, options: GameServerOptions = {}) {
+  const store = options.store ?? new MemoryRoomStore();
   const io = server as unknown as IO;
-  const joinAttempts = new WindowCounter(30, 60_000);
+  const joinAttempts = new WindowCounter(options.joinsPerMinute ?? 30, 60_000);
   const passwordFailures = new WindowCounter(5, 10 * 60_000);
   // Deck imports call an outside service, so they have their own, lower limit.
   const deckImports = new WindowCounter(10, 60_000);
@@ -279,6 +294,51 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
     );
   }
 
+  /** Removes a seat at once: all tabs, the reconnect timer and the token. */
+  function removeSeat(room: Room, playerId: string, why: "left" | "kicked"): void {
+    for (const sid of room.sockets.get(playerId) ?? []) {
+      const s = io.sockets.sockets.get(sid);
+      if (!s) continue;
+      s.data.code = undefined;
+      s.data.playerId = undefined;
+    }
+    room.sockets.delete(playerId);
+    const timer = room.removeTimers.get(playerId);
+    if (timer) clearTimeout(timer);
+    room.removeTimers.delete(playerId);
+    revoke(room, playerId);
+    room.game.removePlayer(playerId, why);
+  }
+
+  /** Leaves the seat that a token belongs to. Returns false when the seat no longer exists. */
+  function abandon(seat: { code: string; token: string } | undefined, notify: boolean): boolean {
+    if (!seat) return false;
+    const room = store.get(seat.code);
+    const playerId = room?.tokens.get(seat.token);
+    if (!room || !playerId || !room.game.hasMember(playerId)) return false;
+    if (notify) {
+      for (const sid of room.sockets.get(playerId) ?? []) io.to(sid).emit("removed", { reason: "left" });
+    }
+    removeSeat(room, playerId, "left");
+    return true;
+  }
+
+  /** True when a person in any room uses this name. */
+  function nameInUse(rawName: string): boolean {
+    const key = nameKey(rawName);
+    for (const room of store.all()) {
+      if (room.closed) continue;
+      if (room.game.memberNames().some((m) => nameKey(m.name) === key)) return true;
+    }
+    return false;
+  }
+
+  /** Checks that a name is free on the whole server. */
+  function requireFreeName(rawName: string): void {
+    if (isReservedName(rawName)) throw new GameError("NAME_RESERVED");
+    if (nameInUse(rawName)) throw new GameError("NAME_TAKEN");
+  }
+
   function revoke(room: Room, playerId: string): void {
     for (const [token, pid] of room.tokens) if (pid === playerId) room.tokens.delete(token);
   }
@@ -344,12 +404,52 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
     socket.data.bucket = new TokenBucket(12, 4);
 
     on(socket, "lobby:subscribe", (s) => {
+      // A player who opens the game list is no longer looking at their room.
+      // Their seat waits for the reconnect window, like a lost connection.
+      detach(s);
       void s.join(LOBBY);
       return { games: listGames() };
     });
 
     on(socket, "lobby:unsubscribe", (s) => {
       void s.leave(LOBBY);
+    });
+
+    on(socket, "name:check", (s, p) => {
+      checkJoinRate(s);
+      const { name: n } = schemas.nameCheck.parse(p);
+      const previous = (p as { previous?: { code: string; token: string } }).previous;
+      const own = previous && store.get(String(previous.code))?.tokens.get(String(previous.token));
+      const ownRoom = own ? store.get(String(previous!.code)) : undefined;
+      const key = nameKey(n);
+      if (key.length === 0) return { available: false, reason: "NAME_INVALID" };
+      if (isReservedName(n)) return { available: false, reason: "NAME_RESERVED" };
+      for (const room of store.all()) {
+        if (room.closed) continue;
+        for (const m of room.game.memberNames()) {
+          if (nameKey(m.name) !== key) continue;
+          // The player's own previous seat does not block the name.
+          if (room === ownRoom && m.id === own) continue;
+          return { available: false, reason: "NAME_TAKEN" };
+        }
+      }
+      return { available: true };
+    });
+
+    on(socket, "room:seat", (s, p) => {
+      checkJoinRate(s);
+      const seat = schemas.resume.parse(p);
+      const room = store.get(seat.code);
+      const playerId = room?.tokens.get(seat.token);
+      if (!room || !playerId || !room.game.hasMember(playerId)) return { valid: false };
+      return { valid: true, hostName: room.game.summary().hostName };
+    });
+
+    on(socket, "room:abandon", (s, p) => {
+      checkJoinRate(s);
+      const seat = schemas.resume.parse(p);
+      if (s.data.code === seat.code) detach(s);
+      if (!abandon(seat, true)) throw new RequestError("SESSION_EXPIRED");
     });
 
     on(socket, "room:info", (s, p) => {
@@ -361,8 +461,12 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
 
     on(socket, "room:create", (s, p) => {
       checkJoinRate(s);
-      const { name: n, password: pw, isPublic, termsVersion } = schemas.create.parse(p);
+      const { name: n, password: pw, isPublic, termsVersion, previous } = schemas.create.parse(p);
       requireTerms(termsVersion);
+      // Moving to a new game leaves the previous one, so the old seat does not block the name.
+      detach(s);
+      abandon(previous, true);
+      requireFreeName(n);
       const room = createRoom(pw);
       try {
         const playerId = room.game.addPlayer(n);
@@ -378,7 +482,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
 
     on(socket, "room:join", (s, p) => {
       checkJoinRate(s);
-      const { code: c, name: n, password: pw, as, termsVersion } = schemas.join.parse(p);
+      const { code: c, name: n, password: pw, as, termsVersion, previous } = schemas.join.parse(p);
       requireTerms(termsVersion);
       const room = store.get(c);
       if (!room) throw new RequestError("ROOM_NOT_FOUND");
@@ -396,6 +500,12 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
           throw new RequestError("BAD_PASSWORD");
         }
       }
+      // Leave the previous game only after the checks for this room pass.
+      if (previous && previous.code !== c) {
+        detach(s);
+        abandon(previous, true);
+      }
+      requireFreeName(n);
       const playerId = as === "spectator" ? room.game.addSpectator(n) : room.game.addPlayer(n);
       const token = issueToken(room, playerId);
       attach(s, room, playerId);
@@ -416,17 +526,8 @@ export function attachGameServer(server: Server, decks: DeckRegistry, store: Roo
 
     on(socket, "room:leave", (s) => {
       const { room, playerId } = current(s);
-      detach(s);
       // Close the other tabs of the same player too.
-      for (const sid of room.sockets.get(playerId) ?? []) {
-        const other = io.sockets.sockets.get(sid);
-        if (other) detach(other);
-      }
-      const timer = room.removeTimers.get(playerId);
-      if (timer) clearTimeout(timer);
-      room.removeTimers.delete(playerId);
-      revoke(room, playerId);
-      room.game.removePlayer(playerId, "left");
+      removeSeat(room, playerId, "left");
     });
 
     on(socket, "settings:update", (s, p) => {

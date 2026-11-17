@@ -41,13 +41,20 @@ async function addPlayer(name: string) {
   sockets.push(socket);
   await new Promise<void>((resolve) => socket.once("connect", () => resolve()));
 
-  const r = await socket.emitWithAck("room:join", { code, name, password, termsVersion: TERMS_VERSION });
+  // Names are unique on the whole server. If the name is in use, try "Tester Ana 2", and so on.
+  let r: { ok: boolean; error?: string } = { ok: false };
+  let joinedAs = name;
+  for (let n = 1; n <= 9; n++) {
+    joinedAs = n === 1 ? name : `${name} ${n}`;
+    r = await socket.emitWithAck("room:join", { code, name: joinedAs, password, termsVersion: TERMS_VERSION });
+    if (r.ok || r.error !== "NAME_TAKEN") break;
+  }
   if (!r.ok) {
     console.error(`${name}: could not join (${r.error}).`);
     socket.close();
     return;
   }
-  console.log(`${name} joined ${code}.`);
+  console.log(`${joinedAs} joined ${code}.`);
   if (idle) return;
 
   // Act once in each round and phase.

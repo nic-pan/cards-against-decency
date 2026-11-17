@@ -43,11 +43,29 @@ export const session = {
   set(code: string, token: string) {
     try {
       localStorage.setItem(key(code), token);
+      localStorage.setItem("bs.current", JSON.stringify({ code, token }));
     } catch {}
   },
   clear(code: string) {
     try {
       localStorage.removeItem(key(code));
+      if (session.current()?.code === code) localStorage.removeItem("bs.current");
+    } catch {}
+  },
+  /** The last game this browser joined. The server frees it when the player moves on. */
+  current(): { code: string; token: string } | undefined {
+    try {
+      const raw = localStorage.getItem("bs.current");
+      const v = raw ? JSON.parse(raw) : null;
+      return v && typeof v.code === "string" && typeof v.token === "string" ? v : undefined;
+    } catch {
+      return undefined;
+    }
+  },
+  /** Forgets the name, the terms agreement and all seats. */
+  logout() {
+    try {
+      for (const k of Object.keys(localStorage)) if (k.startsWith("bs.")) localStorage.removeItem(k);
     } catch {}
   },
   name(): string {

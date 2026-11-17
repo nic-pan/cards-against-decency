@@ -10,6 +10,9 @@ import { attachGameServer } from "./gameServer";
 import { TERMS_VERSION } from "../lib/protocol";
 
 const T = { termsVersion: TERMS_VERSION };
+let nameSeq = 0;
+/** Names must be unique on the whole server, so tests add a number. */
+const nm = (base: string) => `${base}${++nameSeq}`;
 
 let url = "";
 let server: ReturnType<typeof createServer>;
@@ -19,7 +22,8 @@ const clients: Socket[] = [];
 beforeAll(async () => {
   server = createServer();
   ioServer = new Server(server);
-  attachGameServer(ioServer, loadDecks(join(process.cwd(), "data/decks")));
+  // All test clients share one IP address, so the test server allows more joins.
+  attachGameServer(ioServer, loadDecks(join(process.cwd(), "data/decks")), { joinsPerMinute: 1000 });
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
@@ -97,7 +101,7 @@ describe("game server", () => {
 
   it("keeps the seat when a player reconnects with the token", async () => {
     const a = await client();
-    const created = await a.emit("room:create", { ...T, name: "Host" });
+    const created = await a.emit("room:create", { ...T, name: nm("Host") });
     const b = await client();
     const joined = await b.emit("room:join", { ...T, code: created.code, name: "Rejoin" });
     b.s.disconnect();
@@ -112,7 +116,7 @@ describe("game server", () => {
 
   it("checks room passwords", async () => {
     const a = await client();
-    const created = await a.emit("room:create", { ...T, name: "Host", password: "secret" });
+    const created = await a.emit("room:create", { ...T, name: nm("Host"), password: "secret" });
     const b = await client();
     expect((await b.emit("room:info", { code: created.code })).needsPassword).toBe(true);
     expect((await b.emit("room:join", { ...T, code: created.code, name: "B" })).error).toBe("BAD_PASSWORD");
@@ -121,7 +125,7 @@ describe("game server", () => {
 
   it("lets the host ban a player", async () => {
     const a = await client();
-    const created = await a.emit("room:create", { ...T, name: "Host" });
+    const created = await a.emit("room:create", { ...T, name: nm("Host") });
     const b = await client();
     const joined = await b.emit("room:join", { ...T, code: created.code, name: "Troll" });
     const removed = new Promise((r) => b.s.once("removed", r));
@@ -135,7 +139,7 @@ describe("game server", () => {
     const a = await client();
     expect((await a.emit("room:create", { name: "NoTerms" })).error).toBe("TERMS_REQUIRED");
     expect((await a.emit("room:create", { name: "Old", termsVersion: "v0" })).error).toBe("TERMS_REQUIRED");
-    const created = await a.emit("room:create", { ...T, name: "Host" });
+    const created = await a.emit("room:create", { ...T, name: nm("Host") });
     const b = await client();
     expect((await b.emit("room:join", { code: created.code, name: "B" })).error).toBe("TERMS_REQUIRED");
   });
@@ -173,16 +177,83 @@ describe("game server", () => {
 
   it("lets people spectate a private room with the code", async () => {
     const a = await client();
-    const priv = await a.emit("room:create", { ...T, name: "Host", isPublic: false });
+    const priv = await a.emit("room:create", { ...T, name: nm("Host"), isPublic: false });
     const b = await client();
-    expect((await b.emit("room:join", { ...T, code: priv.code, name: "Watcher", as: "spectator" })).ok).toBe(true);
+    expect((await b.emit("room:join", { ...T, code: priv.code, name: nm("Watcher"), as: "spectator" })).ok).toBe(true);
     const view = await b.until((v) => v.youAreSpectator);
     expect(view.settings.isPublic).toBe(false);
   });
 
+  it("keeps names unique on the whole server, and reserves bot names", async () => {
+    const a = await client();
+    const first = await a.emit("room:create", { ...T, name: "Unique Name" });
+    const b = await client();
+    expect((await b.emit("room:create", { ...T, name: "unique  name" })).error).toBe("NAME_TAKEN");
+    expect((await b.emit("room:join", { ...T, code: first.code, name: "UNIQUE NAME" })).error).toBe("NAME_TAKEN");
+    expect((await b.emit("name:check", { name: "Unique Name" })).available).toBe(false);
+    expect((await b.emit("name:check", { name: "Bot 3" })).reason).toBe("NAME_RESERVED");
+    expect((await b.emit("room:create", { ...T, name: "bot 1" })).error).toBe("NAME_RESERVED");
+    // The owner of the name can reuse it when they move to a new game.
+    const previous = { code: first.code, token: first.token };
+    expect((await a.emit("name:check", { name: "Unique Name", previous })).available).toBe(true);
+    const moved = await a.emit("room:create", { ...T, name: "Unique Name", previous });
+    expect(moved.ok).toBe(true);
+    expect(moved.code).not.toBe(first.code);
+  });
+
+  it("gives the room to the longest-present player when the host leaves", async () => {
+    const watcher = await client();
+    await watcher.emit("lobby:subscribe");
+    const host = await client();
+    const room = await host.emit("room:create", { ...T, name: nm("Owner") });
+    const b = await client();
+    await b.emit("room:join", { ...T, code: room.code, name: "Second In" });
+    const c = await client();
+    await c.emit("room:join", { ...T, code: room.code, name: "Third In" });
+
+    // Leaving by token, as "Leave game" and "Log out" do, works without a room connection.
+    expect((await watcher.emit("room:abandon", { code: room.code, token: room.token })).ok).toBe(true);
+    const listed = await new Promise<any>((resolve) => {
+      const check = (p: any) => {
+        const g = p.games.find((x: any) => x.code === room.code);
+        if (g && g.hostName === "Second In") resolve(g);
+      };
+      watcher.s.on("lobby", check);
+    });
+    expect(listed.players.map((p: any) => p.name)).toEqual(["Second In", "Third In"]);
+    // The old token no longer works, and the name is free again.
+    expect((await host.emit("room:resume", { code: room.code, token: room.token })).ok).toBe(false);
+  });
+
+  it("closes the room when only bots remain", async () => {
+    const watcher = await client();
+    await watcher.emit("lobby:subscribe");
+    const host = await client();
+    const room = await host.emit("room:create", { ...T, name: nm("Solo") });
+    await host.emit("settings:update", { botCount: 2 });
+    await host.emit("room:leave");
+    await new Promise<void>((resolve) => {
+      const check = (p: any) => {
+        if (!p.games.some((g: any) => g.code === room.code)) resolve();
+      };
+      watcher.s.on("lobby", check);
+    });
+    expect((await watcher.emit("room:info", { code: room.code })).exists).toBe(false);
+  });
+
+  it("marks a player as offline when they open the game list", async () => {
+    const host = await client();
+    const room = await host.emit("room:create", { ...T, name: nm("Stay") });
+    const b = await client();
+    await b.emit("room:join", { ...T, code: room.code, name: nm("Wander") });
+    await b.emit("lobby:subscribe");
+    const v = await host.until((v) => v.players.some((p) => p.name.startsWith("Wander") && !p.connected));
+    expect(v.players).toHaveLength(2);
+  });
+
   it("rejects malformed payloads and unknown settings", async () => {
     const a = await client();
-    await a.emit("room:create", { ...T, name: "Host" });
+    await a.emit("room:create", { ...T, name: nm("Host") });
     expect((await a.emit("settings:update", { botCount: "lots" })).error).toBe("BAD_REQUEST");
     expect((await a.emit("settings:update", { isAdmin: true })).error).toBe("BAD_REQUEST");
     expect((await a.emit("room:join", { ...T, code: "<script>", name: "x" })).error).toBe("BAD_REQUEST");

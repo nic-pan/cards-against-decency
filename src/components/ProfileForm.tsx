@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useId, useState, type ReactNode } from "react";
-import { session } from "@/lib/socket";
+import { call, session } from "@/lib/socket";
+import { ERROR_TEXT } from "@/lib/protocol";
 import { Button, Field, inputClass } from "./ui";
 
 export const NAME_MAX = 24;
@@ -31,6 +32,8 @@ export function ProfileForm({
   const termsId = useId();
   const [name, setName] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
 
   useEffect(() => {
     setName(session.name());
@@ -38,10 +41,22 @@ export function ProfileForm({
   }, []);
 
   const trimmed = name.trim();
-  const ready = trimmed.length > 0 && agreed && !busy;
+  const ready = trimmed.length > 0 && agreed && !busy && !checking;
 
-  function finish(action: (name: string) => void) {
+  async function finish(action: (name: string) => void) {
     if (!ready) return;
+    // Names are unique on the whole server. Your own previous seat does not count.
+    setChecking(true);
+    setNameError(null);
+    const r = await call<{ available: boolean; reason?: string }>("name:check", {
+      name: trimmed,
+      previous: session.current(),
+    });
+    setChecking(false);
+    if (r.ok && !r.data.available) {
+      setNameError(ERROR_TEXT[r.data.reason ?? "NAME_TAKEN"] ?? ERROR_TEXT.NAME_TAKEN);
+      return;
+    }
     session.setName(trimmed);
     session.acceptTerms();
     action(trimmed);
@@ -49,7 +64,7 @@ export function ProfileForm({
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
-    finish(onSubmit);
+    void finish(onSubmit);
   }
 
   return (
@@ -58,7 +73,10 @@ export function ProfileForm({
         <input
           className={`${inputClass} text-lg`}
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(e) => {
+            setName(e.target.value);
+            setNameError(null);
+          }}
           maxLength={NAME_MAX}
           required
           autoFocus
@@ -90,13 +108,13 @@ export function ProfileForm({
         </label>
       </div>
 
-      {error && <p className="rounded-lg bg-accent-soft px-3 py-2 text-sm">{error}</p>}
+      {(nameError ?? error) && <p className="rounded-lg bg-accent-soft px-3 py-2 text-sm">{nameError ?? error}</p>}
 
       <Button className="w-full" disabled={!ready}>
         {submitLabel}
       </Button>
       {secondaryLabel && onSecondary && (
-        <Button type="button" variant="ghost" className="w-full" disabled={!ready} onClick={() => finish(onSecondary)}>
+        <Button type="button" variant="ghost" className="w-full" disabled={!ready} onClick={() => void finish(onSecondary)}>
           {secondaryLabel}
         </Button>
       )}

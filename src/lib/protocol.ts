@@ -37,11 +37,23 @@ export function offences(n: number): string {
 export const PACK_BROWSER_URL = "https://certifriedmultitool.com/cah/packs";
 export const MANY_DECKS_URL = "https://decks.rereadgames.com";
 
+/** The seat that this browser had before. The server frees it when the player moves on. */
+export interface PreviousSeat {
+  code: string;
+  token: string;
+}
+
 export interface ClientToServer {
+  /** Is this name free on the whole server? The player's own previous seat does not count. */
+  "name:check": (p: { name: string; previous?: PreviousSeat }, ack: (r: Ack<{ available: boolean; reason?: string }>) => void) => void;
+  /** Does this seat still exist? Used for the "You are still in a game" banner. */
+  "room:seat": (p: PreviousSeat, ack: (r: Ack<{ valid: boolean; hostName?: string }>) => void) => void;
+  /** Leave a seat by its token, without being connected to the room. Used by "Leave game" and "Log out". */
+  "room:abandon": (p: PreviousSeat, ack: (r: Ack) => void) => void;
   "lobby:subscribe": (ack: (r: Ack<{ games: RoomListing[] }>) => void) => void;
   "lobby:unsubscribe": (ack: (r: Ack) => void) => void;
-  "room:create": (p: { name: string; password?: string; isPublic?: boolean; termsVersion: string }, ack: (r: Ack<JoinResult>) => void) => void;
-  "room:join": (p: { code: string; name: string; password?: string; as?: JoinAs; termsVersion: string }, ack: (r: Ack<JoinResult>) => void) => void;
+  "room:create": (p: { name: string; password?: string; isPublic?: boolean; termsVersion: string; previous?: PreviousSeat }, ack: (r: Ack<JoinResult>) => void) => void;
+  "room:join": (p: { code: string; name: string; password?: string; as?: JoinAs; termsVersion: string; previous?: PreviousSeat }, ack: (r: Ack<JoinResult>) => void) => void;
   "room:resume": (p: { code: string; token: string }, ack: (r: Ack<JoinResult>) => void) => void;
   "room:leave": (ack: (r: Ack) => void) => void;
   "room:info": (p: { code: string }, ack: (r: Ack<{ exists: boolean; needsPassword: boolean }>) => void) => void;
@@ -65,7 +77,7 @@ export interface ServerToClient {
   lobby: (p: { games: RoomListing[] }) => void;
   state: (view: GameView & { code: string }) => void;
   /** You were removed from the room. */
-  removed: (p: { reason: "kicked" | "banned" | "closed" }) => void;
+  removed: (p: { reason: "kicked" | "banned" | "closed" | "left" }) => void;
 }
 
 /** Plain-language messages for error codes. */
@@ -75,7 +87,8 @@ export const ERROR_TEXT: Record<string, string> = {
   ROOM_FULL: "This room is full.",
   LATE_JOIN_DISABLED: "The game has started and the host does not allow late joining.",
   NAME_INVALID: "Enter a name.",
-  NAME_TAKEN: "Somebody in this room already uses that name.",
+  NAME_TAKEN: "Somebody is already playing with that name. Choose another name.",
+  NAME_RESERVED: "Names like \"Bot 1\" are for bots. Choose another name.",
   NOT_ENOUGH_PLAYERS: "You need at least 3 players. Add bots or invite more friends.",
   NOT_ENOUGH_CARDS: "The selected decks do not have enough cards.",
   NO_DECKS: "Select at least one deck.",

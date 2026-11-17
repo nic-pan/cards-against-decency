@@ -79,7 +79,8 @@ export type ErrorCode =
   | "UNKNOWN_PLAYER"
   | "BAD_SETTINGS"
   | "SPECTATORS_FULL"
-  | "TOO_MANY_DECKS";
+  | "TOO_MANY_DECKS"
+  | "NAME_RESERVED";
 
 export class GameError extends Error {
   constructor(public readonly code: ErrorCode, message?: string) {
@@ -237,6 +238,16 @@ export function cleanText(input: string, max: number): string {
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, max);
+}
+
+/** Names like "Bot 1" belong to bots, so people cannot use them. */
+export function isReservedName(name: string): boolean {
+  return /^bot\s*\d*$/i.test(name.trim());
+}
+
+/** The form of a name that is used to compare names. */
+export function nameKey(rawName: string): string {
+  return cleanText(rawName, NAME_MAX).toLowerCase();
 }
 
 export class Game {
@@ -418,6 +429,11 @@ export class Game {
   /** True for players and spectators. */
   hasMember(id: string): boolean {
     return this.hasPlayer(id) || this.spectators.some((s) => s.id === id);
+  }
+
+  /** Names of human players and spectators, with their ids. */
+  memberNames(): { id: string; name: string }[] {
+    return [...this.humans(), ...this.spectators].map((m) => ({ id: m.id, name: m.name }));
   }
 
   /** Human players and spectators. Bots are not members. */
@@ -807,6 +823,7 @@ export class Game {
   private checkName(rawName: string): string {
     const name = cleanText(rawName, NAME_MAX);
     if (name.length === 0) throw new GameError("NAME_INVALID");
+    if (isReservedName(name)) throw new GameError("NAME_RESERVED");
     const lower = name.toLowerCase();
     if ([...this.players, ...this.spectators].some((p) => p.name.toLowerCase() === lower)) {
       throw new GameError("NAME_TAKEN");

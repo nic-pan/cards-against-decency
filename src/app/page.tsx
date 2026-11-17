@@ -23,7 +23,7 @@ export default function Home() {
           <Logo />
           <h1 className="text-2xl font-black tracking-tight">Cards Against Decency</h1>
         </header>
-        <GameBrowser name={step.name} onChangeName={() => setStep({ kind: "profile" })} />
+        <GameBrowser name={step.name} onLogout={() => setStep({ kind: "profile" })} />
       </main>
     );
   }

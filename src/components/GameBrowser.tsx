@@ -7,12 +7,31 @@ import { TERMS_VERSION, offences, type JoinAs, type JoinResult, type RoomListing
 import { Badge, Button, inputClass } from "./ui";
 
 /** The public game list. Shown after the player chooses a name and accepts the terms. */
-export function GameBrowser({ name, onChangeName }: { name: string; onChangeName: () => void }) {
+export function GameBrowser({ name, onLogout }: { name: string; onLogout: () => void }) {
   const router = useRouter();
   const [games, setGames] = useState<RoomListing[] | null>(null);
   const [filter, setFilter] = useState("");
   const [creating, setCreating] = useState(false);
   const [code, setCode] = useState("");
+  const [seat, setSeat] = useState<{ code: string; token: string; hostName?: string } | null>(null);
+
+  // Show a banner when this browser still has a seat in a game.
+  useEffect(() => {
+    const current = session.current();
+    if (!current) return;
+    void call<{ valid: boolean; hostName?: string }>("room:seat", current).then((r) => {
+      if (r.ok && r.data.valid) setSeat({ ...current, hostName: r.data.hostName });
+      else if (r.ok) session.clear(current.code);
+    });
+  }, []);
+
+  /** Leaves any game, forgets the name and the terms, and shows the first screen. */
+  async function logout() {
+    const current = session.current();
+    if (current) await call("room:abandon", current);
+    session.logout();
+    onLogout();
+  }
 
   useEffect(() => {
     const socket = getSocket();
@@ -40,7 +59,14 @@ export function GameBrowser({ name, onChangeName }: { name: string; onChangeName
   }, [games, filter]);
 
   async function join(game: { code: string }, as: JoinAs, password?: string): Promise<string | null> {
-    const r = await call<JoinResult>("room:join", { code: game.code, name, password, as, termsVersion: TERMS_VERSION });
+    const r = await call<JoinResult>("room:join", {
+      code: game.code,
+      name,
+      password,
+      as,
+      termsVersion: TERMS_VERSION,
+      previous: session.current(),
+    });
     if (!r.ok) return r.text;
     session.set(r.data.code, r.data.token);
     router.push(`/r/${r.data.code}`);
@@ -87,10 +113,12 @@ export function GameBrowser({ name, onChangeName }: { name: string; onChangeName
       <p className="mt-3 text-right text-sm">
         Playing as <b>{name}</b>
         <span className="mx-2 text-muted">·</span>
-        <button type="button" className="font-semibold text-accent underline" onClick={onChangeName}>
-          Change
+        <button type="button" className="font-semibold text-accent underline" onClick={() => void logout()}>
+          Log out
         </button>
       </p>
+
+      {seat && <StillInGame seat={seat} onLeft={() => setSeat(null)} />}
 
       {creating && <CreatePanel name={name} />}
 
@@ -140,6 +168,7 @@ function CreatePanel({ name }: { name: string }) {
       isPublic,
       password: password || undefined,
       termsVersion: TERMS_VERSION,
+      previous: session.current(),
     });
     setBusy(false);
     if (!r.ok) return setError(r.text);
@@ -341,5 +370,45 @@ function GameCard({
         </button>
       </div>
     </li>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+/** "You are still in a game" banner, with a way back and a way out. */
+function StillInGame({
+  seat,
+  onLeft,
+}: {
+  seat: { code: string; token: string; hostName?: string };
+  onLeft: () => void;
+}) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+
+  async function leave() {
+    setBusy(true);
+    await call("room:abandon", { code: seat.code, token: seat.token });
+    session.clear(seat.code);
+    setBusy(false);
+    onLeft();
+  }
+
+  return (
+    <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-accent bg-accent-soft p-4 sm:flex-row sm:items-center">
+      <p className="min-w-0 flex-1 text-sm">
+        <b>You are still in a game</b>
+        {seat.hostName ? ` (${seat.hostName}'s Game, ${seat.code})` : ` (${seat.code})`}. Your seat is kept for 90
+        seconds after you leave the game screen.
+      </p>
+      <div className="flex shrink-0 gap-2">
+        <Button className="min-h-10" onClick={() => router.push(`/r/${seat.code}`)}>
+          Back to game
+        </Button>
+        <Button variant="ghost" className="min-h-10" disabled={busy} onClick={() => void leave()}>
+          Leave game
+        </Button>
+      </div>
+    </div>
   );
 }

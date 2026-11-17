@@ -54,6 +54,8 @@ export function Room({ code }: { code: string }) {
         message:
           reason === "closed"
             ? "The room closed because nobody played for a long time."
+            : reason === "left"
+              ? "You left this game."
             : reason === "banned"
               ? "The host removed you from this room and you can't join again."
               : "The host removed you from this room.",
@@ -198,7 +200,15 @@ function RoomHeader({ code, practice, onLeave }: { code: string; practice: boole
 
   return (
     <header className="flex flex-wrap items-center gap-x-4 gap-y-2">
-      <Link href="/" className="text-lg font-black tracking-tight">
+      {/* The logo asks before it leaves the game, like the Leave button. */}
+      <Link
+        href="/"
+        className="text-lg font-black tracking-tight"
+        onClick={(e) => {
+          e.preventDefault();
+          setConfirmLeave(true);
+        }}
+      >
         Cards Against Decency
       </Link>
       <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-1.5">
@@ -276,6 +286,7 @@ function JoinForm({ code, needsPassword, onJoined }: { code: string; needsPasswo
       as,
       password: needsPassword ? password : undefined,
       termsVersion: TERMS_VERSION,
+      previous: session.current(),
     });
     setBusy(false);
     if (!r.ok) return setError(r.text);
