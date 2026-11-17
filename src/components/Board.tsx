@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { offences, type GameView, type WhiteCard } from "@/lib/protocol";
-import { BlackCardView, CARD_GRID, CardBack, CardSlot, WhiteCardView, deckIdOf } from "./Cards";
+import { BlackCardView, CARD_GRID, CardBack, CardSlot, CombinedAnswer, WhiteCardView, deckIdOf } from "./Cards";
 import type { Act } from "./Room";
 import { Button } from "./ui";
 
@@ -82,14 +82,18 @@ function StatusBar({
       <span className="text-sm">
         Card Czar: <b className="text-accent">{isCzar ? "You" : nameOf(round.czarId)}</b>
       </span>
-      <span className="w-full text-base font-semibold sm:w-auto sm:flex-1">{text}</span>
+      {/* On phones: round, Czar, count and timer on the first line, the status text on the second. */}
+      <span className="order-last w-full text-base font-semibold sm:order-none sm:w-auto sm:flex-1">{text}</span>
       {view.phase === "submitting" && (
-        <span className="text-sm text-muted">
+        <span className="ml-auto text-sm text-muted sm:ml-0">
           {round.submittedCount}/{round.expectedCount} played
         </span>
       )}
       {left !== null && (
-        <span className={`font-mono text-lg font-bold tabular-nums ${urgent ? "animate-pulse text-danger" : ""}`} aria-label="Seconds left">
+        <span
+          className={`font-mono text-lg font-bold tabular-nums ${view.phase === "submitting" ? "" : "ml-auto sm:ml-0"} ${urgent ? "animate-pulse text-danger" : ""}`}
+          aria-label="Seconds left"
+        >
           {left}s
         </span>
       )}
@@ -215,14 +219,14 @@ function Table({
             {view.phase === "submitting" && (
               <>
                 {Array.from({ length: round.submittedCount }, (_, i) => (
-                  <Group key={`b${i}`} size={pick}>
+                  <Group key={`b${i}`} size={pick} faceDown>
                     {Array.from({ length: pick }, (_, j) => (
                       <CardBack key={j} />
                     ))}
                   </Group>
                 ))}
                 {Array.from({ length: Math.max(0, round.expectedCount - round.submittedCount) }, (_, i) => (
-                  <Group key={`s${i}`} size={pick}>
+                  <Group key={`s${i}`} size={pick} faceDown>
                     {Array.from({ length: pick }, (_, j) => (
                       <CardSlot key={j} />
                     ))}
@@ -233,7 +237,12 @@ function Table({
 
             {view.phase === "judging" &&
               subs.map((s) => (
-                <Group key={s.id} size={s.cards.length} highlight={chosen === s.id ? "selected" : undefined}>
+                <Group
+                  key={s.id}
+                  size={s.cards.length}
+                  highlight={chosen === s.id ? "selected" : undefined}
+                  answer={{ cards: s.cards, onClick: isCzar ? () => setChosen(s.id) : undefined, selected: chosen === s.id }}
+                >
                   {s.cards.map((c, i) => (
                     <WhiteCardView
                       key={c.id}
@@ -255,6 +264,7 @@ function Table({
                     key={s.id}
                     size={s.cards.length}
                     highlight={s.isWinner ? "winner" : undefined}
+                    answer={{ cards: s.cards }}
                     label={
                       <span className={s.isWinner ? "font-bold text-ink" : "text-muted"}>
                         {s.isWinner && "★ "}
@@ -326,32 +336,52 @@ function Table({
   );
 }
 
-/** One player's cards. A pick-2 or pick-3 answer spans 2 or 3 columns. */
+/**
+ * One player's cards. On wide screens a pick-2 or pick-3 answer spans 2 or 3 columns.
+ * On phones it becomes one full-width card with numbered parts, and a face-down answer
+ * shows as a single card back.
+ */
 function Group({
   size,
   highlight,
   label,
   children,
+  answer,
+  faceDown = false,
 }: {
   size: number;
   highlight?: "selected" | "winner";
   label?: React.ReactNode;
   children: React.ReactNode;
+  /** The revealed cards, for the combined phone card. */
+  answer?: { cards: WhiteCard[]; onClick?: () => void; selected?: boolean };
+  faceDown?: boolean;
 }) {
+  const multi = size > 1;
   const span = { gridColumn: `span ${size} / span ${size}` };
+  const phoneSpan = !multi ? "" : faceDown ? "max-sm:[grid-column:span_1]!" : "max-sm:col-span-full!";
+  const ring =
+    highlight === "winner"
+      ? "ring-2 ring-accent ring-offset-4 ring-offset-paper"
+      : highlight === "selected"
+        ? "ring-2 ring-accent/60 ring-offset-4 ring-offset-paper"
+        : "";
   return (
-    <div style={span} className="min-w-0">
-      <div
-        className={`grid gap-2 rounded-lg sm:gap-3 ${
-          highlight === "winner"
-            ? "ring-2 ring-accent ring-offset-4 ring-offset-paper"
-            : highlight === "selected"
-              ? "ring-2 ring-accent/60 ring-offset-4 ring-offset-paper"
-              : ""
-        }`}
-        style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
-      >
-        {children}
+    <div style={span} className={`min-w-0 ${phoneSpan}`}>
+      <div className={`rounded-lg ${ring}`}>
+        {multi && answer && (
+          <div className="sm:hidden">
+            <CombinedAnswer cards={answer.cards} onClick={answer.onClick} selected={answer.selected} />
+          </div>
+        )}
+        <div
+          className={`grid gap-2 sm:gap-3 ${multi && answer ? "max-sm:hidden" : ""} ${
+            multi && faceDown ? "max-sm:grid-cols-1! [&>*:not(:first-child)]:max-sm:hidden" : ""
+          }`}
+          style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
+        >
+          {children}
+        </div>
       </div>
       {label && <div className="mt-1.5 truncate text-xs">{label}</div>}
     </div>

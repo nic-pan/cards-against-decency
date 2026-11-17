@@ -144,3 +144,41 @@ export function CardBack({ style }: { style?: CSSProperties }) {
 export function CardSlot() {
   return <div className="aspect-square w-full rounded-lg border-2 border-dashed border-line" aria-hidden />;
 }
+
+/**
+ * A pick-2 or pick-3 answer as one card with numbered parts. Used on phones,
+ * where 2 or 3 square cards side by side are too narrow to read.
+ */
+export function CombinedAnswer({
+  cards,
+  selected,
+  onClick,
+}: {
+  cards: White[];
+  selected?: boolean;
+  onClick?: () => void;
+}) {
+  const body = (
+    <ol className="space-y-1.5">
+      {cards.map((c, i) => (
+        <li key={c.id} className="flex gap-2">
+          <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] text-white">
+            {i + 1}
+          </span>
+          <span className="hyphens-auto break-words">{c.text}</span>
+        </li>
+      ))}
+    </ol>
+  );
+  const className = `block w-full rounded-lg border bg-card-white p-3 text-left text-sm font-bold leading-snug text-[#171717] shadow-sm transition ${
+    // The surrounding group draws the selection frame, so the card only colours its border.
+    selected ? "border-accent" : "border-[#d9d3c6]"
+  }`;
+  return onClick ? (
+    <button type="button" onClick={onClick} aria-pressed={selected} className={`${className} cursor-pointer`}>
+      {body}
+    </button>
+  ) : (
+    <div className={className}>{body}</div>
+  );
+}

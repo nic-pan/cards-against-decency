@@ -352,15 +352,13 @@ function PhoneNotice() {
   };
   return (
     <div className="mt-3 rounded-lg border border-accent bg-accent-soft px-4 py-3 text-sm">
-      <p className="font-bold">📱 You are playing on a phone</p>
-      <p className="mt-1">
-        Phones often do not play sounds or show reminders when the game is not on the screen. When it is your turn,
-        everybody waits for you, and after 2 missed rounds the game removes you. Keep this page open while you play.
+      <p>
+        <b>📱 Keep this page open.</b> Your phone may not remind you when it is your turn, and 2 missed rounds remove
+        you. We keep the screen awake while you play.{" "}
+        <button type="button" className="font-bold text-accent underline" onClick={dismiss}>
+          Got it
+        </button>
       </p>
-      <p className="mt-1 text-muted">We keep your screen awake during the game, if your phone allows it.</p>
-      <button type="button" className="mt-2 text-sm font-bold text-accent underline" onClick={dismiss}>
-        Got it
-      </button>
     </div>
   );
 }
@@ -406,7 +404,8 @@ function SoundToggle() {
       className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-sm font-semibold hover:bg-surface"
     >
       <span aria-hidden>{muted ? "🔇" : "🔊"}</span>
-      {muted ? "Sound off" : "Sound on"}
+      <span className="hidden sm:inline">{muted ? "Sound off" : "Sound on"}</span>
+      <span className="sr-only sm:hidden">{muted ? "Sound off" : "Sound on"}</span>
     </button>
   );
 }
@@ -427,11 +426,11 @@ function RoomHeader({ code, practice, onLeave }: { code: string; practice: boole
   }
 
   return (
-    <header className="flex flex-wrap items-center gap-x-4 gap-y-2">
+    <header className="flex flex-wrap items-center gap-x-2 gap-y-2 sm:gap-x-4">
       {/* The logo asks before it leaves the game, like the Leave button. */}
       <Link
         href="/"
-        className="text-lg font-black tracking-tight"
+        className="hidden text-lg font-black tracking-tight sm:inline"
         onClick={(e) => {
           e.preventDefault();
           setConfirmLeave(true);
@@ -439,21 +438,25 @@ function RoomHeader({ code, practice, onLeave }: { code: string; practice: boole
       >
         Cards Against Decency
       </Link>
-      <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-1.5">
-        <span className="text-xs text-muted">Room</span>
+      <div className="flex items-center gap-2 rounded-lg border border-line bg-surface px-2.5 py-1.5 sm:px-3">
+        <span className="hidden text-xs text-muted sm:inline">Room</span>
         <span className="font-mono text-base font-bold tracking-[0.2em]">{code}</span>
       </div>
-      <Button variant="ghost" className="min-h-9 px-3" onClick={copy}>
-        {copied ? "Link copied" : "Copy invite link"}
+      <Button variant="ghost" className="min-h-9 px-3" onClick={copy} aria-label="Copy invite link">
+        <span className="sm:hidden">{copied ? "Copied" : "Invite"}</span>
+        <span className="hidden sm:inline">{copied ? "Link copied" : "Copy invite link"}</span>
       </Button>
       <SoundToggle />
       {practice && (
-        <span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-bold text-accent">Practice mode</span>
+        <span className="hidden rounded-full bg-accent-soft px-3 py-1 text-xs font-bold text-accent sm:inline">
+          Practice mode
+        </span>
       )}
       <div className="ml-auto">
         {confirmLeave ? (
           <span className="flex items-center gap-2 text-sm">
-            Leave the room?
+            <span className="hidden sm:inline">Leave the room?</span>
+            <span className="sm:hidden">Leave?</span>
             <Button variant="danger" className="min-h-9 px-3" onClick={onLeave}>
               Leave
             </Button>
