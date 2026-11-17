@@ -3,23 +3,41 @@
 // Game sounds. Short files from Pixabay (see README, "Sound credits") play through the
 // Web Audio API. If a file does not load, the turn sound falls back to a generated one.
 
-export type SoundStyle = "funny" | "gentle" | "off";
-
 const KEY = "bs.sound";
 
-export function getSoundStyle(): SoundStyle {
+/** True when the player has turned sounds off for this browser. */
+export function isMuted(): boolean {
   try {
-    const v = localStorage.getItem(KEY);
-    return v === "gentle" || v === "off" ? v : "funny";
+    return localStorage.getItem(KEY) === "off";
   } catch {
-    return "funny";
+    return false;
   }
 }
 
-export function setSoundStyle(style: SoundStyle): void {
+export function setMuted(muted: boolean): void {
   try {
-    localStorage.setItem(KEY, style);
+    localStorage.setItem(KEY, muted ? "off" : "on");
   } catch {}
+}
+
+let lastActivity = Date.now();
+let activityInstalled = false;
+
+/** Remembers when the player last moved the mouse, scrolled, tapped or pressed a key. */
+export function installActivityTracker(): void {
+  if (activityInstalled || typeof window === "undefined") return;
+  activityInstalled = true;
+  const mark = () => {
+    lastActivity = Date.now();
+  };
+  for (const e of ["pointermove", "pointerdown", "keydown", "scroll", "touchstart", "wheel"]) {
+    window.addEventListener(e, mark, { passive: true, capture: true });
+  }
+}
+
+/** Seconds since the player last did something on the page. */
+export function secondsSinceActivity(): number {
+  return (Date.now() - lastActivity) / 1000;
 }
 
 let ctx: AudioContext | null = null;
@@ -123,32 +141,23 @@ async function playFile(name: SoundFile, volume: number): Promise<boolean> {
   return true;
 }
 
-/** Sounds for game events. They follow the turn sound choice: nothing plays when it is "Off". */
+/** Sounds for game events. Nothing plays when the player has turned sounds off. */
 export function playEventSound(event: "idleWarning" | "removed"): void {
-  if (getSoundStyle() === "off") return;
+  if (isMuted()) return;
   void playFile(event, 0.7);
 }
 
-export function playTurnSound(style: SoundStyle = getSoundStyle()): void {
-  if (style === "off") return;
-  if (style === "funny") {
-    void playFile("turnFunny", 0.6).then((played) => {
-      if (!played) playGenerated("funny");
-    });
-    return;
-  }
-  playGenerated(style);
+/** The turn horn. Falls back to a generated sound when the file does not load. */
+export function playTurnSound(): void {
+  if (isMuted()) return;
+  void playFile("turnFunny", 0.6).then((played) => {
+    if (!played) playGenerated();
+  });
 }
 
-function playGenerated(style: "funny" | "gentle"): void {
+function playGenerated(): void {
   const a = audio();
   if (!a) return;
-  if (style === "gentle") {
-    // A short two-tone chime.
-    tone(a, { type: "sine", from: 880, to: 880, start: 0, length: 0.35, volume: 0.12 });
-    tone(a, { type: "sine", from: 1320, to: 1320, start: 0.14, length: 0.45, volume: 0.1 });
-    return;
-  }
   // A cartoon slide whistle up and down, then a little horn honk.
   tone(a, { type: "sine", from: 320, to: 1100, start: 0, length: 0.18, volume: 0.14 });
   tone(a, { type: "sine", from: 1100, to: 260, start: 0.18, length: 0.22, volume: 0.14 });

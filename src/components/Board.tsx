@@ -73,7 +73,8 @@ function StatusBar({
   } else {
     text = round.end === "winner" ? "Round over." : "Round skipped.";
   }
-  const urgent = left !== null && left <= 10 && view.phase !== "roundOver";
+  // The countdown turns red for the last 15 seconds.
+  const urgent = left !== null && left <= 15 && view.phase !== "roundOver";
 
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-2xl border border-line bg-surface px-4 py-3">
@@ -88,7 +89,7 @@ function StatusBar({
         </span>
       )}
       {left !== null && (
-        <span className={`font-mono text-lg font-bold tabular-nums ${urgent ? "text-accent" : ""}`} aria-label="Seconds left">
+        <span className={`font-mono text-lg font-bold tabular-nums ${urgent ? "animate-pulse text-danger" : ""}`} aria-label="Seconds left">
           {left}s
         </span>
       )}

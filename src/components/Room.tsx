@@ -10,13 +10,14 @@ import { PlayerList } from "./PlayerList";
 import { ProfileForm } from "./ProfileForm";
 import { Button, Field, inputClass } from "./ui";
 import {
-  getSoundStyle,
+  installActivityTracker,
   installAudioUnlock,
+  isMuted,
   playEventSound,
   playTurnSound,
   preloadSounds,
-  setSoundStyle,
-  type SoundStyle,
+  secondsSinceActivity,
+  setMuted,
 } from "@/lib/sounds";
 
 type View = GameView & { code: string };
@@ -39,6 +40,7 @@ export function Room({ code }: { code: string }) {
   useIdleWarningSound(view);
   useEffect(() => {
     installAudioUnlock();
+    installActivityTracker();
     preloadSounds();
   }, []);
   const phone = useIsPhone();
@@ -226,11 +228,14 @@ export type Act = (event: Parameters<typeof call>[0], payload?: unknown) => Prom
 /** The horn plays in the last seconds of a turn, every 5 seconds, until the player acts. */
 const REMIND_FROM_SECONDS = 15;
 const REMIND_EVERY_SECONDS = 5;
+/** A player who did something on the page this recently is not idle, so the horn stays quiet. */
+const ACTIVE_WITHIN_SECONDS = 10;
 
 /**
  * Reminds the player when it is their turn: to play a card, or to choose as Card Czar.
  * In the last 15 seconds, while the player has not acted, the horn plays every 5 seconds
- * (at 15, 10 and 5 seconds left). While the player looks at another tab, the title blinks.
+ * (at 15, 10 and 5 seconds left), but only when the player seems idle: in another tab, or
+ * no mouse, touch, scroll or key activity for 10 seconds. While in another tab, the title blinks.
  */
 function useTurnAlert(view: View | null, clockOffset: React.MutableRefObject<number>) {
   // mustSubmit is false once the player has played; the Czar's turn ends when the Czar chooses.
@@ -249,9 +254,11 @@ function useTurnAlert(view: View | null, clockOffset: React.MutableRefObject<num
         const left = Math.ceil((deadline - (Date.now() + clockOffset.current)) / 1000);
         // Play at 15, 10 and 5 seconds left, once each.
         const mark = Math.ceil(left / REMIND_EVERY_SECONDS) * REMIND_EVERY_SECONDS;
+        const away = document.hidden || !document.hasFocus();
+        const idle = away || secondsSinceActivity() > ACTIVE_WITHIN_SECONDS;
         if (left > 0 && left <= REMIND_FROM_SECONDS && !played.has(mark)) {
           played.add(mark);
-          playTurnSound();
+          if (idle) playTurnSound();
         }
       }
       const away = document.hidden || !document.hasFocus();
@@ -349,33 +356,26 @@ function useIdleWarningSound(view: View | null) {
   }, [idle]);
 }
 
-const SOUND_LABELS: Record<SoundStyle, string> = { funny: "🤡 Funny", gentle: "🔔 Gentle", off: "🔇 Off" };
-
-/** Turn sound choice for this browser. Changing it plays a sample. */
-function SoundPicker() {
-  const [style, setStyle] = useState<SoundStyle>("funny");
-  useEffect(() => setStyle(getSoundStyle()), []);
+/** Turns all game sounds on or off for this browser. */
+function SoundToggle() {
+  const [muted, setMutedState] = useState(false);
+  useEffect(() => setMutedState(isMuted()), []);
   return (
-    <label className="flex items-center gap-1.5 text-xs text-muted" title="Sound when it is your turn">
-      <span className="sr-only sm:not-sr-only">Turn sound</span>
-      <select
-        className="rounded-lg border border-line bg-surface px-2 py-1.5 text-sm text-ink"
-        value={style}
-        onChange={(e) => {
-          const next = e.target.value as SoundStyle;
-          setStyle(next);
-          setSoundStyle(next);
-          playTurnSound(next);
-        }}
-        aria-label="Turn sound"
-      >
-        {(Object.keys(SOUND_LABELS) as SoundStyle[]).map((k) => (
-          <option key={k} value={k}>
-            {SOUND_LABELS[k]}
-          </option>
-        ))}
-      </select>
-    </label>
+    <button
+      type="button"
+      aria-pressed={!muted}
+      title={muted ? "Sounds are off. Click to turn them on." : "Sounds are on. Click to turn them off."}
+      onClick={() => {
+        const next = !muted;
+        setMutedState(next);
+        setMuted(next);
+        if (!next) playTurnSound();
+      }}
+      className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-line px-3 text-sm font-semibold hover:bg-surface"
+    >
+      <span aria-hidden>{muted ? "🔇" : "🔊"}</span>
+      {muted ? "Sound off" : "Sound on"}
+    </button>
   );
 }
 
@@ -414,7 +414,7 @@ function RoomHeader({ code, practice, onLeave }: { code: string; practice: boole
       <Button variant="ghost" className="min-h-9 px-3" onClick={copy}>
         {copied ? "Link copied" : "Copy invite link"}
       </Button>
-      <SoundPicker />
+      <SoundToggle />
       {practice && (
         <span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-bold text-accent">Practice mode</span>
       )}
