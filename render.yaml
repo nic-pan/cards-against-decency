@@ -16,8 +16,12 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "22"
-      # One proxy (Render's load balancer) is in front of the app.
+      # Render's traffic passes Cloudflare, which sets CF-Connecting-IP to the player's
+      # real address and blocks requests that try to fake it (checked 2026-11-17).
+      - key: CLIENT_IP_HEADER
+        value: cf-connecting-ip
+      # Fallback when the header is missing: 3 proxy entries in X-Forwarded-For (checked 2026-11-17).
       - key: TRUST_PROXY
-        value: "1"
+        value: "3"
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"

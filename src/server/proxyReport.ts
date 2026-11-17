@@ -1,5 +1,5 @@
 import type { IncomingMessage } from "node:http";
-import { trustedHopsFromEnv } from "./clientIp";
+import { clientIpFrom, ipHeaderFromEnv, trustedHopsFromEnv } from "./clientIp";
 
 // TEMPORARY diagnostic for the TRUST_PROXY setting. Remove it after the check.
 // It reports counts and header names only. It never returns an IP address.
@@ -57,6 +57,13 @@ export function proxyReport(req: IncomingMessage) {
     cfConnectingIpPositionFromRight: fromRight(cf),
     trueClientIpPositionFromRight: fromRight(trueClient),
     trueClientIpEqualsCfConnectingIp: cf !== undefined && cf === trueClient,
+    clientIpHeader: ipHeaderFromEnv(process.env.CLIENT_IP_HEADER) ?? null,
+    serverChoiceEqualsCfConnectingIp:
+      cf !== undefined &&
+      clientIpFrom(req.headers, req.socket.remoteAddress ?? "", {
+        trustedHops,
+        header: ipHeaderFromEnv(process.env.CLIENT_IP_HEADER),
+      }) === cf,
     probe: probe
       ? {
           leftmostForwardedForIsProbe: list[0] === probe,

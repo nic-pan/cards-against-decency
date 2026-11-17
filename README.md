@@ -35,7 +35,8 @@ What `render.yaml` sets:
 
 - Build: `npm ci && npm run build`. Start: `npm start`. Node.js 22. Region: Frankfurt.
 - Health check: `/healthz`. It answers `ok` without rendering a page.
-- `TRUST_PROXY=1`: one proxy (Render's load balancer) is in front of the app.
+- `CLIENT_IP_HEADER=cf-connecting-ip`: the player's address comes from Cloudflare's header, which a browser cannot fake.
+- `TRUST_PROXY=3`: the fallback. Render's `X-Forwarded-For` has 3 proxy entries (checked on 2026-11-17).
 
 Limits of the free plan:
 
@@ -45,7 +46,9 @@ Limits of the free plan:
 ### Rules for any host
 
 - Run **one instance only**. Live rooms are in memory, so a second instance does not see them.
-- **Set `TRUST_PROXY`** to the number of proxies in front of the app. The server then counts that many entries from the right of `X-Forwarded-For`, which the browser cannot fake. Without it, every player looks like the same IP address, so the rate limits cover all players at once and a ban blocks everyone.
+- **Tell the server where the real player address is.** Without this, every player looks like the same IP address, so the rate limits cover all players at once and a ban blocks everyone.
+  - `CLIENT_IP_HEADER`: a header that the host's edge network sets and protects (`cf-connecting-ip`, `true-client-ip` or `x-real-ip`). Use it only when every request passes through that network.
+  - `TRUST_PROXY`: the number of entries that the host's proxies add to `X-Forwarded-For`. The server counts that many from the right. Never trust the left side: a browser can write it.
 - Rate limits for each IP address: 60 create, join and leave actions each minute, and 300 name and room checks each minute. Friends on one Wi-Fi share one IP address.
 
 ## Test players (development only)

@@ -7,7 +7,7 @@ import { TERMS_VERSION, type ClientToServer, type RoomListing, type ServerToClie
 import { TokenBucket, WindowCounter } from "./rateLimit";
 import { ipKey, securityLog } from "./securityLog";
 import { DeckImportError, fetchManyDeck, normalizeCode } from "./manyDecks";
-import { clientIp, trustedHopsFromEnv } from "./clientIp";
+import { clientIpFrom, ipHeaderFromEnv, trustedHopsFromEnv } from "./clientIp";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -153,7 +153,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
   const store = options.store ?? new MemoryRoomStore();
   const io = server as unknown as IO;
   // Friends on one Wi-Fi share one IP address, so these limits are for the whole group.
-  // Behind a hosting proxy, set TRUST_PROXY to the number of proxies (1 on Render),
+  // Behind a hosting proxy, set CLIENT_IP_HEADER and TRUST_PROXY (see README),
   // or all players look like one address.
   const joinAttempts = new WindowCounter(options.joinsPerMinute ?? 60, 60_000);
   const lookups = new WindowCounter(options.lookupsPerMinute ?? 300, 60_000);
@@ -420,11 +420,10 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
   }
 
   io.on("connection", (socket: Sock) => {
-    socket.data.ip = clientIp(
-      socket.handshake.headers["x-forwarded-for"],
-      socket.handshake.address,
-      trustedHopsFromEnv(process.env.TRUST_PROXY),
-    );
+    socket.data.ip = clientIpFrom(socket.handshake.headers, socket.handshake.address, {
+      trustedHops: trustedHopsFromEnv(process.env.TRUST_PROXY),
+      header: ipHeaderFromEnv(process.env.CLIENT_IP_HEADER),
+    });
     // 12 actions at once, then 4 each second.
     socket.data.bucket = new TokenBucket(12, 4);
 
