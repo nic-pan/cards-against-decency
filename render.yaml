@@ -1,0 +1,23 @@
+# Render Blueprint. In the Render dashboard: New > Blueprint, then choose this repository.
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: cards-against-decency
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    autoDeploy: true
+    # Do not set NODE_ENV here: the build needs the dev dependencies (Tailwind, TypeScript).
+    # "npm start" sets NODE_ENV=production for the server.
+    buildCommand: npm ci --no-audit --no-fund && npm run build
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # One proxy (Render's load balancer) is in front of the app.
+      - key: TRUST_PROXY
+        value: "1"
+      - key: NEXT_TELEMETRY_DISABLED
+        value: "1"

@@ -6,7 +6,8 @@ import { loadDecks } from "./src/server/decks";
 import { attachGameServer } from "./src/server/gameServer";
 
 const dev = process.env.NODE_ENV !== "production";
-const hostname = process.env.HOST ?? "localhost";
+// Hosts such as Render need the server to listen on all interfaces.
+const hostname = process.env.HOST ?? (dev ? "localhost" : "0.0.0.0");
 const port = Number(process.env.PORT ?? 3000);
 
 const decks = loadDecks(join(process.cwd(), "data/decks"));
@@ -14,7 +15,15 @@ const app = next({ dev, hostname, port });
 await app.prepare();
 const handle = app.getRequestHandler();
 
-const httpServer = createServer((req, res) => handle(req, res));
+const httpServer = createServer((req, res) => {
+  // Health check for the host and for uptime monitors. It does not render a page.
+  if (req.url === "/healthz") {
+    res.writeHead(200, { "content-type": "text/plain", "cache-control": "no-store" });
+    res.end("ok");
+    return;
+  }
+  void handle(req, res);
+});
 const io = new Server(httpServer, {
   // Game messages are small. Reject large payloads early.
   maxHttpBufferSize: 16 * 1024,

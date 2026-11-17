@@ -21,12 +21,31 @@ To test with friends on the same network, open `http://<your-computer-ip>:3000` 
 
 ## Deploying
 
-The game needs a host that runs one long-running Node.js process, because `server.ts` runs Next.js and the Socket.IO game server together.
+The game needs a host that runs one long-running Node.js process, because `server.ts` runs Next.js and the Socket.IO game server together. Vercel and other serverless hosts do not work: they never start `server.ts`.
 
-- **Vercel and other serverless hosts do not work.** They run Next.js pages as short functions and never start `server.ts`, so there is no game server.
-- **Use** Railway, Render, Fly.io or a small VPS. Run `npm run build`, then `npm start`.
-- Run **one instance only**. Live rooms are in memory, so a second instance does not see them. A restart deletes all rooms.
-- **Set `TRUST_PROXY=1`** when the app runs behind the host's proxy. Without it, every player looks like the same IP address. Then the rate limits cover all players at once, and a ban blocks everyone.
+### Render (free plan)
+
+`render.yaml` describes the service. To deploy:
+
+1. Sign in to Render with GitHub.
+2. Click **New > Blueprint** and choose this repository.
+3. Click **Apply**. Render builds and starts the game. Each push to `main` deploys again.
+
+What `render.yaml` sets:
+
+- Build: `npm ci && npm run build`. Start: `npm start`. Node.js 22. Region: Frankfurt.
+- Health check: `/healthz`. It answers `ok` without rendering a page.
+- `TRUST_PROXY=1`: one proxy (Render's load balancer) is in front of the app.
+
+Limits of the free plan:
+
+- The service sleeps after 15 minutes without visits or game messages. The next visitor waits about a minute. An uptime monitor (for example UptimeRobot) that calls `/healthz` every 5 minutes keeps it awake. This uses most of the 750 free hours each month, so it works for one service only.
+- A sleep, a restart or a deploy deletes all live rooms.
+
+### Rules for any host
+
+- Run **one instance only**. Live rooms are in memory, so a second instance does not see them.
+- **Set `TRUST_PROXY`** to the number of proxies in front of the app. The server then counts that many entries from the right of `X-Forwarded-For`, which the browser cannot fake. Without it, every player looks like the same IP address, so the rate limits cover all players at once and a ban blocks everyone.
 - Rate limits for each IP address: 60 create, join and leave actions each minute, and 300 name and room checks each minute. Friends on one Wi-Fi share one IP address.
 
 ## Test players (development only)
