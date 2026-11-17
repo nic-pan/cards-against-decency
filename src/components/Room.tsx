@@ -294,10 +294,14 @@ function IdleRemoved() {
         </p>
         <h1 className="mt-3 text-xl font-black text-danger">You were removed for being idle</h1>
         <p className="mt-3 text-sm leading-relaxed text-ink">
-          You missed 2 rounds in a row, so the game removed you. When a player does not play, everybody else has to
-          wait. Please do not leave a game idle again: it ruins the game for the other players.
+          You missed 2 consecutive rounds, so the game removed you to keep things moving for everyone else.
         </p>
-        <p className="mt-3 text-sm text-muted">If you need a break, use Leave. You can always join a game again.</p>
+        <p className="mt-3 text-sm leading-relaxed text-ink">
+          If you need a break, please use Leave instead of leaving your game unattended. You can always join again later.
+        </p>
+        <p className="mt-3 text-sm font-semibold leading-relaxed text-danger">
+          Don&apos;t hold everyone hostage. The other players have a questionable sense of humour to attend to.
+        </p>
         <Link
           href="/"
           className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg bg-ink px-5 text-sm font-bold text-paper"
