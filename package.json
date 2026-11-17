@@ -10,7 +10,8 @@
     "start": "NODE_ENV=production tsx server.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "import:jah": "tsx scripts/import-json-against-humanity.ts"
+    "import:jah": "tsx scripts/import-json-against-humanity.ts",
+    "dev:players": "tsx scripts/dev-players.ts"
   },
   "dependencies": {
     "next": "15.5.4",

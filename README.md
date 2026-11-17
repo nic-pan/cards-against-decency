@@ -19,6 +19,19 @@ docker compose run --rm app npm run typecheck
 
 To test with friends on the same network, open `http://<your-computer-ip>:3000` on their devices.
 
+## Test players (development only)
+
+Add fake human players to a local room, to test with more people:
+
+```sh
+docker compose exec app npm run dev:players -- <ROOM CODE> [count] [--idle] [--password=...]
+```
+
+- The players are called "Tester Ana", "Tester Bo", and so on. The game treats them as people, not bots.
+- Without `--idle`, they play random cards and choose random answers as Card Czar.
+- Press Ctrl+C to remove them from the room.
+- The script refuses to run when `NODE_ENV` is `production`.
+
 ## Structure
 
 | Path | Purpose |

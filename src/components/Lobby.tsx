@@ -2,7 +2,7 @@
 
 import type { GameView, Settings } from "@/lib/protocol";
 import type { Act } from "./Room";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MANY_DECKS_URL, PACK_BROWSER_URL, offences } from "@/lib/protocol";
 import { Badge, Button, Toggle, inputClass } from "./ui";
 
@@ -50,10 +50,13 @@ export function Lobby({ view, isHost, act }: { view: GameView; isHost: boolean; 
         )}
       </section>
 
+      {!isHost ? (
+        <SettingsSummary view={view} />
+      ) : (
       <section className="rounded-2xl border border-line bg-surface p-5">
-        <h2 className="mb-4 font-bold">Game settings {!isHost && <span className="font-normal text-muted">(the host can change these)</span>}</h2>
+        <h2 className="mb-4 font-bold">Game settings</h2>
 
-        <fieldset disabled={!isHost} className="space-y-6">
+        <fieldset className="space-y-6">
           <div className="space-y-3">
             <Toggle
               label="Play with bots"
@@ -194,10 +197,11 @@ export function Lobby({ view, isHost, act }: { view: GameView; isHost: boolean; 
                 </li>
               ))}
             </ul>
-            {isHost && <ImportDeck act={act} />}
+            <ImportDeck act={act} />
           </div>
         </fieldset>
       </section>
+      )}
     </div>
   );
 }
@@ -292,5 +296,139 @@ function ImportDeck({ act }: { act: Act }) {
         &quot;Custom decks&quot; label. The deck stays in this room only and is gone when the room closes.
       </p>
     </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+type SummaryRow = { key: string; label: string; value: React.ReactNode };
+
+/** The settings that matter to players, as label and value rows. */
+function summaryRows(view: GameView): SummaryRow[] {
+  const s = view.settings;
+  const decks = view.decks.filter((d) => s.deckIds.includes(d.id));
+  return [
+    { key: "targetScore", label: "Offences to win", value: offences(s.targetScore) },
+    { key: "maxPlayers", label: "Maximum players", value: `${s.maxPlayers} players` },
+    { key: "botCount", label: "Bots", value: s.botCount === 0 ? "Off" : `${s.botCount} bot${s.botCount === 1 ? "" : "s"}` },
+    { key: "submitSeconds", label: "Time to play a card", value: seconds(s.submitSeconds) },
+    { key: "judgeSeconds", label: "Time for the Card Czar", value: seconds(s.judgeSeconds) },
+    {
+      key: "maxSpectators",
+      label: "Spectators",
+      value: s.maxSpectators === 0 ? "Not allowed" : `Up to ${s.maxSpectators}`,
+    },
+    { key: "isPublic", label: "Game list", value: s.isPublic ? "Public" : "Private (link or code only)" },
+    { key: "allowLateJoin", label: "Joining during the game", value: s.allowLateJoin ? "Allowed" : "Not allowed" },
+    {
+      key: "deckIds",
+      label: "Decks",
+      value:
+        decks.length === 0 ? (
+          "None selected"
+        ) : (
+          <span className="flex flex-wrap gap-x-2 gap-y-1">
+            {decks.map((d, i) => (
+              <span key={d.id}>
+                {d.name}
+                {d.external && (
+                  <span className="ml-1 align-middle">
+                    <Badge tone="accent">User-made</Badge>
+                  </span>
+                )}
+                {i < decks.length - 1 && ","}
+              </span>
+            ))}
+          </span>
+        ),
+    },
+  ];
+}
+
+const HIGHLIGHT_MS = 4000;
+
+/**
+ * Read-only settings for players who are not the host. The panel is closed by default.
+ * Values update live, and a changed value is highlighted for a few seconds.
+ */
+function SettingsSummary({ view }: { view: GameView }) {
+  const [open, setOpen] = useState(false);
+  const [changed, setChanged] = useState<Set<string>>(new Set());
+  const [unseen, setUnseen] = useState(false);
+  const previous = useRef<GameView["settings"] | null>(null);
+  const s = view.settings;
+
+  useEffect(() => {
+    const before = previous.current;
+    previous.current = s;
+    if (!before) return;
+    const keys = (Object.keys(s) as (keyof typeof s)[]).filter(
+      (k) => JSON.stringify(s[k]) !== JSON.stringify(before[k]),
+    );
+    if (keys.length === 0) return;
+    setChanged(new Set(keys));
+    if (!open) setUnseen(true);
+    const t = setTimeout(() => setChanged(new Set()), HIGHLIGHT_MS);
+    return () => clearTimeout(t);
+    // Only a new settings object starts a highlight.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [s]);
+
+  const short = [
+    offences(s.targetScore),
+    s.botCount === 0 ? "no bots" : `${s.botCount} bot${s.botCount === 1 ? "" : "s"}`,
+    `${s.deckIds.length} deck${s.deckIds.length === 1 ? "" : "s"}`,
+  ].join(" · ");
+
+  return (
+    <section className="rounded-2xl border border-line bg-surface">
+      <button
+        type="button"
+        onClick={() => {
+          setOpen((o) => !o);
+          setUnseen(false);
+        }}
+        aria-expanded={open}
+        aria-controls="settings-summary"
+        className="flex w-full items-center gap-3 p-5 text-left"
+      >
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2 font-bold">
+            Game settings
+            {unseen && (
+              <span className="rounded-full bg-accent px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                Updated
+              </span>
+            )}
+          </span>
+          <span className="mt-0.5 block text-sm text-muted">{short}</span>
+        </span>
+        <span className="shrink-0 text-sm font-semibold text-accent">{open ? "Hide" : "Show"}</span>
+      </button>
+
+      {open && (
+        <div id="settings-summary" className="border-t border-line px-5 pb-5 pt-3">
+          <p className="mb-3 text-xs text-muted">The host chooses these settings. They update here when the host changes them.</p>
+          <dl className="grid gap-x-6 gap-y-2 text-sm sm:grid-cols-[auto_1fr]">
+            {summaryRows(view).map((row) => {
+              const hot = changed.has(row.key);
+              return (
+                <div key={row.key} className="contents">
+                  <dt className="font-semibold sm:py-1">{row.label}</dt>
+                  <dd
+                    className={`-mx-2 mb-2 rounded px-2 transition-colors sm:mb-0 sm:py-1 ${
+                      hot ? "bg-accent-soft font-semibold text-ink" : ""
+                    }`}
+                  >
+                    {row.value}
+                    {hot && <span className="ml-2 text-xs font-bold text-accent">Changed</span>}
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
+        </div>
+      )}
+    </section>
   );
 }
