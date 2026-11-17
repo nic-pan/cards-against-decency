@@ -715,7 +715,7 @@ export class Game {
     this.whitePile?.discard(round.submissions.flatMap((s) => s.cards));
     this.blackPile?.discard([round.black]);
 
-    if (end === "czarTimeout") this.setNotice("The Card Czar did not choose in time. Nobody scored.");
+    if (end === "czarTimeout") this.setNotice("The Card Czar did not choose in time. Nobody gets an Offence.");
     if (end === "czarLeft") this.setNotice("The Card Czar left. The round was cancelled.");
     if (end === "noSubmissions") this.setNotice("Nobody submitted an answer. The round was skipped.");
 

@@ -15,7 +15,7 @@ export default function Privacy() {
       <ul className="mt-2 list-disc space-y-1 pl-5">
         <li>The display name that you type. You choose it, and it does not have to be your real name.</li>
         <li>A random session token. It keeps your seat if your connection drops or you reload the page.</li>
-        <li>Your game actions in the current room, such as the cards you play and your score.</li>
+        <li>Your game actions in the current room, such as the cards you play and your Offences (your score).</li>
         <li>
           Your IP address, for a short time, to stop abuse. We do not store it in plain text. Security logs contain a
           one-way hash with a key that changes every day.
@@ -37,7 +37,7 @@ export default function Privacy() {
 
       <h2 className="mt-8 text-lg font-bold">Who can see it</h2>
       <p className="mt-2">
-        Other players in your room see your name, your score and the cards you play. The Card Czar does not see who
+        Other players in your room see your name, your Offences (your score) and the cards you play. The Card Czar does not see who
         played which answer until they choose. Only the people who run this service can read the security logs.
       </p>
 

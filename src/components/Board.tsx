@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { GameView, SubmissionView, WhiteCard } from "@/lib/protocol";
+import { offences, type GameView, type SubmissionView, type WhiteCard } from "@/lib/protocol";
 import { BlackCardView, WhiteCardView } from "./Cards";
 import type { Act } from "./Room";
 import { Button } from "./ui";
@@ -267,10 +267,12 @@ function RoundResult({ view, nameOf, left }: { view: GameView; nameOf: (id: stri
       </div>
       {winner ? (
         <p className="text-center text-xl font-black">
-          {winner.playerId === view.youId ? "You win this round!" : `${nameOf(winner.playerId)} wins this round.`}
+          {winner.playerId === view.youId
+            ? "You win this round and get an Offence!"
+            : `${nameOf(winner.playerId)} wins this round and gets an Offence.`}
         </p>
       ) : (
-        <p className="text-center text-lg font-semibold">Nobody scored this round.</p>
+        <p className="text-center text-lg font-semibold">Nobody got an Offence this round.</p>
       )}
       {left !== null && <p className="text-center text-sm text-muted">Next round in {left} seconds.</p>}
       {subs.length > 0 && (
@@ -311,7 +313,7 @@ function GameOver({
     <section className="rounded-2xl border border-line bg-surface p-6 text-center">
       <p className="text-sm font-bold uppercase tracking-wide text-muted">Game over</p>
       <h2 className="mt-2 text-3xl font-black">
-        {view.winnerId ? (view.winnerId === view.youId ? "You win!" : `${nameOf(view.winnerId)} wins!`) : "Nobody scored."}
+        {view.winnerId ? (view.winnerId === view.youId ? "You win!" : `${nameOf(view.winnerId)} wins!`) : "Nobody got an Offence."}
       </h2>
       <ol className="mx-auto mt-6 max-w-xs space-y-1 text-left">
         {ranked.map((p, i) => (
@@ -320,7 +322,7 @@ function GameOver({
               {i + 1}. {p.name}
               {p.isBot && <span className="text-muted"> (bot)</span>}
             </span>
-            <span className="font-bold tabular-nums">{p.score}</span>
+            <span className="font-bold tabular-nums">{offences(p.score)}</span>
           </li>
         ))}
       </ol>

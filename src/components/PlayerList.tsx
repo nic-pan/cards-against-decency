@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { GameView, PlayerStatus } from "@/lib/protocol";
+import { offences, type GameView, type PlayerStatus } from "@/lib/protocol";
 import type { Act } from "./Room";
 import { Badge } from "./ui";
 
@@ -27,7 +27,7 @@ export function PlayerList({ view, isHost, act }: { view: GameView; isHost: bool
         <h2 className="font-bold">Players</h2>
         <span className="text-xs text-muted">
           {humans}/{view.settings.maxPlayers} people
-          {view.phase !== "lobby" && ` · first to ${view.settings.targetScore}`}
+          {view.phase !== "lobby" && ` · first to ${offences(view.settings.targetScore)}`}
         </span>
       </div>
       <ul className="divide-y divide-line">
@@ -49,7 +49,13 @@ export function PlayerList({ view, isHost, act }: { view: GameView; isHost: bool
                   {p.isHost && <Badge tone="accent">Host</Badge>}
                   {p.isBot && <Badge>Bot</Badge>}
                 </span>
-                {view.phase !== "lobby" && <span className="ml-auto pl-2 text-lg font-black tabular-nums">{p.score}</span>}
+                {view.phase !== "lobby" && <span
+                    className="ml-auto pl-2 text-lg font-black tabular-nums"
+                    title={offences(p.score)}
+                    aria-label={offences(p.score)}
+                  >
+                    {p.score}
+                  </span>}
                 {canManage && (
                   <button
                     className={`${view.phase === "lobby" ? "ml-auto" : ""} rounded px-1.5 text-muted hover:bg-paper`}

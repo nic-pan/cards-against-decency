@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { call, getSocket, session } from "@/lib/socket";
-import { TERMS_VERSION, type JoinAs, type JoinResult, type RoomListing } from "@/lib/protocol";
+import { TERMS_VERSION, offences, type JoinAs, type JoinResult, type RoomListing } from "@/lib/protocol";
 import { Badge, Button, inputClass } from "./ui";
 
 /** The public game list. Shown after the player chooses a name and accepts the terms. */
@@ -291,7 +291,7 @@ function GameCard({
           <dt className="font-semibold">Spectators</dt>
           <dd className="min-w-0 break-words text-muted">{game.spectators.join(", ") || "None"}</dd>
           <dt className="font-semibold">Goal</dt>
-          <dd>{game.targetScore} points</dd>
+          <dd>{offences(game.targetScore)}</dd>
           <dt className="font-semibold">Decks</dt>
           <dd className="min-w-0 break-words">{game.deckNames.join(", ") || "None selected"}</dd>
         </dl>

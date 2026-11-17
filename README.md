@@ -52,7 +52,7 @@ These are decisions that the brief did not specify. Change them if you want diff
 - The hand size is fixed at 10 cards.
 - When the Card Czar does not choose in time, nobody scores and the cards go back to the players' hands.
 - When the Card Czar leaves, the round is cancelled.
-- Decks, bots and the points to win change only in the lobby. Time limits and late joining can change at any time.
+- Players score "Offences". One Offence is one point. Decks, bots and the Offences to win change only in the lobby. Time limits and late joining can change at any time.
 - Bans exist only while the room exists. A ban covers the player's session token and a hashed IP.
 - New rooms are public. The host can make a room private when they create it, or later in the lobby.
 - A spectator can start to play under the same rules as a late joiner.

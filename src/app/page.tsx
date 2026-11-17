@@ -57,7 +57,7 @@ export default function Home() {
         </p>
         <p>
           <b className="text-ink">Who wins.</b> The Card Czar chooses the best answer without knowing who played it.
-          That player gets a point.
+          That player gets an Offence. Offences are the points in this game.
         </p>
         <p>
           <b className="text-ink">Small group?</b> Add bots. They play random cards from the deck. Humans always judge.

@@ -28,6 +28,11 @@ export interface RoomListing extends Omit<GameSummary, "isPublic"> {
 
 export type JoinAs = "player" | "spectator";
 
+/** Players score "Offences". One Offence is one point. */
+export function offences(n: number): string {
+  return `${n} ${n === 1 ? "Offence" : "Offences"}`;
+}
+
 /** Where hosts find and build external decks. */
 export const PACK_BROWSER_URL = "https://certifriedmultitool.com/cah/packs";
 export const MANY_DECKS_URL = "https://decks.rereadgames.com";

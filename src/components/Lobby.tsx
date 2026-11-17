@@ -3,7 +3,7 @@
 import type { GameView, Settings } from "@/lib/protocol";
 import type { Act } from "./Room";
 import { useState } from "react";
-import { MANY_DECKS_URL, PACK_BROWSER_URL } from "@/lib/protocol";
+import { MANY_DECKS_URL, PACK_BROWSER_URL, offences } from "@/lib/protocol";
 import { Badge, Button, Toggle, inputClass } from "./ui";
 
 const range = (from: number, to: number, step = 1) =>
@@ -86,11 +86,11 @@ export function Lobby({ view, isHost, act }: { view: GameView; isHost: boolean; 
 
           <div className="grid gap-5 sm:grid-cols-2">
             <Select
-              label="Points to win"
+              label="Offences to win (points)"
               value={s.targetScore}
-              options={range(3, 15).map((n) => [n, `${n} points`])}
+              options={range(3, 15).map((n) => [n, offences(n)])}
               onChange={(v) => set({ targetScore: v })}
-              hint="The first player to reach this score wins the game."
+              hint="An Offence is a point. A player gets one Offence for each round they win. The first player to reach this number wins the game."
             />
             <Select
               label="Maximum players"
@@ -112,7 +112,7 @@ export function Lobby({ view, isHost, act }: { view: GameView; isHost: boolean; 
               value={s.judgeSeconds}
               options={[30, 45, 60, 75, 90, 120, 180, 300].map((n) => [n, seconds(n)])}
               onChange={(v) => set({ judgeSeconds: v })}
-              hint="If the Card Czar does not choose in time, nobody scores and the cards go back to the players."
+              hint="If the Card Czar does not choose in time, nobody gets an Offence and the cards go back to the players."
             />
             <Select
               label="Maximum spectators"
