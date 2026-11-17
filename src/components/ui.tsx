@@ -1,4 +1,6 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+"use client";
+
+import { useId, useState, type ButtonHTMLAttributes, type ReactNode } from "react";
 
 export const inputClass =
   "w-full rounded-lg border border-line bg-paper px-3 py-2.5 text-base outline-none focus:border-accent focus:ring-2 focus:ring-accent/30";
@@ -82,5 +84,39 @@ export function Toggle({
         />
       </button>
     </label>
+  );
+}
+
+/**
+ * A "?" icon that explains a setting. The text shows on hover and on keyboard focus.
+ * On touch screens, a tap opens and closes it.
+ */
+export function InfoTip({ text, label }: { text: string; label: string }) {
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="group relative inline-flex">
+      <button
+        type="button"
+        aria-label={`About ${label}`}
+        aria-describedby={id}
+        aria-expanded={open}
+        onClick={() => setOpen((o) => !o)}
+        onBlur={() => setOpen(false)}
+        onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
+        className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-muted text-[10px] font-bold leading-none text-muted hover:border-accent hover:text-accent focus-visible:border-accent focus-visible:text-accent focus-visible:outline-none"
+      >
+        ?
+      </button>
+      <span
+        role="tooltip"
+        id={id}
+        className={`absolute bottom-full left-0 z-30 mb-2 w-64 max-w-[75vw] rounded-lg bg-ink px-3 py-2 text-xs font-normal leading-snug text-paper shadow-lg ${
+          open ? "block" : "hidden"
+        } group-hover:block group-focus-within:block`}
+      >
+        {text}
+      </span>
+    </span>
   );
 }

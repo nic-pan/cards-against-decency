@@ -4,10 +4,23 @@ import type { GameView, Settings } from "@/lib/protocol";
 import type { Act } from "./Room";
 import { useEffect, useRef, useState } from "react";
 import { MANY_DECKS_URL, PACK_BROWSER_URL, offences } from "@/lib/protocol";
-import { Badge, Button, Toggle, inputClass } from "./ui";
+import { Badge, Button, InfoTip, Toggle, inputClass } from "./ui";
 
 const range = (from: number, to: number, step = 1) =>
   Array.from({ length: Math.floor((to - from) / step) + 1 }, (_, i) => from + i * step);
+
+/** Setting hints. The host sees them as text, other players as tooltips. */
+const HINTS = {
+  botCount: "Bots play random cards from the decks. They are never the Card Czar.",
+  targetScore: "An Offence is a point. A player gets one Offence for each round they win. The first player to reach this number wins the game.",
+  maxPlayers: "More than 10 players is hard to follow. Rounds get slow, and more people leave or stop playing.",
+  submitSeconds: "A player who does not play in time misses the round. After 2 missed rounds, the player sits out until they come back.",
+  judgeSeconds: "If the Card Czar does not choose in time, nobody gets an Offence and the cards go back to the players.",
+  maxSpectators: "Spectators watch the game but do not play. They are never the Card Czar.",
+  isPublic: "When this is off, only people with the invite link or the room code can find the game.",
+  allowLateJoin: "New players get cards at once and play from the next round. Spectators can also switch to playing.",
+  deckIds: "The game mixes the cards from all selected decks. Click a deck name to see where its cards come from.",
+} as const;
 
 /** The bot count to use when the host turns bots on. */
 function suggestedBots(humans: number): number {
@@ -62,7 +75,7 @@ export function Lobby({ view, isHost, act }: { view: GameView; isHost: boolean; 
               label="Play with bots"
               checked={s.botCount > 0}
               onChange={(on) => set({ botCount: on ? suggestedBots(humans) : 0 })}
-              hint="Bots play random cards from the decks. They are never the Card Czar."
+              hint={HINTS.botCount}
             />
             {s.botCount > 0 && (
               <div>
@@ -93,14 +106,14 @@ export function Lobby({ view, isHost, act }: { view: GameView; isHost: boolean; 
               value={s.targetScore}
               options={range(3, 15).map((n) => [n, offences(n)])}
               onChange={(v) => set({ targetScore: v })}
-              hint="An Offence is a point. A player gets one Offence for each round they win. The first player to reach this number wins the game."
+              hint={HINTS.targetScore}
             />
             <Select
               label="Maximum players"
               value={s.maxPlayers}
               options={range(3, 20).map((n) => [n, `${n} players`])}
               onChange={(v) => set({ maxPlayers: v })}
-              hint="More than 10 players is hard to follow. Rounds get slow, and more people leave or stop playing."
+              hint={HINTS.maxPlayers}
               warn={s.maxPlayers > 10}
             />
             <Select
@@ -108,21 +121,21 @@ export function Lobby({ view, isHost, act }: { view: GameView; isHost: boolean; 
               value={s.submitSeconds}
               options={[30, 45, 60, 75, 90, 120, 180, 300].map((n) => [n, seconds(n)])}
               onChange={(v) => set({ submitSeconds: v })}
-              hint="A player who does not play in time misses the round. After 2 missed rounds, the player sits out until they come back."
+              hint={HINTS.submitSeconds}
             />
             <Select
               label="Time for the Card Czar"
               value={s.judgeSeconds}
               options={[30, 45, 60, 75, 90, 120, 180, 300].map((n) => [n, seconds(n)])}
               onChange={(v) => set({ judgeSeconds: v })}
-              hint="If the Card Czar does not choose in time, nobody gets an Offence and the cards go back to the players."
+              hint={HINTS.judgeSeconds}
             />
             <Select
               label="Maximum spectators"
               value={s.maxSpectators}
               options={[0, 2, 5, 10, 15, 20].map((n) => [n, n === 0 ? "No spectators" : `${n} spectators`])}
               onChange={(v) => set({ maxSpectators: v })}
-              hint="Spectators watch the game but do not play. They are never the Card Czar."
+              hint={HINTS.maxSpectators}
             />
           </div>
 
@@ -131,13 +144,13 @@ export function Lobby({ view, isHost, act }: { view: GameView; isHost: boolean; 
               label="Show in the public game list"
               checked={s.isPublic}
               onChange={(on) => set({ isPublic: on })}
-              hint="When this is off, only people with the invite link or the room code can find the game."
+              hint={HINTS.isPublic}
             />
             <Toggle
               label="Allow joining during the game"
               checked={s.allowLateJoin}
               onChange={(on) => set({ allowLateJoin: on })}
-              hint="New players get cards at once and play from the next round. Spectators can also switch to playing."
+              hint={HINTS.allowLateJoin}
             />
           </div>
 
@@ -301,7 +314,7 @@ function ImportDeck({ act }: { act: Act }) {
 
 // ---------------------------------------------------------------------------
 
-type SummaryRow = { key: string; label: string; value: React.ReactNode };
+type SummaryRow = { key: keyof typeof HINTS; label: string; value: React.ReactNode };
 
 /** The settings that matter to players, as label and value rows. */
 function summaryRows(view: GameView): SummaryRow[] {
@@ -330,7 +343,15 @@ function summaryRows(view: GameView): SummaryRow[] {
           <span className="flex flex-wrap gap-x-2 gap-y-1">
             {decks.map((d, i) => (
               <span key={d.id}>
-                {d.name}
+                <a
+                  href={d.source.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline decoration-line underline-offset-2 hover:decoration-accent"
+                  title={d.external ? "View this deck on Many Decks" : `Card source: ${d.source.name}`}
+                >
+                  {d.name}
+                </a>
                 {d.external && (
                   <span className="ml-1 align-middle">
                     <Badge tone="accent">User-made</Badge>
@@ -414,7 +435,10 @@ function SettingsSummary({ view }: { view: GameView }) {
               const hot = changed.has(row.key);
               return (
                 <div key={row.key} className="contents">
-                  <dt className="font-semibold sm:py-1">{row.label}</dt>
+                  <dt className="flex items-center gap-1.5 font-semibold sm:py-1">
+                    {row.label}
+                    <InfoTip label={row.label} text={HINTS[row.key]} />
+                  </dt>
                   <dd
                     className={`-mx-2 mb-2 rounded px-2 transition-colors sm:mb-0 sm:py-1 ${
                       hot ? "bg-accent-soft font-semibold text-ink" : ""
