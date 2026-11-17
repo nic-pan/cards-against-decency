@@ -26,7 +26,7 @@ type Status =
   | { kind: "connecting" }
   | { kind: "join"; needsPassword: boolean }
   | { kind: "in" }
-  | { kind: "gone"; message: string; removed?: "idle" | "kicked" | "banned" };
+  | { kind: "gone"; message: string; removed?: "idle" | "kicked" | "banned"; timesRemoved?: number };
 
 export function Room({ code }: { code: string }) {
   const [status, setStatus] = useState<Status>({ kind: "connecting" });
@@ -53,7 +53,7 @@ export function Room({ code }: { code: string }) {
       const r = await call<JoinResult>("room:resume", { code, token });
       if (r.ok) return setStatus({ kind: "in" });
       session.clear(code);
-      if (r.error === "BANNED") return setStatus({ kind: "gone", message: r.text });
+      if (r.error === "BANNED") return setStatus({ kind: "gone", message: r.text, removed: "banned" });
     }
     const info = await call<{ exists: boolean; needsPassword: boolean }>("room:info", { code });
     if (!info.ok) return setStatus({ kind: "gone", message: info.text });
@@ -83,7 +83,8 @@ export function Room({ code }: { code: string }) {
       session.clear(code);
       setView(null);
       if (reason === "idle" || reason === "kicked" || reason === "banned") {
-        return setStatus({ kind: "gone", message: "", removed: reason });
+        const timesRemoved = reason === "kicked" ? countRemoval(code) : undefined;
+        return setStatus({ kind: "gone", message: "", removed: reason, timesRemoved });
       }
       setStatus({
         kind: "gone",
@@ -139,7 +140,8 @@ export function Room({ code }: { code: string }) {
 
   if (status.kind === "connecting") return <Centered>Connecting…</Centered>;
   if (status.kind === "gone" && status.removed === "idle") return <IdleRemoved />;
-  if (status.kind === "gone" && status.removed) return <HostRemoved banned={status.removed === "banned"} />;
+  if (status.kind === "gone" && status.removed === "banned") return <Banned />;
+  if (status.kind === "gone" && status.removed) return <HostRemoved timesRemoved={status.timesRemoved ?? 1} />;
   if (status.kind === "gone")
     return (
       <Centered>
@@ -483,17 +485,52 @@ function Banner({ children, tone }: { children: React.ReactNode; tone: "accent" 
   );
 }
 
-/** Shown to a player whom the host removed, with or without a ban. In the page, not a browser pop-up. */
-function HostRemoved({ banned }: { banned: boolean }) {
+/** Counts how often the host removed this browser from a room. Only for the message text. */
+function countRemoval(code: string): number {
+  const key = `bs.removed.${code}`;
+  try {
+    const n = Number(localStorage.getItem(key) ?? 0) + 1;
+    localStorage.setItem(key, String(n));
+    return n;
+  } catch {
+    return 1;
+  }
+}
+
+/** Shown to a player whom the host removed. In the page, not a browser pop-up. */
+function HostRemoved({ timesRemoved }: { timesRemoved: number }) {
+  return (
+    <RemovalCard icon="🚪" title="The host removed you from this room.">
+      <p className="mt-3 text-sm leading-relaxed text-ink">
+        {timesRemoved >= 3
+          ? "The host has had enough. Understandably."
+          : "Take it up with management. There is no management."}
+      </p>
+    </RemovalCard>
+  );
+}
+
+/** Shown to a player whom the host banned. */
+function Banned() {
+  return (
+    <RemovalCard icon="⛔" title="You have been banned from this room.">
+      <p className="mt-3 text-sm leading-relaxed text-ink">The host has exercised questionable authority.</p>
+      <p className="mt-3 text-sm font-semibold leading-relaxed text-danger">
+        Your access to this room has been revoked. You will not be able to rejoin.
+      </p>
+    </RemovalCard>
+  );
+}
+
+function RemovalCard({ icon, title, children }: { icon: string; title: string; children: React.ReactNode }) {
   return (
     <div className="mx-auto max-w-md px-4 py-20">
       <section role="alert" className="rounded-2xl border-2 border-danger bg-danger-soft p-6 text-center">
         <p className="text-4xl" aria-hidden>
-          🚪
+          {icon}
         </p>
-        <h1 className="mt-3 text-xl font-black text-danger">The host removed you from this room.</h1>
-        <p className="mt-3 text-sm leading-relaxed text-ink">Take it up with management. There is no management.</p>
-        {banned && <p className="mt-3 text-sm font-semibold text-danger">You can&apos;t join this room again.</p>}
+        <h1 className="mt-3 text-xl font-black text-danger">{title}</h1>
+        {children}
         <Link
           href="/"
           className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg bg-ink px-5 text-sm font-bold text-paper"
