@@ -126,6 +126,16 @@ The host can import user-made decks from [Many Decks](https://decks.rereadgames.
 - Nobody moderates these decks. A public game with an imported deck shows a "Custom decks" label in the game list.
 - Limits: 10 imported decks in each room, 10 imports each minute from one IP address.
 
+## Sound credits
+
+The game sounds come from [Pixabay](https://pixabay.com/sound-effects/) under the Pixabay Content License. The files in `public/sounds/` are shortened versions that the game plays. The original downloads stay in `assets/sounds-src/` on the developer's computer only: that folder is in `.gitignore`, because the licence does not allow sharing the raw files on their own.
+
+| File | Original on Pixabay | Use |
+| --- | --- | --- |
+| `turn-funny.mp3` | "Horn" by digitalstore07 (ID 430368), first blast only | "Your turn", Funny style |
+| `idle-warning.mp3` | "Suspenseful Boom" by Dragon Studio (ID 451863), from 1.4 s | The red idle warning |
+| `removed.mp3` | "Thud Sound Effect" by Dragon Studio (ID 405470), 0.3–2.0 s | Removed for being idle, or by the host |
+
 ## Not in version 1
 
 Chat, the activity log, Player Cards, saved custom decks, and community deck imports are planned for Phases 2–4 in the project brief. The public game list exists, but the extra moderation that the brief asks for with public games (Phase 4) does not exist yet.

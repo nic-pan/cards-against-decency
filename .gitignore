@@ -4,3 +4,6 @@ next-env.d.ts
 *.tsbuildinfo
 .DS_Store
 .env*
+
+# Original Pixabay downloads. The licence does not allow sharing the raw files, so keep them local.
+assets/sounds-src/

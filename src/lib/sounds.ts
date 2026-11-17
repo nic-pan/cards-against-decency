@@ -1,7 +1,7 @@
 "use client";
 
-// Turn reminder sounds. The browser makes them with the Web Audio API,
-// so there are no audio files and nothing to license.
+// Game sounds. Short files from Pixabay (see README, "Sound credits") play through the
+// Web Audio API. If a file does not load, the turn sound falls back to a generated one.
 
 export type SoundStyle = "funny" | "gentle" | "off";
 
@@ -54,8 +54,67 @@ function tone(
   osc.stop(t + opts.length + 0.05);
 }
 
+const FILES = {
+  turnFunny: "/sounds/turn-funny.mp3",
+  idleWarning: "/sounds/idle-warning.mp3",
+  removed: "/sounds/removed.mp3",
+} as const;
+
+type SoundFile = keyof typeof FILES;
+const buffers = new Map<SoundFile, Promise<AudioBuffer | null>>();
+
+/** Loads and decodes a sound file once. Resolves to null when it fails. */
+function load(name: SoundFile): Promise<AudioBuffer | null> {
+  let p = buffers.get(name);
+  if (!p) {
+    const a = audio();
+    p = a
+      ? fetch(FILES[name])
+          .then((r) => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
+          .then((data) => a.decodeAudioData(data))
+          .catch(() => null)
+      : Promise.resolve(null);
+    buffers.set(name, p);
+  }
+  return p;
+}
+
+/** Loads the sound files ahead of time, so the first sound plays at once. */
+export function preloadSounds(): void {
+  for (const name of Object.keys(FILES) as SoundFile[]) void load(name);
+}
+
+async function playFile(name: SoundFile, volume: number): Promise<boolean> {
+  const a = audio();
+  const buffer = await load(name);
+  if (!a || !buffer) return false;
+  const source = a.createBufferSource();
+  const gain = a.createGain();
+  source.buffer = buffer;
+  gain.gain.value = volume;
+  source.connect(gain).connect(a.destination);
+  source.start();
+  return true;
+}
+
+/** Sounds for game events. They follow the turn sound choice: nothing plays when it is "Off". */
+export function playEventSound(event: "idleWarning" | "removed"): void {
+  if (getSoundStyle() === "off") return;
+  void playFile(event, 0.7);
+}
+
 export function playTurnSound(style: SoundStyle = getSoundStyle()): void {
   if (style === "off") return;
+  if (style === "funny") {
+    void playFile("turnFunny", 0.6).then((played) => {
+      if (!played) playGenerated("funny");
+    });
+    return;
+  }
+  playGenerated(style);
+}
+
+function playGenerated(style: "funny" | "gentle"): void {
   const a = audio();
   if (!a) return;
   if (style === "gentle") {

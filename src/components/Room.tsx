@@ -9,7 +9,7 @@ import { Lobby } from "./Lobby";
 import { PlayerList } from "./PlayerList";
 import { ProfileForm } from "./ProfileForm";
 import { Button, Field, inputClass } from "./ui";
-import { getSoundStyle, playTurnSound, setSoundStyle, type SoundStyle } from "@/lib/sounds";
+import { getSoundStyle, playEventSound, playTurnSound, preloadSounds, setSoundStyle, type SoundStyle } from "@/lib/sounds";
 
 type View = GameView & { code: string };
 
@@ -26,6 +26,8 @@ export function Room({ code }: { code: string }) {
   const [toast, setToast] = useState<string | null>(null);
   const clockOffset = useRef(0);
   useTurnAlert(view);
+  useIdleWarningSound(view);
+  useEffect(() => preloadSounds(), []);
   const phone = useIsPhone();
   // On phones, keep the screen on during a game, so the connection and the turn reminders stay alive.
   useWakeLock(phone && !!view && view.phase !== "lobby" && view.phase !== "gameOver" && !view.youAreSpectator);
@@ -52,6 +54,7 @@ export function Room({ code }: { code: string }) {
       setView(v);
     };
     const onRemoved = ({ reason }: { reason: string }) => {
+      if (reason === "idle" || reason === "kicked" || reason === "banned") playEventSound("removed");
       session.clear(code);
       setView(null);
       if (reason === "idle") return setStatus({ kind: "gone", message: "", idle: true });
@@ -297,6 +300,16 @@ function PhoneNotice() {
       </button>
     </div>
   );
+}
+
+/** Plays the "suspenseful boom" once, when the player gets the red idle warning. */
+function useIdleWarningSound(view: View | null) {
+  const idle = view?.yourIdleRounds ?? 0;
+  const before = useRef(idle);
+  useEffect(() => {
+    if (idle === 1 && before.current === 0) playEventSound("idleWarning");
+    before.current = idle;
+  }, [idle]);
 }
 
 const SOUND_LABELS: Record<SoundStyle, string> = { funny: "🤡 Funny", gentle: "🔔 Gentle", off: "🔇 Off" };
