@@ -19,12 +19,15 @@ export default function Home() {
   if (step.kind === "browse") {
     return (
       <main className="mx-auto max-w-6xl px-4 py-6">
-        <header className="mb-5">
-          <h1>
-            <Wordmark className="h-14 w-auto sm:h-16" />
-          </h1>
-        </header>
-        <GameBrowser name={step.name} onLogout={() => setStep({ kind: "profile" })} />
+        <GameBrowser
+          name={step.name}
+          onLogout={() => setStep({ kind: "profile" })}
+          logo={
+            <h1>
+              <Wordmark className="h-14 w-auto sm:h-16" />
+            </h1>
+          }
+        />
       </main>
     );
   }

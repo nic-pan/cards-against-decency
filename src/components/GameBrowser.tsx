@@ -7,7 +7,16 @@ import { TERMS_VERSION, offences, type JoinAs, type JoinResult, type RoomListing
 import { Badge, Button, inputClass } from "./ui";
 
 /** The public game list. Shown after the player chooses a name and accepts the terms. */
-export function GameBrowser({ name, onLogout }: { name: string; onLogout: () => void }) {
+export function GameBrowser({
+  name,
+  onLogout,
+  logo,
+}: {
+  name: string;
+  onLogout: () => void;
+  /** Shown left in the top row, next to "Playing as … · Log out". */
+  logo?: React.ReactNode;
+}) {
   const router = useRouter();
   const [games, setGames] = useState<RoomListing[] | null>(null);
   const [filter, setFilter] = useState("");
@@ -80,6 +89,16 @@ export function GameBrowser({ name, onLogout }: { name: string; onLogout: () => 
 
   return (
     <div>
+      <header className="mb-5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        {logo}
+        <p className="text-sm">
+          Playing as <b className="break-all">{name}</b>
+          <span className="mx-2 text-muted">·</span>
+          <button type="button" className="font-semibold text-accent underline" onClick={() => void logout()}>
+            Log out
+          </button>
+        </p>
+      </header>
       {/* Toolbar */}
       <div className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-3 sm:flex-row sm:items-center">
         <Button onClick={() => setCreating((c) => !c)} aria-expanded={creating} className="shrink-0">
@@ -110,13 +129,6 @@ export function GameBrowser({ name, onLogout }: { name: string; onLogout: () => 
         </form>
       </div>
 
-      <p className="mt-3 text-right text-sm">
-        Playing as <b>{name}</b>
-        <span className="mx-2 text-muted">·</span>
-        <button type="button" className="font-semibold text-accent underline" onClick={() => void logout()}>
-          Log out
-        </button>
-      </p>
 
       {seat && <StillInGame seat={seat} onLeft={() => setSeat(null)} />}
 
