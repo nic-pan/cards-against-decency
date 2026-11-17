@@ -68,8 +68,8 @@ export default function Home() {
 }
 
 /**
- * The full logo. Dark pages get a version with a transparent background. Light pages
- * keep the black banner, because "Cards Against" is white text.
+ * The full logo, with a transparent background. Dark pages get the version with white
+ * text, light pages the version with dark text.
  */
 function Wordmark({ className }: { className: string }) {
   return (
@@ -81,7 +81,7 @@ function Wordmark({ className }: { className: string }) {
         alt="Cards Against Decency"
         width={960}
         height={360}
-        className={`rounded-xl ${className}`}
+        className={className}
       />
     </picture>
   );

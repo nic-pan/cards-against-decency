@@ -5,20 +5,27 @@
 import { mkdirSync } from "node:fs";
 import sharp, { type Color } from "sharp";
 
-const WORDMARK = "assets/logo/big-logo.png"; // 1600 x 600, black background
+// The full logo, made by the designer for each colour mode (1600 x 600).
+const WORDMARK_DARK = "assets/logo/Cards/logo-black-bg.png"; // white text, #111111 background
+const WORDMARK_LIGHT = "assets/logo/Cards/logo-white-bg.png"; // dark text, white background
 const MARK = "assets/logo/card-stack-logo-transparent.png"; // card stack, transparent
 
 mkdirSync("public/logo", { recursive: true });
 
-// The full logo for the front page. 960 px wide is sharp on high-density screens at 480 px.
-await sharp(WORDMARK).resize({ width: 960 }).webp({ quality: 88 }).toFile("public/logo/wordmark.webp");
-
-// A version for dark pages: the black background becomes transparent. Only black pixels
-// connected to the image edge change, so the black card outlines and letter insides stay.
-{
-  const { data, info } = await sharp(WORDMARK).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+/**
+ * Makes the background transparent. Only pixels connected to the image edge and close to
+ * the background colour change, so card outlines and the insides of letters stay intact.
+ * "dark" removes a near-black background, "light" a near-white one.
+ */
+async function transparentBackground(file: string, mode: "dark" | "light", out: string) {
+  const { data, info } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
   const { width, height } = info;
-  const dark = (i: number) => Math.max(data[i * 4], data[i * 4 + 1], data[i * 4 + 2]);
+  // 0 = exactly the background colour, 1 = clearly not background.
+  const distance = (i: number) => {
+    const r = data[i * 4], g = data[i * 4 + 1], b = data[i * 4 + 2];
+    // The designer's backgrounds are #111111 and #fefefe, so measure from just beyond those.
+    return mode === "dark" ? Math.max(0, Math.max(r, g, b) - 24) / 86 : Math.max(0, 250 - Math.min(r, g, b)) / 60;
+  };
   const seen = new Uint8Array(width * height);
   const stack: number[] = [];
   for (let x = 0; x < width; x++) stack.push(x, (height - 1) * width + x);
@@ -27,10 +34,10 @@ await sharp(WORDMARK).resize({ width: 960 }).webp({ quality: 88 }).toFile("publi
     const i = stack.pop()!;
     if (seen[i]) continue;
     seen[i] = 1;
-    const v = dark(i);
-    if (v > 110) continue; // a bright pixel: the edge of a letter or card
-    // Fully black becomes fully transparent; the soft grey edge becomes partly transparent.
-    data[i * 4 + 3] = Math.min(data[i * 4 + 3], Math.round((v / 110) * 255));
+    const d = distance(i);
+    if (d >= 1) continue; // the edge of a letter or a card
+    // The background becomes transparent; its soft edge becomes partly transparent.
+    data[i * 4 + 3] = Math.min(data[i * 4 + 3], Math.round(Math.max(0, d) * 255));
     const x = i % width;
     if (x > 0) stack.push(i - 1);
     if (x < width - 1) stack.push(i + 1);
@@ -40,8 +47,12 @@ await sharp(WORDMARK).resize({ width: 960 }).webp({ quality: 88 }).toFile("publi
   await sharp(data, { raw: { width, height, channels: 4 } })
     .resize({ width: 960 })
     .webp({ quality: 88, alphaQuality: 90 })
-    .toFile("public/logo/wordmark-dark.webp");
+    .toFile(out);
 }
+
+// The full logo: one version for each colour mode.
+await transparentBackground(WORDMARK_LIGHT, "light", "public/logo/wordmark.webp");
+await transparentBackground(WORDMARK_DARK, "dark", "public/logo/wordmark-dark.webp");
 
 // The card stack for headers. Shown at about 32 px, so 128 px is sharp everywhere.
 await sharp(MARK).resize({ width: 128 }).webp({ quality: 90 }).toFile("public/logo/mark.webp");

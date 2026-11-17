@@ -7,3 +7,6 @@ next-env.d.ts
 
 # Original Pixabay downloads. The licence does not allow sharing the raw files, so keep them local.
 assets/sounds-src/
+
+# Design exports. The PNG files are in git; the zip is not needed.
+assets/logo/*.zip
