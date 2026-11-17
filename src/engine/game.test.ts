@@ -21,11 +21,12 @@ function setup(opts: { humans?: number; bots?: number; pick?: number; targetScor
   const decks = new DeckRegistry([makeDeck("test", opts.pick ?? 1)]);
   let seq = 0;
   const onEmpty = vi.fn();
-  const game = new Game({ decks, onEmpty, idFactory: () => `id${++seq}`, rng: mulberry(42) });
+  const onRemoved = vi.fn();
+  const game = new Game({ decks, onEmpty, onRemoved, idFactory: () => `id${++seq}`, rng: mulberry(42) });
   const ids: string[] = [];
   for (let i = 0; i < (opts.humans ?? 3); i++) ids.push(game.addPlayer(`P${i}`));
   game.updateSettings(ids[0], { botCount: opts.bots ?? 0, targetScore: opts.targetScore ?? 3 });
-  return { game, ids, host: ids[0], onEmpty };
+  return { game, ids, host: ids[0], onEmpty, onRemoved };
 }
 
 function mulberry(seed: number) {
@@ -181,28 +182,84 @@ describe("rounds", () => {
 });
 
 describe("timeouts and inactive players", () => {
-  it("moves to judging when the submit time ends and marks repeat no-shows as away", () => {
-    const { game, ids, host } = setup({ humans: 4 });
+  it("warns after one missed round and removes the player after two", () => {
+    const { game, ids, host, onRemoved } = setup({ humans: 4 });
     game.updateSettings(host, { submitSeconds: 20, judgeSeconds: 20 });
     game.start(host);
 
+    // The last player in join order is not the Card Czar in the first two rounds.
     const idle = ids.filter((id) => game.viewFor(id).mustSubmit).at(-1)!;
-    for (let round = 0; round < 2; round++) {
+    const playRound = () => {
       for (const id of ids) {
         const v = game.viewFor(id);
-        if (id !== idle && v.mustSubmit) game.submit(id, [v.hand[0].id]);
+        if (id !== idle && game.hasPlayer(id) && v.mustSubmit) game.submit(id, [v.hand[0].id]);
       }
       if (game.viewFor(host).phase === "submitting") vi.advanceTimersByTime(20_000);
-      const czar = game.viewFor(host).round!.czarId;
-      game.pick(czar, game.viewFor(czar).round!.submissions![0].id);
-      vi.advanceTimersByTime(ROUND_OVER_MS);
-    }
-    const me = game.viewFor(idle).players.find((p) => p.id === idle)!;
-    expect(me.status).toBe("away");
-    expect(game.viewFor(idle).mustSubmit).toBe(false);
+    };
 
-    game.markBack(idle);
-    expect(game.viewFor(idle).players.find((p) => p.id === idle)!.status).not.toBe("away");
+    playRound();
+    expect(game.viewFor(idle).yourIdleRounds).toBe(1);
+    expect(game.viewFor(host).players.find((p) => p.id === idle)!.status).toBe("missed");
+    expect(game.hasPlayer(idle)).toBe(true);
+    const czar = game.viewFor(host).round!.czarId;
+    game.pick(czar, game.viewFor(czar).round!.submissions![0].id);
+    vi.advanceTimersByTime(ROUND_OVER_MS);
+
+    playRound();
+    expect(game.hasPlayer(idle)).toBe(false);
+    expect(onRemoved).toHaveBeenCalledWith(idle, "idle");
+    const removal = game.viewFor(host).notices.find((n) => n.text.includes("missing 2 rounds in a row"))!;
+    expect(removal.tone).toBe("danger");
+    // The round goes on for the others.
+    expect(game.viewFor(host).phase).toBe("judging");
+  });
+
+  it("resets the missed rounds when the player plays again", () => {
+    const { game, ids, host, onRemoved } = setup({ humans: 4 });
+    game.updateSettings(host, { submitSeconds: 20, judgeSeconds: 20 });
+    game.start(host);
+    const idle = ids.filter((id) => game.viewFor(id).mustSubmit).at(-1)!;
+
+    for (const id of ids) {
+      const v = game.viewFor(id);
+      if (id !== idle && v.mustSubmit) game.submit(id, [v.hand[0].id]);
+    }
+    vi.advanceTimersByTime(20_000);
+    expect(game.viewFor(idle).yourIdleRounds).toBe(1);
+    const czar = game.viewFor(host).round!.czarId;
+    game.pick(czar, game.viewFor(czar).round!.submissions![0].id);
+    vi.advanceTimersByTime(ROUND_OVER_MS);
+
+    submitAll(game, ids);
+    expect(game.viewFor(idle).yourIdleRounds).toBe(0);
+    expect(onRemoved).not.toHaveBeenCalled();
+  });
+
+  it("counts a Card Czar who does not choose as a missed round", () => {
+    const { game, ids, host, onRemoved } = setup({ humans: 4 });
+    game.updateSettings(host, { submitSeconds: 20, judgeSeconds: 20 });
+    game.start(host);
+    // The second player misses round 1, then is the Card Czar in round 2.
+    const nextCzar = ids[1];
+    expect(game.viewFor(host).round!.czarId).toBe(ids[0]);
+    for (const id of ids) {
+      const v = game.viewFor(id);
+      if (id !== nextCzar && v.mustSubmit) game.submit(id, [v.hand[0].id]);
+    }
+    vi.advanceTimersByTime(20_000);
+    game.pick(ids[0], game.viewFor(ids[0]).round!.submissions![0].id);
+    vi.advanceTimersByTime(ROUND_OVER_MS);
+
+    expect(game.viewFor(host).round!.czarId).toBe(nextCzar);
+    submitAll(game, ids);
+    vi.advanceTimersByTime(20_000);
+    expect(onRemoved).toHaveBeenCalledWith(nextCzar, "idle");
+    expect(game.hasPlayer(nextCzar)).toBe(false);
+    // Both events stay visible to the other players.
+    const texts = game.viewFor(host).notices.map((n) => n.text).join(" | ");
+    expect(texts).toContain("did not choose in time");
+    expect(texts).toContain("went back to the players' hands");
+    expect(texts).toContain("missing 2 rounds in a row");
   });
 
   it("skips the round and returns cards when the Card Czar does not choose", () => {

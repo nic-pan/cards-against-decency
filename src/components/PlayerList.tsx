@@ -9,8 +9,8 @@ const STATUS_TEXT: Record<PlayerStatus, string> = {
   czar: "Card Czar",
   submitted: "Played",
   playing: "Choosing…",
+  missed: "Missed this round",
   waiting: "Joins next round",
-  away: "Away",
   idle: "",
 };
 
@@ -41,7 +41,7 @@ export function PlayerList({ view, isHost, act }: { view: GameView; isHost: bool
                   className={`h-2 w-2 shrink-0 rounded-full ${p.connected ? "bg-ok" : "bg-line"}`}
                   title={p.connected ? "Online" : "Offline"}
                 />
-                <span className={`min-w-0 truncate font-semibold ${p.status === "away" ? "text-muted" : ""}`}>
+                <span className={`min-w-0 truncate font-semibold `}>
                   {p.name}
                   {you && <span className="font-normal text-muted"> (you)</span>}
                 </span>
@@ -67,7 +67,7 @@ export function PlayerList({ view, isHost, act }: { view: GameView; isHost: bool
                 )}
               </div>
               {(STATUS_TEXT[p.status] || !p.connected) && (
-                <p className={`pl-4 text-xs ${p.status === "czar" ? "font-bold text-accent" : "text-muted"}`}>
+                <p className={`pl-4 text-xs ${p.status === "czar" ? "font-bold text-accent" : p.status === "missed" ? "font-semibold text-danger" : "text-muted"}`}>
                   {STATUS_TEXT[p.status]}
                   {!p.connected && (STATUS_TEXT[p.status] ? " · offline" : "Offline, can reconnect")}
                 </p>

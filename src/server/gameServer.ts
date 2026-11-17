@@ -219,6 +219,12 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       decks,
       onChange: () => queueBroadcast(room),
       onEmpty: () => closeRoom(room, null),
+      // The game removes players who miss too many rounds. Tell them why and end their session.
+      onRemoved: (playerId, why) => {
+        if (why !== "idle") return;
+        for (const sid of room.sockets.get(playerId) ?? []) io.to(sid).emit("removed", { reason: "idle" });
+        dropSeat(room, playerId);
+      },
     });
     store.set(room);
     return room;
@@ -303,6 +309,12 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
 
   /** Removes a seat at once: all tabs, the reconnect timer and the token. */
   function removeSeat(room: Room, playerId: string, why: "left" | "kicked"): void {
+    dropSeat(room, playerId);
+    room.game.removePlayer(playerId, why);
+  }
+
+  /** Unlinks a seat from its tabs, its reconnect timer and its token. Does not touch the game. */
+  function dropSeat(room: Room, playerId: string): void {
     for (const sid of room.sockets.get(playerId) ?? []) {
       const s = io.sockets.sockets.get(sid);
       if (!s) continue;
@@ -314,7 +326,6 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
     if (timer) clearTimeout(timer);
     room.removeTimers.delete(playerId);
     revoke(room, playerId);
-    room.game.removePlayer(playerId, why);
   }
 
   /** Leaves the seat that a token belongs to. Returns false when the seat no longer exists. */

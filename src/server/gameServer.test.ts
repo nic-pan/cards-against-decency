@@ -3,7 +3,7 @@ import type { AddressInfo } from "node:net";
 import { join } from "node:path";
 import { Server } from "socket.io";
 import { io as connect, type Socket } from "socket.io-client";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { GameView } from "../engine/game";
 import { loadDecks } from "./decks";
 import { attachGameServer } from "./gameServer";
@@ -249,6 +249,32 @@ describe("game server", () => {
     await b.emit("lobby:subscribe");
     const v = await host.until((v) => v.players.some((p) => p.name.startsWith("Wander") && !p.connected));
     expect(v.players).toHaveLength(2);
+  });
+
+  it("tells an idle player why the game removed them, and ends their seat", async () => {
+    const host = await client();
+    const room = await host.emit("room:create", { ...T, name: nm("Busy") });
+    await host.emit("settings:update", { botCount: 1, submitSeconds: 20, judgeSeconds: 20 });
+    const b = await client();
+    const joined = await b.emit("room:join", { ...T, code: room.code, name: nm("Sleepy") });
+    const removed = new Promise((r) => b.s.once("removed", r));
+
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout", "Date"] });
+    try {
+      await host.emit("game:start");
+      // Two rounds pass without the sleepy player. The host plays when not the Czar.
+      for (let round = 0; round < 2; round++) {
+        const v = host.view();
+        if (v.mustSubmit) await host.emit("card:submit", { cardIds: [v.hand[0].id] });
+        await vi.advanceTimersByTimeAsync(20_000);
+        await vi.advanceTimersByTimeAsync(20_000);
+        await vi.advanceTimersByTimeAsync(8_000);
+      }
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(await removed).toEqual({ reason: "idle" });
+    expect((await b.emit("room:resume", { code: room.code, token: joined.token })).ok).toBe(false);
   });
 
   it("rejects malformed payloads and unknown settings", async () => {

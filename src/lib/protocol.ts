@@ -77,7 +77,7 @@ export interface ServerToClient {
   lobby: (p: { games: RoomListing[] }) => void;
   state: (view: GameView & { code: string }) => void;
   /** You were removed from the room. */
-  removed: (p: { reason: "kicked" | "banned" | "closed" | "left" }) => void;
+  removed: (p: { reason: "kicked" | "banned" | "closed" | "left" | "idle" }) => void;
 }
 
 /** Plain-language messages for error codes. */

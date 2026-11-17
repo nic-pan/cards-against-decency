@@ -33,8 +33,8 @@ export const LIMITS = {
 export const HAND_SIZE = 10;
 /** A game needs a Card Czar and at least two players who submit. */
 export const MIN_PARTICIPANTS = 3;
-/** Rounds in a row that a player can miss before the game marks them as away. */
-export const IDLE_ROUNDS_BEFORE_AWAY = 2;
+/** Rounds in a row that a player can miss before the game removes them. */
+export const IDLE_ROUNDS_BEFORE_KICK = 2;
 export const ROUND_OVER_MS = 7_000;
 export const NAME_MAX = 24;
 /** Maximum number of imported decks in one room. */
@@ -95,8 +95,7 @@ interface Player {
   score: number;
   hand: WhiteCard[];
   connected: boolean;
-  /** An away player does not play or judge until they come back. */
-  away: boolean;
+  /** Rounds in a row that the player missed. At IDLE_ROUNDS_BEFORE_KICK the game removes them. */
   idleRounds: number;
 }
 
@@ -121,6 +120,8 @@ interface Round {
   black: BlackCard;
   /** Players who must submit in this round. Set when the round starts. */
   participants: Set<string>;
+  /** Players who did not submit in time. */
+  missed: Set<string>;
   submissions: Submission[];
   winnerSubmissionId: string | null;
   end: RoundEnd | null;
@@ -130,13 +131,18 @@ interface Round {
 export interface Notice {
   id: number;
   text: string;
+  /** "danger" notices show in red, for example when a player is removed for being idle. */
+  tone: "info" | "danger";
 }
+
+/** The number of recent notices that players see together. */
+const NOTICES_KEPT = 3;
 
 // ---------------------------------------------------------------------------
 // Client view (what one player is allowed to see)
 // ---------------------------------------------------------------------------
 
-export type PlayerStatus = "czar" | "submitted" | "playing" | "waiting" | "away" | "idle";
+export type PlayerStatus = "czar" | "submitted" | "playing" | "missed" | "waiting" | "idle";
 
 export interface PublicPlayer {
   id: string;
@@ -192,6 +198,8 @@ export interface GameSummary {
 
 export interface GameView {
   youId: string;
+  /** Rounds in a row that you missed. The game warns you at 1 and removes you at IDLE_ROUNDS_BEFORE_KICK. */
+  yourIdleRounds: number;
   youAreSpectator: boolean;
   spectators: SpectatorView[];
   hostId: string;
@@ -204,7 +212,8 @@ export interface GameView {
   yourSubmission: WhiteCard[] | null;
   mustSubmit: boolean;
   winnerId: string | null;
-  notice: Notice | null;
+  /** Recent notices, oldest first. */
+  notices: Notice[];
   decks: DeckSummary[];
   serverNow: number;
 }
@@ -213,6 +222,8 @@ export interface GameView {
 // Game
 // ---------------------------------------------------------------------------
 
+export type RemoveReason = "left" | "kicked" | "timeout" | "idle";
+
 export interface GameOptions {
   decks: DeckRegistry;
   rng?: Rng;
@@ -220,6 +231,8 @@ export interface GameOptions {
   onChange?: () => void;
   /** Called when the last human leaves. The server closes the room. */
   onEmpty?: () => void;
+  /** Called when the game removes a player. The server uses it to tell an idle player why. */
+  onRemoved?: (playerId: string, why: RemoveReason) => void;
   idFactory?: () => string;
 }
 
@@ -255,6 +268,9 @@ export class Game {
   private readonly rng: Rng;
   private readonly onChange: () => void;
   private readonly onEmpty: () => void;
+  private readonly onRemoved: (playerId: string, why: RemoveReason) => void;
+  /** Idle players to remove after the current phase change. */
+  private pendingKicks: string[] = [];
   private readonly newId: () => string;
 
   private players: Player[] = [];
@@ -267,7 +283,7 @@ export class Game {
   private round: Round | null = null;
   private roundNumber = 0;
   private winnerId: string | null = null;
-  private notice: Notice | null = null;
+  private notices: Notice[] = [];
   private noticeSeq = 0;
   private lastCzarId: string | null = null;
   private botSeq = 0;
@@ -281,6 +297,7 @@ export class Game {
     this.rng = opts.rng ?? Math.random;
     this.onChange = opts.onChange ?? (() => {});
     this.onEmpty = opts.onEmpty ?? (() => {});
+    this.onRemoved = opts.onRemoved ?? (() => {});
     this.newId = opts.idFactory ?? randomId;
     this.settings = defaultSettings(opts.decks);
   }
@@ -325,7 +342,7 @@ export class Game {
     this.changed();
   }
 
-  removePlayer(id: string, why: "left" | "kicked" | "timeout"): void {
+  removePlayer(id: string, why: RemoveReason): void {
     if (this.spectators.some((s) => s.id === id)) {
       this.spectators = this.spectators.filter((s) => s.id !== id);
       this.changed();
@@ -336,6 +353,7 @@ export class Game {
     this.players = this.players.filter((p) => p.id !== id);
     this.whitePile?.discard(player.hand);
     player.hand = [];
+    this.onRemoved(id, why);
 
     if (this.humans().length === 0) {
       this.dispose();
@@ -344,8 +362,15 @@ export class Game {
     }
     if (this.hostId === id) this.hostId = this.humans()[0].id;
 
-    const verb = why === "kicked" ? "was removed" : why === "timeout" ? "lost connection" : "left";
-    this.setNotice(`${player.name} ${verb}.`);
+    const verb =
+      why === "kicked"
+        ? "was removed"
+        : why === "timeout"
+          ? "lost connection"
+          : why === "idle"
+            ? `was removed for missing ${IDLE_ROUNDS_BEFORE_KICK} rounds in a row`
+            : "left";
+    this.setNotice(`${player.name} ${verb}.`, why === "idle" ? "danger" : "info");
 
     const round = this.round;
     if (round && (this.phase === "submitting" || this.phase === "judging")) {
@@ -384,11 +409,10 @@ export class Game {
     this.changed();
   }
 
-  /** The player says they are back. This clears the away state. */
+  /** The player is active again. This resets their missed rounds. */
   markBack(id: string): void {
     const player = this.find(id);
     if (!player) throw new GameError("UNKNOWN_PLAYER");
-    player.away = false;
     player.idleRounds = 0;
     this.changed();
   }
@@ -516,13 +540,12 @@ export class Game {
     for (const p of this.players) {
       p.score = 0;
       p.hand = [];
-      p.away = false;
       p.idleRounds = 0;
     }
     this.winnerId = null;
     this.roundNumber = 0;
     this.lastCzarId = null;
-    this.notice = null;
+    this.notices = [];
     this.startRound();
   }
 
@@ -561,7 +584,6 @@ export class Game {
     player.hand = player.hand.filter((c) => !cardIds.includes(c.id));
     round.submissions.push({ id: this.newId(), playerId, cards: cards as WhiteCard[] });
     player.idleRounds = 0;
-    player.away = false;
 
     if (this.allSubmitted(round)) this.toJudging();
     else this.changed();
@@ -602,6 +624,7 @@ export class Game {
 
     return {
       youId: playerId,
+      yourIdleRounds: me?.idleRounds ?? 0,
       youAreSpectator: this.spectators.some((s) => s.id === playerId),
       spectators: this.spectators.map((s) => ({ id: s.id, name: s.name, connected: s.connected })),
       hostId: this.hostId,
@@ -632,7 +655,7 @@ export class Game {
       mustSubmit:
         this.phase === "submitting" && !!round && round.participants.has(playerId) && !mySubmission,
       winnerId: this.winnerId,
-      notice: this.notice,
+      notices: this.notices,
       decks: [...this.decks.list(), ...[...this.externalDecks.values()].map((d) => ({ ...summarize(d), external: true }))],
       serverNow: Date.now(),
     };
@@ -651,7 +674,7 @@ export class Game {
 
   private startRound(): void {
     this.clearTimer();
-    const active = this.players.filter((p) => !p.away);
+    const active = this.players;
     const activeHumans = active.filter((p) => !p.isBot);
     if (active.length < MIN_PARTICIPANTS || activeHumans.length === 0) {
       this.toLobby("There are not enough active players. The game returned to the lobby.");
@@ -672,6 +695,7 @@ export class Game {
       czarId: czar.id,
       black,
       participants: new Set(active.filter((p) => p.id !== czar.id).map((p) => p.id)),
+      missed: new Set(),
       submissions: [],
       winnerSubmissionId: null,
       end: null,
@@ -697,14 +721,16 @@ export class Game {
     if (!round || this.phase !== "submitting") return;
     this.clearTimer();
 
-    // Players who did not submit in time lose the round and can become away.
+    // Players who did not submit in time miss the round. A second miss in a row removes them.
     for (const id of round.participants) {
       if (round.submissions.some((s) => s.playerId === id)) continue;
+      round.missed.add(id);
       const p = this.find(id);
       if (p) this.markIdle(p);
     }
     if (round.submissions.length === 0) {
       this.endRound("noSubmissions");
+      this.kickIdle();
       return;
     }
     round.submissions = shuffle(round.submissions, this.rng);
@@ -712,6 +738,15 @@ export class Game {
     this.phase = "judging";
     this.schedule(this.settings.judgeSeconds * 1000, () => this.onJudgeTimeout());
     this.changed();
+    this.kickIdle();
+  }
+
+  /** Removes the players who missed too many rounds. Runs after the phase change. */
+  private kickIdle(): void {
+    for (const id of this.pendingKicks.splice(0)) {
+      if (this.disposed) return;
+      if (this.find(id)) this.removePlayer(id, "idle");
+    }
   }
 
   private onJudgeTimeout(): void {
@@ -721,6 +756,7 @@ export class Game {
     if (czar) this.markIdle(czar);
     this.returnSubmissions(round);
     this.endRound("czarTimeout");
+    this.kickIdle();
   }
 
   private endRound(end: RoundEnd): void {
@@ -731,8 +767,15 @@ export class Game {
     this.whitePile?.discard(round.submissions.flatMap((s) => s.cards));
     this.blackPile?.discard([round.black]);
 
-    if (end === "czarTimeout") this.setNotice("The Card Czar did not choose in time. Nobody gets an Offence.");
-    if (end === "czarLeft") this.setNotice("The Card Czar left. The round was cancelled.");
+    if (end === "czarTimeout") {
+      this.setNotice(
+        "The Card Czar did not choose in time. Nobody gets an Offence, and the played cards went back to the players' hands.",
+        "danger",
+      );
+    }
+    if (end === "czarLeft") {
+      this.setNotice("The Card Czar left. The round was cancelled, and the played cards went back to the players' hands.");
+    }
     if (end === "noSubmissions") this.setNotice("Nobody submitted an answer. The round was skipped.");
 
     const champion = this.players.find((p) => p.score >= this.settings.targetScore);
@@ -790,9 +833,8 @@ export class Game {
   private markIdle(p: Player): void {
     if (p.isBot) return;
     p.idleRounds += 1;
-    if (p.idleRounds >= IDLE_ROUNDS_BEFORE_AWAY && !p.away) {
-      p.away = true;
-      this.setNotice(`${p.name} is away and will sit out until they return.`);
+    if (p.idleRounds >= IDLE_ROUNDS_BEFORE_KICK && !this.pendingKicks.includes(p.id)) {
+      this.pendingKicks.push(p.id);
     }
   }
 
@@ -839,14 +881,14 @@ export class Game {
   }
 
   private makePlayer(name: string, isBot: boolean): Player {
-    return { id: this.newId(), name, isBot, score: 0, hand: [], connected: true, away: false, idleRounds: 0 };
+    return { id: this.newId(), name, isBot, score: 0, hand: [], connected: true, idleRounds: 0 };
   }
 
   private statusOf(p: Player): PlayerStatus {
     const round = this.round;
-    if (p.away) return "away";
     if (!round || this.phase === "lobby" || this.phase === "gameOver") return "idle";
     if (round.czarId === p.id) return "czar";
+    if (round.missed.has(p.id)) return "missed";
     if (!round.participants.has(p.id)) return "waiting";
     if (round.submissions.some((s) => s.playerId === p.id)) return "submitted";
     return "playing";
@@ -874,9 +916,9 @@ export class Game {
     if (id !== this.hostId) throw new GameError("NOT_HOST");
   }
 
-  private setNotice(text: string): void {
+  private setNotice(text: string, tone: Notice["tone"] = "info"): void {
     this.noticeSeq += 1;
-    this.notice = { id: this.noticeSeq, text };
+    this.notices = [...this.notices, { id: this.noticeSeq, text, tone }].slice(-NOTICES_KEPT);
   }
 
   private schedule(ms: number, fn: () => void): void {

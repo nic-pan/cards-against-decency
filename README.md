@@ -79,7 +79,7 @@ docker compose exec app npm run dev:players -- <ROOM CODE> [count] [--idle] [--p
 - The server checks every action: who sent it, the game phase, and the cards in the player's hand.
 - The Card Czar sees answers without names. The server sends names only after the Czar chooses.
 - Bots play random cards from their hand. They never judge, write cards, or chat.
-- A player who misses two rounds in a row becomes "away" and sits out. The player can come back.
+- A player who misses a round (does not play, or does not choose as Card Czar) gets a red warning. A second missed round in a row removes them from the game. The removed player sees why, and the other players see a red notice.
 - A disconnected player keeps their seat for 90 seconds.
 - A room closes when the last human player leaves, or after 2 hours with no activity.
 - Players must accept the current `TERMS_VERSION` before they create or join a room.

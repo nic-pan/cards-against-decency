@@ -16,7 +16,7 @@ type Status =
   | { kind: "connecting" }
   | { kind: "join"; needsPassword: boolean }
   | { kind: "in" }
-  | { kind: "gone"; message: string };
+  | { kind: "gone"; message: string; idle?: boolean };
 
 export function Room({ code }: { code: string }) {
   const [status, setStatus] = useState<Status>({ kind: "connecting" });
@@ -49,6 +49,7 @@ export function Room({ code }: { code: string }) {
     const onRemoved = ({ reason }: { reason: string }) => {
       session.clear(code);
       setView(null);
+      if (reason === "idle") return setStatus({ kind: "gone", message: "", idle: true });
       setStatus({
         kind: "gone",
         message:
@@ -100,6 +101,7 @@ export function Room({ code }: { code: string }) {
   }
 
   if (status.kind === "connecting") return <Centered>Connecting…</Centered>;
+  if (status.kind === "gone" && status.idle) return <IdleRemoved />;
   if (status.kind === "gone")
     return (
       <Centered>
@@ -123,12 +125,11 @@ export function Room({ code }: { code: string }) {
       {offline && (
         <Banner tone="accent">Connection lost. Trying to reconnect… Your seat is kept for 90 seconds.</Banner>
       )}
-      {me?.status === "away" && (
-        <Banner tone="accent">
-          <span>You missed two rounds, so you are sitting out.</span>
-          <Button className="ml-3 min-h-9" onClick={() => act("player:back")}>
-            I&apos;m back
-          </Button>
+      {view.yourIdleRounds === 1 && view.phase !== "lobby" && view.phase !== "gameOver" && (
+        <Banner tone="danger">
+          <span role="alert">
+            You missed a round. If you miss the next one too, you will be removed from the game.
+          </span>
         </Banner>
       )}
       {view.youAreSpectator && (
@@ -147,7 +148,7 @@ export function Room({ code }: { code: string }) {
           )}
         </Banner>
       )}
-      <Notice view={view} />
+      <Notices view={view} />
 
       <div className="mt-4 grid gap-6 lg:grid-cols-[17rem_1fr]">
         <aside className="order-2 lg:order-1">
@@ -242,28 +243,68 @@ function RoomHeader({ code, practice, onLeave }: { code: string; practice: boole
   );
 }
 
-function Notice({ view }: { view: View }) {
-  const [hidden, setHidden] = useState<number | null>(null);
-  const n = view.notice;
-  if (!n || hidden === n.id) return null;
+/** Recent game events, newest last. Red ones are about idle players and missed rounds. */
+function Notices({ view }: { view: View }) {
+  const [hidden, setHidden] = useState<Set<number>>(new Set());
+  const shown = view.notices.filter((n) => !hidden.has(n.id));
+  if (shown.length === 0) return null;
   return (
-    <div className="mt-3 flex items-start justify-between gap-3 rounded-lg border border-line bg-surface px-4 py-2.5 text-sm">
-      <span>{n.text}</span>
-      <button className="text-muted" aria-label="Dismiss" onClick={() => setHidden(n.id)}>
-        ✕
-      </button>
+    <div className="mt-3 space-y-2" aria-live="polite">
+      {shown.map((n) => (
+        <div
+          key={n.id}
+          role={n.tone === "danger" ? "alert" : undefined}
+          className={`flex items-start justify-between gap-3 rounded-lg border px-4 py-2.5 text-sm ${
+            n.tone === "danger" ? "border-danger bg-danger-soft font-semibold text-danger" : "border-line bg-surface"
+          }`}
+        >
+          <span>{n.text}</span>
+          <button
+            className={n.tone === "danger" ? "text-danger" : "text-muted"}
+            aria-label="Dismiss"
+            onClick={() => setHidden((h) => new Set(h).add(n.id))}
+          >
+            ✕
+          </button>
+        </div>
+      ))}
     </div>
   );
 }
 
-function Banner({ children, tone }: { children: React.ReactNode; tone: "accent" }) {
+function Banner({ children, tone }: { children: React.ReactNode; tone: "accent" | "danger" }) {
   return (
     <div
       className={`mt-3 flex flex-wrap items-center rounded-lg px-4 py-2.5 text-sm font-semibold ${
-        tone === "accent" ? "bg-accent-soft text-ink" : ""
+        tone === "danger" ? "border border-danger bg-danger-soft text-danger" : "bg-accent-soft text-ink"
       }`}
     >
       {children}
+    </div>
+  );
+}
+
+/** Shown to a player whom the game removed for missing rounds. In the page, not a browser pop-up. */
+function IdleRemoved() {
+  return (
+    <div className="mx-auto max-w-md px-4 py-20">
+      <section role="alert" className="rounded-2xl border-2 border-danger bg-danger-soft p-6 text-center">
+        <p className="text-4xl" aria-hidden>
+          ⏰
+        </p>
+        <h1 className="mt-3 text-xl font-black text-danger">You were removed for being idle</h1>
+        <p className="mt-3 text-sm leading-relaxed text-ink">
+          You missed 2 rounds in a row, so the game removed you. When a player does not play, everybody else has to
+          wait. Please do not leave a game idle again: it ruins the game for the other players.
+        </p>
+        <p className="mt-3 text-sm text-muted">If you need a break, use Leave. You can always join a game again.</p>
+        <Link
+          href="/"
+          className="mt-5 inline-flex min-h-11 items-center justify-center rounded-lg bg-ink px-5 text-sm font-bold text-paper"
+        >
+          Back to the game list
+        </Link>
+      </section>
     </div>
   );
 }
