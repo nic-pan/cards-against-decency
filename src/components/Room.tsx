@@ -9,6 +9,7 @@ import { Lobby } from "./Lobby";
 import { PlayerList } from "./PlayerList";
 import { ProfileForm } from "./ProfileForm";
 import { Button, Field, inputClass } from "./ui";
+import { getSoundStyle, playTurnSound, setSoundStyle, type SoundStyle } from "@/lib/sounds";
 
 type View = GameView & { code: string };
 
@@ -24,6 +25,7 @@ export function Room({ code }: { code: string }) {
   const [offline, setOffline] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
   const clockOffset = useRef(0);
+  useTurnAlert(view);
 
   const resume = useCallback(async () => {
     const token = session.get(code);
@@ -184,6 +186,75 @@ function canJoin(view: View): boolean {
 
 export type Act =(event: Parameters<typeof call>[0], payload?: unknown) => Promise<boolean>;
 
+/**
+ * Reminds the player when it is their turn: to play a card, or to choose as Card Czar.
+ * One sound when the turn starts. While the player looks at another tab or app,
+ * the sound repeats every 5 seconds and the tab title blinks.
+ */
+function useTurnAlert(view: View | null) {
+  const myTurn =
+    !!view && (view.mustSubmit || (view.phase === "judging" && view.round?.czarId === view.youId));
+  const key = view?.round ? `${view.round.number}:${view.phase}` : "";
+  const announced = useRef("");
+
+  useEffect(() => {
+    if (!myTurn) return;
+    if (announced.current !== key) {
+      announced.current = key;
+      playTurnSound();
+    }
+    const away = () => document.hidden || !document.hasFocus();
+    const title = document.title;
+    let flip = false;
+    const repeat = setInterval(() => {
+      if (away()) playTurnSound();
+    }, 5000);
+    const blink = setInterval(() => {
+      if (away()) {
+        flip = !flip;
+        document.title = flip ? "🃏 Your turn!" : title;
+      } else if (document.title !== title) {
+        document.title = title;
+      }
+    }, 1000);
+    return () => {
+      clearInterval(repeat);
+      clearInterval(blink);
+      document.title = title;
+    };
+  }, [myTurn, key]);
+}
+
+const SOUND_LABELS: Record<SoundStyle, string> = { funny: "🤡 Funny", gentle: "🔔 Gentle", off: "🔇 Off" };
+
+/** Turn sound choice for this browser. Changing it plays a sample. */
+function SoundPicker() {
+  const [style, setStyle] = useState<SoundStyle>("funny");
+  useEffect(() => setStyle(getSoundStyle()), []);
+  return (
+    <label className="flex items-center gap-1.5 text-xs text-muted" title="Sound when it is your turn">
+      <span className="sr-only sm:not-sr-only">Turn sound</span>
+      <select
+        className="rounded-lg border border-line bg-surface px-2 py-1.5 text-sm text-ink"
+        value={style}
+        onChange={(e) => {
+          const next = e.target.value as SoundStyle;
+          setStyle(next);
+          setSoundStyle(next);
+          playTurnSound(next);
+        }}
+        aria-label="Turn sound"
+      >
+        {(Object.keys(SOUND_LABELS) as SoundStyle[]).map((k) => (
+          <option key={k} value={k}>
+            {SOUND_LABELS[k]}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 function RoomHeader({ code, practice, onLeave }: { code: string; practice: boolean; onLeave: () => void }) {
   const [copied, setCopied] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
@@ -219,6 +290,7 @@ function RoomHeader({ code, practice, onLeave }: { code: string; practice: boole
       <Button variant="ghost" className="min-h-9 px-3" onClick={copy}>
         {copied ? "Link copied" : "Copy invite link"}
       </Button>
+      <SoundPicker />
       {practice && (
         <span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-bold text-accent">Practice mode</span>
       )}
