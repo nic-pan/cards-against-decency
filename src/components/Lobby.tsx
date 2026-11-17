@@ -347,7 +347,7 @@ function summaryRows(view: GameView): SummaryRow[] {
                   href={d.source.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="underline decoration-line underline-offset-2 hover:decoration-accent"
+                  className="underline decoration-muted decoration-2 underline-offset-4 hover:decoration-accent"
                   title={d.external ? "View this deck on Many Decks" : `Card source: ${d.source.name}`}
                 >
                   {d.name}
