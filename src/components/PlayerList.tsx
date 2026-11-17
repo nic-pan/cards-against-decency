@@ -34,6 +34,8 @@ export function PlayerList({
   }
   if (view.phase !== "lobby") rows.sort((a, b) => b.p.score - a.p.score);
   const humans = view.players.filter((p) => !p.isBot).length;
+  const botsNow = view.players.filter((p) => p.isBot).length;
+  const inGame = view.phase !== "lobby" && view.phase !== "gameOver";
 
   return (
     <section className="rounded-2xl border border-line bg-surface p-4">
@@ -65,7 +67,7 @@ export function PlayerList({
             );
           }
           const you = p.id === view.youId;
-          const canManage = isHost && !you && !p.isBot;
+          const canManage = isHost && !you;
           return (
             <li key={p.id} className="py-2">
               <div className="flex items-center gap-2">
@@ -106,24 +108,45 @@ export function PlayerList({
               )}
               {menuFor === p.id && (
                 <div className="mt-2 flex gap-2 pl-4">
-                  <button
-                    className="rounded border border-line px-2 py-1 text-xs font-semibold hover:bg-paper"
-                    onClick={() => act("player:kick", { playerId: p.id, ban: false }).then(() => setMenuFor(null))}
-                  >
-                    Remove
-                  </button>
-                  <button
-                    className="rounded border border-accent px-2 py-1 text-xs font-semibold text-accent hover:bg-accent-soft"
-                    onClick={() => act("player:kick", { playerId: p.id, ban: true }).then(() => setMenuFor(null))}
-                  >
-                    Remove and ban
-                  </button>
+                  {p.isBot ? (
+                    <button
+                      className="rounded border border-line px-2 py-1 text-xs font-semibold hover:bg-paper"
+                      onClick={() => act("bot:remove", { playerId: p.id }).then(() => setMenuFor(null))}
+                    >
+                      Remove bot
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        className="rounded border border-line px-2 py-1 text-xs font-semibold hover:bg-paper"
+                        onClick={() => act("player:kick", { playerId: p.id, ban: false }).then(() => setMenuFor(null))}
+                      >
+                        Remove
+                      </button>
+                      <button
+                        className="rounded border border-accent px-2 py-1 text-xs font-semibold text-accent hover:bg-accent-soft"
+                        onClick={() => act("player:kick", { playerId: p.id, ban: true }).then(() => setMenuFor(null))}
+                      >
+                        Remove and ban
+                      </button>
+                    </>
+                  )}
                 </div>
               )}
             </li>
           );
         })}
       </ul>
+
+      {isHost && inGame && botsNow < view.settings.botCount && (
+        <button
+          type="button"
+          onClick={() => act("bot:add")}
+          className="mt-2 w-full rounded-lg border border-dashed border-line px-3 py-2 text-sm font-semibold text-muted hover:bg-paper hover:text-ink"
+        >
+          + Add a bot ({botsNow}/{view.settings.botCount})
+        </button>
+      )}
 
       {isHost && view.bans.length > 0 && (
         <div className="mt-4 border-t border-line pt-3">

@@ -451,3 +451,42 @@ describe("imported decks", () => {
     expect(() => game.removeDeck(host, "test")).toThrow("UNKNOWN_DECK");
   });
 });
+
+describe("removing and adding bots", () => {
+  it("lowers the bot count when the host removes a bot in the lobby", () => {
+    const { game, host } = setup({ bots: 3 });
+    const bot = game.viewFor(host).players.find((p) => p.isBot)!;
+    game.removeBot(host, bot.id);
+    const v = game.viewFor(host);
+    expect(v.settings.botCount).toBe(2);
+    expect(v.players.filter((p) => p.isBot)).toHaveLength(2);
+    expect(v.players.some((p) => p.id === bot.id)).toBe(false);
+  });
+
+  it("removes a bot during a game, with its played card", () => {
+    const { game, ids, host, onRemoved } = setup({ humans: 3, bots: 2 });
+    game.start(host);
+    const bot = game.viewFor(host).players.find((p) => p.isBot)!;
+    expect(game.viewFor(host).round!.submittedCount).toBe(2);
+    game.removeBot(host, bot.id);
+    const v = game.viewFor(host);
+    expect(v.round!.submittedCount).toBe(1);
+    expect(v.settings.botCount).toBe(2);
+    expect(onRemoved).toHaveBeenCalledWith(bot.id, "kicked", bot.name);
+    expect(() => game.removeBot(ids[1], v.players.find((p) => p.isBot)!.id)).toThrow("NOT_HOST");
+  });
+
+  it("adds bots back during a game only up to the count set before the start", () => {
+    const { game, host } = setup({ humans: 3, bots: 1 });
+    game.start(host);
+    expect(() => game.addBot(host)).toThrow("TOO_MANY_BOTS");
+    const bot = game.viewFor(host).players.find((p) => p.isBot)!;
+    game.removeBot(host, bot.id);
+    game.addBot(host);
+    const v = game.viewFor(host);
+    const added = v.players.find((p) => p.isBot)!;
+    expect(added.id).not.toBe(bot.id);
+    expect(added.status).toBe("waiting");
+    expect(() => game.addBot(host)).toThrow("TOO_MANY_BOTS");
+  });
+});

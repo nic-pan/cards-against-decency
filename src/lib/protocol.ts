@@ -70,6 +70,10 @@ export interface ClientToServer {
   /** A spectator starts to play. */
   "player:play": (ack: (r: Ack) => void) => void;
   "player:kick": (p: { playerId: string; ban: boolean }, ack: (r: Ack) => void) => void;
+  /** The host removes a bot. In the lobby this lowers the bot count. */
+  "bot:remove": (p: { playerId: string }, ack: (r: Ack) => void) => void;
+  /** The host adds a bot. During a game, only up to the bot count set before the start. */
+  "bot:add": (ack: (r: Ack) => void) => void;
   /** The host lifts a ban. The person can join again, with any name. */
   "player:unban": (p: { banId: string }, ack: (r: Ack) => void) => void;
 }
@@ -117,5 +121,6 @@ export const ERROR_TEXT: Record<string, string> = {
   DECK_NOT_FOUND: "No deck has that code. Check the code and try again.",
   DECK_FETCH_FAILED: "Many Decks did not answer. Try again in a moment.",
   DECK_EMPTY: "That deck has no usable cards.",
+  TOO_MANY_BOTS: "The game already has as many bots as were set before the start.",
   TERMS_REQUIRED: "Accept the Terms of Use and the Privacy Notice to play.",
 };

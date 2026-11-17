@@ -80,7 +80,8 @@ export type ErrorCode =
   | "BAD_SETTINGS"
   | "SPECTATORS_FULL"
   | "TOO_MANY_DECKS"
-  | "NAME_RESERVED";
+  | "NAME_RESERVED"
+  | "TOO_MANY_BOTS";
 
 export class GameError extends Error {
   constructor(public readonly code: ErrorCode, message?: string) {
@@ -565,6 +566,44 @@ export class Game {
   backToLobby(byId: string): void {
     this.requireHost(byId);
     this.toLobby(null);
+  }
+
+  // ----- Bots ----------------------------------------------------------
+
+  /**
+   * The host removes one bot. In the lobby this lowers the bot count. During a game the
+   * bot leaves at once; settings.botCount stays as the limit for adding bots back.
+   */
+  removeBot(byId: string, botId: string): void {
+    this.requireHost(byId);
+    const bot = this.find(botId);
+    if (!bot || !bot.isBot) throw new GameError("UNKNOWN_PLAYER");
+    if (this.phase === "lobby" || this.phase === "gameOver") {
+      this.players = this.players.filter((p) => p !== bot);
+      this.settings = { ...this.settings, botCount: this.players.filter((p) => p.isBot).length };
+      this.changed();
+      return;
+    }
+    this.removePlayer(botId, "kicked");
+  }
+
+  /** During a game, the host adds a bot back, up to the bot count set before the start. */
+  addBot(byId: string): void {
+    this.requireHost(byId);
+    if (this.phase === "lobby" || this.phase === "gameOver") {
+      const next = this.settings.botCount + 1;
+      if (next > LIMITS.botCount.max) throw new GameError("BAD_SETTINGS");
+      this.updateSettings(byId, { botCount: next });
+      return;
+    }
+    if (this.players.filter((p) => p.isBot).length >= this.settings.botCount) throw new GameError("TOO_MANY_BOTS");
+    this.botSeq += 1;
+    const bot = this.makePlayer(`Bot ${this.botSeq}`, true);
+    // Like a late joiner: cards now, play from the next round.
+    if (this.whitePile) this.refill(bot);
+    this.players.push(bot);
+    this.setNotice(`The host added ${bot.name}. It plays from the next round.`);
+    this.changed();
   }
 
   // ----- Player actions ------------------------------------------------

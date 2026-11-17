@@ -145,6 +145,7 @@ const schemas = {
   nameCheck: z.object({ name }),
   deckRemove: z.object({ deckId: id }),
   unban: z.object({ banId: id }),
+  botRemove: z.object({ playerId: id }),
 };
 
 class RequestError extends Error {
@@ -680,6 +681,16 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       room.removeTimers.delete(target);
       revoke(room, target);
       room.game.removePlayer(target, "kicked");
+    });
+
+    on(socket, "bot:remove", (s, p) => {
+      const { room, playerId } = current(s);
+      room.game.removeBot(playerId, schemas.botRemove.parse(p).playerId);
+    });
+
+    on(socket, "bot:add", (s) => {
+      const { room, playerId } = current(s);
+      room.game.addBot(playerId);
     });
 
     on(socket, "player:unban", (s, p) => {
