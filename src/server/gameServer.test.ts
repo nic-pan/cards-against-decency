@@ -171,6 +171,15 @@ describe("game server", () => {
     await watcher.until((v) => !v.youAreSpectator && v.players.some((p) => p.name === "Watcher"));
   });
 
+  it("lets people spectate a private room with the code", async () => {
+    const a = await client();
+    const priv = await a.emit("room:create", { ...T, name: "Host", isPublic: false });
+    const b = await client();
+    expect((await b.emit("room:join", { ...T, code: priv.code, name: "Watcher", as: "spectator" })).ok).toBe(true);
+    const view = await b.until((v) => v.youAreSpectator);
+    expect(view.settings.isPublic).toBe(false);
+  });
+
   it("rejects malformed payloads and unknown settings", async () => {
     const a = await client();
     await a.emit("room:create", { ...T, name: "Host" });

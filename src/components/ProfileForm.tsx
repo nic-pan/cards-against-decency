@@ -11,6 +11,8 @@ export const NAME_MAX = 24;
 export function ProfileForm({
   submitLabel,
   onSubmit,
+  secondaryLabel,
+  onSecondary,
   busy = false,
   error,
   children,
@@ -18,6 +20,9 @@ export function ProfileForm({
   submitLabel: string;
   /** Called with the trimmed name after the player accepts the terms. */
   onSubmit: (name: string) => void;
+  /** Optional second action, for example "Watch as spectator". Needs the same name and terms. */
+  secondaryLabel?: string;
+  onSecondary?: (name: string) => void;
   busy?: boolean;
   error?: string | null;
   /** Extra fields, for example a room password. */
@@ -35,12 +40,16 @@ export function ProfileForm({
   const trimmed = name.trim();
   const ready = trimmed.length > 0 && agreed && !busy;
 
-  function submit(e: React.FormEvent) {
-    e.preventDefault();
+  function finish(action: (name: string) => void) {
     if (!ready) return;
     session.setName(trimmed);
     session.acceptTerms();
-    onSubmit(trimmed);
+    action(trimmed);
+  }
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    finish(onSubmit);
   }
 
   return (
@@ -86,6 +95,11 @@ export function ProfileForm({
       <Button className="w-full" disabled={!ready}>
         {submitLabel}
       </Button>
+      {secondaryLabel && onSecondary && (
+        <Button type="button" variant="ghost" className="w-full" disabled={!ready} onClick={() => finish(onSecondary)}>
+          {secondaryLabel}
+        </Button>
+      )}
     </form>
   );
 }

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { call, getSocket, session } from "@/lib/socket";
-import { TERMS_VERSION, type GameView, type JoinResult } from "@/lib/protocol";
+import { TERMS_VERSION, type GameView, type JoinAs, type JoinResult } from "@/lib/protocol";
 import { Board } from "./Board";
 import { Lobby } from "./Lobby";
 import { PlayerList } from "./PlayerList";
@@ -267,12 +267,13 @@ function JoinForm({ code, needsPassword, onJoined }: { code: string; needsPasswo
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  async function join(name: string) {
+  async function join(name: string, as: JoinAs = "player") {
     setBusy(true);
     setError(null);
     const r = await call<JoinResult>("room:join", {
       code,
       name,
+      as,
       password: needsPassword ? password : undefined,
       termsVersion: TERMS_VERSION,
     });
@@ -291,8 +292,17 @@ function JoinForm({ code, needsPassword, onJoined }: { code: string; needsPasswo
         <h1 className="mb-1 text-xl font-bold">
           Join room <span className="font-mono tracking-[0.2em]">{code}</span>
         </h1>
-        <p className="mb-5 text-sm text-muted">You were invited to a game. Choose a username to join.</p>
-        <ProfileForm submitLabel="Join game" onSubmit={join} busy={busy} error={error}>
+        <p className="mb-5 text-sm text-muted">
+          You were invited to a game. Choose a username to play, or watch as a spectator.
+        </p>
+        <ProfileForm
+          submitLabel="Join game"
+          onSubmit={(name) => join(name, "player")}
+          secondaryLabel="Watch as spectator"
+          onSecondary={(name) => join(name, "spectator")}
+          busy={busy}
+          error={error}
+        >
           {needsPassword && (
             <Field label="Room password">
               <input
