@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { offences, type GameView, type SubmissionView, type WhiteCard } from "@/lib/protocol";
-import { BlackCardView, WhiteCardView } from "./Cards";
+import { offences, type GameView, type WhiteCard } from "@/lib/protocol";
+import { BlackCardView, CARD_GRID, CardBack, CardSlot, WhiteCardView, deckIdOf } from "./Cards";
 import type { Act } from "./Room";
 import { Button } from "./ui";
 
@@ -31,9 +31,7 @@ export function Board({ view, isHost, act, clockOffset }: { view: GameView; isHo
     <div className="space-y-5">
       <StatusBar view={view} isCzar={isCzar} left={left} nameOf={nameOf} />
 
-      {view.phase === "submitting" && <Submitting view={view} isCzar={isCzar} act={act} />}
-      {view.phase === "judging" && <Judging view={view} isCzar={isCzar} act={act} nameOf={nameOf} />}
-      {view.phase === "roundOver" && <RoundResult view={view} nameOf={nameOf} left={left} />}
+      <Table view={view} isCzar={isCzar} act={act} left={left} nameOf={nameOf} />
 
       {isHost && <HostBar act={act} />}
     </div>
@@ -99,201 +97,251 @@ function StatusBar({
 }
 
 // ---------------------------------------------------------------------------
+// The table: black card and action on the left, played cards on the right, your hand below.
 
-function Submitting({ view, isCzar, act }: { view: GameView; isCzar: boolean; act: Act }) {
+type Action = { label: string; disabled: boolean; onClick: () => void; note?: string };
+
+function Table({
+  view,
+  isCzar,
+  act,
+  left,
+  nameOf,
+}: {
+  view: GameView;
+  isCzar: boolean;
+  act: Act;
+  left: number | null;
+  nameOf: (id: string | null) => string;
+}) {
   const round = view.round!;
   const pick = round.black.pick;
+  const subs = round.submissions ?? [];
   const [selected, setSelected] = useState<string[]>([]);
+  const [chosen, setChosen] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
-  // Clear the selection when a new round starts.
-  useEffect(() => setSelected([]), [round.number]);
+  // Clear the choices when a new round starts.
+  useEffect(() => {
+    setSelected([]);
+    setChosen(null);
+  }, [round.number]);
 
   const toggle = (id: string) =>
     setSelected((cur) =>
       cur.includes(id) ? cur.filter((c) => c !== id) : pick === 1 ? [id] : cur.length < pick ? [...cur, id] : cur,
     );
 
-  const chosen = selected.map((id) => view.hand.find((c) => c.id === id)).filter(Boolean) as WhiteCard[];
-  const answers = view.yourSubmission ?? (chosen.length ? chosen : undefined);
+  const winner = subs.find((s) => s.isWinner);
+  const deckName = (cardId: string) => view.decks.find((d) => d.id === deckIdOf(cardId))?.name;
+  const handChoice = selected.map((id) => view.hand.find((c) => c.id === id)).filter(Boolean) as WhiteCard[];
 
-  async function submit() {
+  // The black card shows the answer that is being previewed or revealed.
+  let answers: WhiteCard[] | undefined;
+  if (view.phase === "roundOver") answers = winner?.cards;
+  else if (view.phase === "judging") answers = subs.find((s) => s.id === chosen)?.cards;
+  else answers = view.yourSubmission ?? (handChoice.length ? handChoice : undefined);
+
+  async function run(event: Parameters<Act>[0], payload: unknown, after: () => void) {
     setSending(true);
-    const ok = await act("card:submit", { cardIds: selected });
+    const ok = await act(event, payload);
     setSending(false);
-    if (ok) setSelected([]);
+    if (ok) after();
+  }
+
+  let action: Action | null = null;
+  if (view.phase === "submitting" && view.mustSubmit) {
+    action = {
+      label: pick === 1 ? "Play this card" : `Play ${pick} cards`,
+      disabled: selected.length !== pick || sending,
+      onClick: () => void run("card:submit", { cardIds: selected }, () => setSelected([])),
+      note: `${selected.length}/${pick} selected`,
+    };
+  } else if (view.phase === "judging" && isCzar) {
+    action = {
+      label: "Confirm selection",
+      disabled: !chosen || sending,
+      onClick: () => chosen && void run("czar:pick", { submissionId: chosen }, () => setChosen(null)),
+      note: chosen ? undefined : "Tap an answer to preview it",
+    };
+  }
+
+  let playedHeading: React.ReactNode = (
+    <>
+      The white cards played this round are:{" "}
+      {view.phase === "submitting" && (
+        <span className="font-normal">
+          ({round.submittedCount}/{round.expectedCount})
+        </span>
+      )}
+    </>
+  );
+  if (view.phase === "roundOver") {
+    playedHeading = winner ? (
+      <span className="text-base text-ink">
+        {winner.playerId === view.youId
+          ? "You win this round and get an Offence!"
+          : `${nameOf(winner.playerId)} wins this round and gets an Offence.`}
+        {left !== null && <span className="ml-2 text-sm font-normal text-muted">Next round in {left} s</span>}
+      </span>
+    ) : (
+      <span className="text-base text-ink">
+        Nobody got an Offence this round.
+        {left !== null && <span className="ml-2 text-sm font-normal text-muted">Next round in {left} s</span>}
+      </span>
+    );
   }
 
   return (
     <>
-      <div className="mx-auto max-w-xl">
-        <BlackCardView card={round.black} answers={answers?.map((c) => c.text)} />
+      <div className="grid gap-5 md:grid-cols-[13rem_minmax(0,1fr)] lg:grid-cols-[15rem_minmax(0,1fr)]">
+        <div>
+          <h3 className="mb-2 text-sm font-bold text-muted">The black card for this round is:</h3>
+          <div className="mx-auto max-w-[15rem] md:max-w-none">
+            <BlackCardView card={round.black} answers={answers?.map((c) => c.text)} deckName={deckName(round.black.id)} />
+          </div>
+          {action && <ActionBar action={action} />}
+        </div>
+
+        <div className="min-w-0">
+          <h3 className="mb-2 text-sm font-bold text-muted">{playedHeading}</h3>
+          <div className={CARD_GRID}>
+            {view.phase === "submitting" && (
+              <>
+                {Array.from({ length: round.submittedCount }, (_, i) => (
+                  <Group key={`b${i}`} size={pick}>
+                    {Array.from({ length: pick }, (_, j) => (
+                      <CardBack key={j} />
+                    ))}
+                  </Group>
+                ))}
+                {Array.from({ length: Math.max(0, round.expectedCount - round.submittedCount) }, (_, i) => (
+                  <Group key={`s${i}`} size={pick}>
+                    {Array.from({ length: pick }, (_, j) => (
+                      <CardSlot key={j} />
+                    ))}
+                  </Group>
+                ))}
+              </>
+            )}
+
+            {view.phase === "judging" &&
+              subs.map((s) => (
+                <Group key={s.id} size={s.cards.length} highlight={chosen === s.id ? "selected" : undefined}>
+                  {s.cards.map((c, i) => (
+                    <WhiteCardView
+                      key={c.id}
+                      card={c}
+                      deckName={deckName(c.id)}
+                      selected={chosen === s.id}
+                      order={s.cards.length > 1 ? i + 1 : undefined}
+                      onClick={isCzar ? () => setChosen(s.id) : undefined}
+                    />
+                  ))}
+                </Group>
+              ))}
+
+            {view.phase === "roundOver" &&
+              [...subs]
+                .sort((a, b) => Number(b.isWinner) - Number(a.isWinner))
+                .map((s) => (
+                  <Group
+                    key={s.id}
+                    size={s.cards.length}
+                    highlight={s.isWinner ? "winner" : undefined}
+                    label={
+                      <span className={s.isWinner ? "font-bold text-ink" : "text-muted"}>
+                        {s.isWinner && "★ "}
+                        {s.playerId === view.youId ? "You" : nameOf(s.playerId)}
+                      </span>
+                    }
+                  >
+                    {s.cards.map((c, i) => (
+                      <WhiteCardView key={c.id} card={c} deckName={deckName(c.id)} order={s.cards.length > 1 ? i + 1 : undefined} />
+                    ))}
+                  </Group>
+                ))}
+          </div>
+          {view.phase === "judging" && !isCzar && (
+            <p className="mt-2 text-xs text-muted">The answers are shown without names until the Card Czar chooses.</p>
+          )}
+        </div>
       </div>
 
-      {view.yourSubmission && (
-        <p className="text-center text-sm text-muted">Your answer is in. The Card Czar will see it without your name.</p>
-      )}
-
-      {!view.youAreSpectator && <section>
-        <h3 className="mb-2 text-sm font-bold text-muted">
-          Your cards
-          {isCzar && " (you do not play this round)"}
-        </h3>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
-          {view.hand.map((card) => (
-            <WhiteCardView
-              key={card.id}
-              card={card}
-              selected={selected.includes(card.id)}
-              order={pick > 1 && selected.includes(card.id) ? selected.indexOf(card.id) + 1 : undefined}
-              disabled={!view.mustSubmit}
-              onClick={view.mustSubmit ? () => toggle(card.id) : undefined}
-            />
-          ))}
-        </div>
-      </section>}
-
-      {view.mustSubmit && (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface/95 p-3 backdrop-blur lg:static lg:border-0 lg:bg-transparent lg:p-0">
-          <div className="mx-auto flex max-w-6xl items-center gap-3">
-            <span className="text-sm text-muted">
-              {selected.length}/{pick} selected
+      {!view.youAreSpectator && (
+        <section>
+          <h3 className="mb-2 text-sm font-bold text-muted">
+            Your hand
+            <span className="font-normal">
+              {view.mustSubmit
+                ? ` — choose ${pick === 1 ? "a card" : `${pick} cards, in order`}`
+                : isCzar && view.phase === "submitting"
+                  ? " — you are the Card Czar and do not play this round"
+                  : ""}
             </span>
-            <Button className="ml-auto px-8" disabled={selected.length !== pick || sending} onClick={submit}>
-              {pick === 1 ? "Play this card" : `Play ${pick} cards`}
-            </Button>
+          </h3>
+          <div className={CARD_GRID}>
+            {view.hand.map((card) => (
+              <WhiteCardView
+                key={card.id}
+                card={card}
+                deckName={deckName(card.id)}
+                selected={selected.includes(card.id)}
+                order={pick > 1 && selected.includes(card.id) ? selected.indexOf(card.id) + 1 : undefined}
+                disabled={!view.mustSubmit}
+                onClick={view.mustSubmit ? () => toggle(card.id) : undefined}
+              />
+            ))}
           </div>
-        </div>
+        </section>
       )}
     </>
   );
 }
 
-// ---------------------------------------------------------------------------
-
-function Judging({
-  view,
-  isCzar,
-  act,
-}: {
-  view: GameView;
-  isCzar: boolean;
-  act: Act;
-  nameOf: (id: string | null) => string;
-}) {
-  const round = view.round!;
-  const subs = round.submissions ?? [];
-  const [chosen, setChosen] = useState<string | null>(null);
-  useEffect(() => setChosen(null), [round.number]);
-  const preview = subs.find((s) => s.id === chosen);
-
-  return (
-    <>
-      <div className="mx-auto max-w-xl">
-        <BlackCardView card={round.black} answers={preview?.cards.map((c) => c.text)} />
-      </div>
-      <section>
-        <h3 className="mb-2 text-sm font-bold text-muted">
-          {subs.length} answer{subs.length === 1 ? "" : "s"}
-          {isCzar && " — tap one to preview it, then confirm"}
-        </h3>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {subs.map((s) => (
-            <SubmissionGroup
-              key={s.id}
-              sub={s}
-              selected={chosen === s.id}
-              onClick={isCzar ? () => setChosen(s.id) : undefined}
-            />
-          ))}
-        </div>
-      </section>
-      {isCzar && (
-        <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface/95 p-3 backdrop-blur lg:static lg:border-0 lg:bg-transparent lg:p-0">
-          <div className="mx-auto flex max-w-6xl justify-end">
-            <Button className="px-8" disabled={!chosen} onClick={() => chosen && act("czar:pick", { submissionId: chosen })}>
-              Choose this answer
-            </Button>
-          </div>
-        </div>
-      )}
-    </>
-  );
-}
-
-function SubmissionGroup({
-  sub,
-  selected,
-  onClick,
+/** One player's cards. A pick-2 or pick-3 answer spans 2 or 3 columns. */
+function Group({
+  size,
+  highlight,
   label,
+  children,
 }: {
-  sub: SubmissionView;
-  selected?: boolean;
-  onClick?: () => void;
+  size: number;
+  highlight?: "selected" | "winner";
   label?: React.ReactNode;
+  children: React.ReactNode;
 }) {
+  const span = { gridColumn: `span ${size} / span ${size}` };
   return (
-    <div
-      className={`rounded-2xl p-2 transition ${
-        sub.isWinner ? "bg-accent-soft ring-2 ring-accent" : selected ? "bg-accent-soft" : "bg-transparent"
-      }`}
-    >
-      <div className={`grid gap-2 ${sub.cards.length > 1 ? "grid-cols-2" : ""}`}>
-        {sub.cards.map((c, i) => (
-          <WhiteCardView
-            key={c.id}
-            card={c}
-            selected={selected}
-            order={sub.cards.length > 1 ? i + 1 : undefined}
-            onClick={onClick}
-          />
-        ))}
+    <div style={span} className="min-w-0">
+      <div
+        className={`grid gap-2 rounded-lg sm:gap-3 ${
+          highlight === "winner"
+            ? "ring-2 ring-accent ring-offset-4 ring-offset-paper"
+            : highlight === "selected"
+              ? "ring-2 ring-accent/60 ring-offset-4 ring-offset-paper"
+              : ""
+        }`}
+        style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
+      >
+        {children}
       </div>
-      {label && <div className="mt-2 px-1 text-sm">{label}</div>}
+      {label && <div className="mt-1.5 truncate text-xs">{label}</div>}
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-
-function RoundResult({ view, nameOf, left }: { view: GameView; nameOf: (id: string | null) => string; left: number | null }) {
-  const round = view.round!;
-  const subs = round.submissions ?? [];
-  const winner = subs.find((s) => s.isWinner);
+/** The confirm button. Under the black card on wide screens, fixed at the bottom on phones. */
+function ActionBar({ action }: { action: Action }) {
   return (
-    <>
-      <div className="mx-auto max-w-xl">
-        <BlackCardView card={round.black} answers={winner?.cards.map((c) => c.text)} />
+    <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface/95 p-3 backdrop-blur md:static md:mt-3 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
+      <div className="mx-auto flex max-w-6xl items-center gap-3 md:block">
+        {action.note && <span className="text-sm text-muted md:mb-1.5 md:block md:text-center md:text-xs">{action.note}</span>}
+        <Button className="ml-auto px-8 md:w-full" disabled={action.disabled} onClick={action.onClick}>
+          {action.label}
+        </Button>
       </div>
-      {winner ? (
-        <p className="text-center text-xl font-black">
-          {winner.playerId === view.youId
-            ? "You win this round and get an Offence!"
-            : `${nameOf(winner.playerId)} wins this round and gets an Offence.`}
-        </p>
-      ) : (
-        <p className="text-center text-lg font-semibold">Nobody got an Offence this round.</p>
-      )}
-      {left !== null && <p className="text-center text-sm text-muted">Next round in {left} seconds.</p>}
-      {subs.length > 0 && (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {[...subs]
-            .sort((a, b) => Number(b.isWinner) - Number(a.isWinner))
-            .map((s) => (
-              <SubmissionGroup
-                key={s.id}
-                sub={s}
-                label={
-                  <span className={s.isWinner ? "font-bold" : "text-muted"}>
-                    {s.isWinner && "★ "}
-                    {s.playerId === view.youId ? "You" : nameOf(s.playerId)}
-                  </span>
-                }
-              />
-            ))}
-        </div>
-      )}
-    </>
+    </div>
   );
 }
 

@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type { BlackCard as Black, WhiteCard as White } from "@/lib/protocol";
 
 /** Splits a prompt at its blanks and puts answers into them. */
@@ -15,15 +16,42 @@ export function fillPrompt(text: string, answers: string[] = []) {
   return out;
 }
 
-export function BlackCardView({ card, answers, size = "lg" }: { card: Black; answers?: string[]; size?: "lg" | "sm" }) {
-  const segments = fillPrompt(card.text, answers);
+/**
+ * Card grid. Cards are squares with a minimum size, so words do not break.
+ * The grid fits as many cards in a row as the width allows (3 on a phone),
+ * and wraps to more rows when there are more cards.
+ */
+export const CARD_GRID =
+  "grid grid-cols-[repeat(auto-fill,minmax(6.25rem,1fr))] gap-2 sm:grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] sm:gap-3";
+
+/** The small mark at the bottom of every card. */
+function CardMark({ dark = false, size = "sm" }: { dark?: boolean; size?: "sm" | "lg" }) {
+  const small = size === "sm";
   return (
-    <div
-      className={`relative flex flex-col justify-between rounded-2xl bg-card-black text-white shadow-lg ring-1 ring-line ${
-        size === "lg" ? "min-h-48 p-5 sm:min-h-56 sm:p-6" : "min-h-32 p-4"
-      }`}
-    >
-      <p className={`font-bold leading-snug ${size === "lg" ? "text-xl sm:text-2xl" : "text-base"}`}>
+    <span className={`flex items-center gap-1.5 font-semibold ${small ? "text-[8px] sm:text-[9px]" : "text-xs"} ${dark ? "text-white/80" : "text-[#555]"}`}>
+      <span aria-hidden className={`relative inline-block shrink-0 ${small ? "h-3 w-2.5" : "h-5 w-4"}`}>
+        <span className="absolute inset-0 -rotate-[8deg] rounded-[2px] border border-[#777] bg-[#171717]" />
+        <span className="absolute inset-0 translate-x-[30%] rotate-[6deg] rounded-[2px] border border-[#999] bg-white" />
+      </span>
+      {/* Small cards on phones show only the logo; the name does not fit. */}
+      <span className={`truncate ${small ? "hidden sm:inline" : ""}`}>Cards Against Decency</span>
+    </span>
+  );
+}
+
+/** The deck id is the first part of a card id, for example "cah-base" in "cah-base:b:5". */
+export function deckIdOf(cardId: string): string {
+  return cardId.split(":")[0];
+}
+
+/** The black prompt card. Answers fill the blanks when you preview or reveal them. */
+export function BlackCardView({ card, answers, deckName }: { card: Black; answers?: string[]; deckName?: string }) {
+  const segments = fillPrompt(card.text, answers);
+  const long = card.text.length + (answers?.join(" ").length ?? 0) > 110;
+  return (
+    // aspect-square is a minimum: a very long prompt makes the card taller, not cut off.
+    <div className="flex aspect-square w-full flex-col justify-between rounded-xl bg-card-black p-4 text-white shadow-lg ring-1 ring-[#333] sm:p-5">
+      <p className={`hyphens-auto font-bold leading-snug ${long ? "text-base sm:text-lg" : "text-lg sm:text-xl"}`}>
         {segments.map((s, i) =>
           s.answer ? (
             <span key={i} className={answers ? "text-[#fb9a6a]" : "tracking-tighter opacity-80"}>
@@ -34,46 +62,85 @@ export function BlackCardView({ card, answers, size = "lg" }: { card: Black; ans
           ),
         )}
       </p>
-      <div className="mt-4 flex items-center justify-between text-xs font-semibold opacity-70">
-        <span>Cards Against Decency</span>
-        {card.pick > 1 && <span className="rounded-full bg-white px-2 py-0.5 text-card-black">Pick {card.pick}</span>}
+      <div className="mt-3">
+        {deckName && (
+          <p className="mb-1.5 truncate text-[11px] font-medium text-white/55" title={`This card comes from ${deckName}`}>
+            From {deckName}
+          </p>
+        )}
+        <div className="flex items-center justify-between gap-2">
+        <CardMark dark size="lg" />
+        {card.pick > 1 && (
+          <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-xs font-bold text-card-black">Pick {card.pick}</span>
+        )}
+        </div>
       </div>
     </div>
   );
 }
 
+/** A square white answer card. */
 export function WhiteCardView({
   card,
   selected,
   order,
   disabled,
   onClick,
+  deckName,
 }: {
   card: White;
   selected?: boolean;
   order?: number;
   disabled?: boolean;
   onClick?: () => void;
+  /** Shown on hover. White cards are too small to show it all the time. */
+  deckName?: string;
 }) {
   const interactive = !!onClick && !disabled;
   return (
     <button
       type="button"
+      title={deckName ? `From ${deckName}` : undefined}
       onClick={interactive ? onClick : undefined}
       disabled={!interactive}
       aria-pressed={selected}
-      className={`relative flex min-h-28 w-full flex-col rounded-xl border bg-card-white p-3 text-left text-[15px] font-bold leading-snug text-[#171717] shadow-sm transition sm:min-h-36 ${
+      className={`relative flex aspect-square w-full flex-col justify-between rounded-lg border bg-card-white p-2 text-left text-[13px] font-bold leading-snug text-[#171717] shadow-sm transition sm:p-2.5 sm:text-sm ${
         selected ? "-translate-y-1 border-accent ring-2 ring-accent" : "border-[#d9d3c6]"
       } ${interactive ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-md" : ""} ${
-        disabled && !selected ? "opacity-60" : ""
+        disabled && !selected ? "opacity-85" : ""
       }`}
     >
-      {card.text}
+      <span className={`hyphens-auto break-words ${order !== undefined ? "pr-5" : ""}`}>{card.text}</span>
+      <CardMark />
       {order !== undefined && (
-        <span className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-xs text-white">
+        <span className="absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-[11px] text-white">
           {order}
         </span>
       )}
     </button>
   );
+}
+
+/** A face-down card: somebody played it, but it is not revealed yet. */
+export function CardBack({ style }: { style?: CSSProperties }) {
+  return (
+    <div
+      style={style}
+      className="flex aspect-square w-full items-center justify-center rounded-lg border border-[#d9d3c6] bg-card-white shadow-sm"
+      aria-label="A played card, face down"
+    >
+      <span className="text-center text-[10px] font-black uppercase leading-tight tracking-wide text-[#171717] sm:text-xs">
+        Cards
+        <br />
+        Against
+        <br />
+        Decency
+      </span>
+    </div>
+  );
+}
+
+/** An empty place for a card that a player has not played yet. */
+export function CardSlot() {
+  return <div className="aspect-square w-full rounded-lg border-2 border-dashed border-line" aria-hidden />;
 }
