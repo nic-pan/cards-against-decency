@@ -21,14 +21,7 @@ export default function Home() {
       <main className="mx-auto max-w-6xl px-4 py-6">
         <header className="mb-5">
           <h1>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo/wordmark.webp"
-              alt="Cards Against Decency"
-              width={960}
-              height={360}
-              className="h-14 w-auto rounded-lg sm:h-16"
-            />
+            <Wordmark className="h-14 w-auto sm:h-16" />
           </h1>
         </header>
         <GameBrowser name={step.name} onLogout={() => setStep({ kind: "profile" })} />
@@ -40,14 +33,7 @@ export default function Home() {
     <main className="mx-auto max-w-3xl px-4 py-10 sm:py-16">
       <header className="mb-8 text-center sm:mb-10">
         <h1>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo/wordmark.webp"
-            alt="Cards Against Decency"
-            width={960}
-            height={360}
-            className="mx-auto w-full max-w-md rounded-2xl"
-          />
+          <Wordmark className="mx-auto w-full max-w-md" />
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-lg text-muted">
           A fill-in-the-blank party card game. Play with friends in the browser. No accounts, no downloads.
@@ -78,5 +64,25 @@ export default function Home() {
         </p>
       </section>
     </main>
+  );
+}
+
+/**
+ * The full logo. Dark pages get a version with a transparent background. Light pages
+ * keep the black banner, because "Cards Against" is white text.
+ */
+function Wordmark({ className }: { className: string }) {
+  return (
+    <picture>
+      <source srcSet="/logo/wordmark-dark.webp" media="(prefers-color-scheme: dark)" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/logo/wordmark.webp"
+        alt="Cards Against Decency"
+        width={960}
+        height={360}
+        className={`rounded-xl ${className}`}
+      />
+    </picture>
   );
 }
