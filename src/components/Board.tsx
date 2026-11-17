@@ -121,10 +121,15 @@ function Table({
   const [chosen, setChosen] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
 
+  // The Card Czar's hand is hidden until the Czar chooses. The Czar can peek.
+  const [peekHand, setPeekHand] = useState(false);
+  const judgingThisRound = isCzar && (view.phase === "submitting" || view.phase === "judging");
+
   // Clear the choices when a new round starts.
   useEffect(() => {
     setSelected([]);
     setChosen(null);
+    setPeekHand(false);
   }, [round.number]);
 
   const toggle = (id: string) =>
@@ -268,33 +273,52 @@ function Table({
         </div>
       </div>
 
-      {!view.youAreSpectator && (
-        <section>
-          <h3 className="mb-2 text-sm font-bold text-muted">
-            Your hand
-            <span className="font-normal">
-              {view.mustSubmit
-                ? ` — choose ${pick === 1 ? "a card" : `${pick} cards, in order`}`
-                : isCzar && view.phase === "submitting"
-                  ? " — you are the Card Czar and do not play this round"
-                  : ""}
+      {!view.youAreSpectator &&
+        (judgingThisRound && !peekHand ? (
+          // The Card Czar does not play, so the hand is hidden: no distractions.
+          <section className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-dashed border-line px-4 py-3 text-sm">
+            <span>
+              <b>You are the Card Czar this round.</b>{" "}
+              <span className="text-muted">Your cards come back when the round ends.</span>
             </span>
-          </h3>
-          <div className={CARD_GRID}>
-            {view.hand.map((card) => (
-              <WhiteCardView
-                key={card.id}
-                card={card}
-                deckName={deckName(card.id)}
-                selected={selected.includes(card.id)}
-                order={pick > 1 && selected.includes(card.id) ? selected.indexOf(card.id) + 1 : undefined}
-                disabled={!view.mustSubmit}
-                onClick={view.mustSubmit ? () => toggle(card.id) : undefined}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+            <button type="button" className="ml-auto text-xs font-semibold text-muted underline" onClick={() => setPeekHand(true)}>
+              Show my hand
+            </button>
+          </section>
+        ) : (
+          <section>
+            <h3 className="mb-2 flex items-baseline gap-2 text-sm font-bold text-muted">
+              <span>
+                Your hand
+                <span className="font-normal">
+                  {view.mustSubmit
+                    ? ` — choose ${pick === 1 ? "a card" : `${pick} cards, in order`}`
+                    : judgingThisRound
+                      ? " — you are the Card Czar and do not play this round"
+                      : ""}
+                </span>
+              </span>
+              {judgingThisRound && (
+                <button type="button" className="ml-auto text-xs font-semibold underline" onClick={() => setPeekHand(false)}>
+                  Hide my hand
+                </button>
+              )}
+            </h3>
+            <div className={`${CARD_GRID} ${judgingThisRound ? "opacity-50 grayscale" : ""}`}>
+              {view.hand.map((card) => (
+                <WhiteCardView
+                  key={card.id}
+                  card={card}
+                  deckName={deckName(card.id)}
+                  selected={selected.includes(card.id)}
+                  order={pick > 1 && selected.includes(card.id) ? selected.indexOf(card.id) + 1 : undefined}
+                  disabled={!view.mustSubmit}
+                  onClick={view.mustSubmit ? () => toggle(card.id) : undefined}
+                />
+              ))}
+            </div>
+          </section>
+        ))}
     </>
   );
 }
