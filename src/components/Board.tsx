@@ -429,13 +429,18 @@ function GameOver({
             : `${nameOf(view.winnerId)} wins!`
           : draw
             ? "It's a Draw!"
-            : "Nobody got an Offence."}
+            : "An Embarrassment to the Department"}
       </h2>
       {view.winnerId && (
         <p className="mt-3">
           <span className="inline-block rounded-full bg-accent px-3 py-1 text-xs font-black uppercase tracking-wide text-white">
             🏅 A National Disgrace
           </span>
+        </p>
+      )}
+      {!view.winnerId && !draw && (
+        <p className="mx-auto mt-2 max-w-md text-sm text-muted">
+          Not a single Offence recorded. We expected better. Much, much worse, actually.
         </p>
       )}
       {draw && (
