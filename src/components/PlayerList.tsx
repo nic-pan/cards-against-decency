@@ -5,6 +5,9 @@ import { offences, type GameView, type PlayerStatus } from "@/lib/protocol";
 import type { Act, Ghost, View } from "./Room";
 import { Badge } from "./ui";
 
+/** The most bots a game can have (LIMITS.botCount.max in the engine). */
+const MAX_BOTS = 6;
+
 const STATUS_TEXT: Record<PlayerStatus, string> = {
   czar: "Card Czar",
   submitted: "Played",
@@ -125,13 +128,13 @@ export function PlayerList({
         })}
       </ul>
 
-      {isHost && inGame && botsNow < view.settings.botCount && (
+      {isHost && (inGame ? botsNow < view.settings.botCount : botsNow < MAX_BOTS) && (
         <button
           type="button"
           onClick={() => act("bot:add")}
           className="mt-2 w-full rounded-lg border border-dashed border-line px-3 py-2 text-sm font-semibold text-muted hover:bg-paper hover:text-ink"
         >
-          + Add a bot ({botsNow}/{view.settings.botCount})
+          + Add a bot ({botsNow}/{inGame ? view.settings.botCount : MAX_BOTS})
         </button>
       )}
 
