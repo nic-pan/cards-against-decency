@@ -38,9 +38,11 @@ export default function Home() {
         <h1>
           <Wordmark className="mx-auto w-full max-w-md" />
         </h1>
-        <p className="mx-auto mt-3 max-w-xl text-lg text-muted">
-          A fill-in-the-blank party card game. Play with friends in the browser. No accounts, no downloads.
-        </p>
+        <div className="mx-auto mt-3 max-w-xl space-y-1">
+          <p className="text-lg font-semibold">A party card game for people with questionable standards.</p>
+          <p className="text-muted">Fill in the blanks. Make your friends regret inviting you.</p>
+          <p className="text-muted">Play in your browser. No accounts, no downloads, no evidence retained.</p>
+        </div>
       </header>
 
       {step.kind === "loading" ? (
