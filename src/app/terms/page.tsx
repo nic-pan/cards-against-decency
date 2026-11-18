@@ -46,14 +46,22 @@ export default function Terms() {
       </Section>
 
       <Section title="4. Your username">
-        <p>You choose your username. Other players and visitors to the public game list can see it. Do not use a username that:</p>
+        <p>
+          You choose your username. Other players and visitors to the public game list can see it. Edgy names are part
+          of the game. Names that can hurt real people are not. Do not use a username that:
+        </p>
         <ul className="mt-2 list-disc space-y-1 pl-5">
-          <li>is your real full name or someone else&apos;s, or contains contact details,</li>
-          <li>pretends to be another person, the game&apos;s staff or one of the bots,</li>
-          <li>attacks people for their race, ethnicity, religion, gender, sexuality or disability,</li>
-          <li>is sexual, threatening, or advertises something.</li>
+          <li>contains a real person&apos;s full name, contact details or address, including your own,</li>
+          <li>targets a specific person, for example another player,</li>
+          <li>threatens violence, or calls for violence against people or groups,</li>
+          <li>is clearly illegal, for example anything sexual involving minors,</li>
+          <li>pretends to be the game&apos;s staff or one of the bots,</li>
+          <li>advertises something or contains a link.</li>
         </ul>
-        <p className="mt-2">We can remove a username, a game or a player that breaks these rules, without warning.</p>
+        <p className="mt-2">
+          No list can cover everything. We can remove a username, a game or a player that crosses the line, without
+          warning.
+        </p>
       </Section>
 
       <Section title="5. How to behave">
