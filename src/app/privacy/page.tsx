@@ -165,8 +165,7 @@ export default function Privacy() {
           above.
         </p>
         <p className="mt-2">
-          You can also complain to a data protection authority, for example the Commission for Personal Data Protection
-          in Bulgaria, or the authority in your own country.
+          You can also complain to a data protection authority, for example the one in the country where you live.
         </p>
       </Section>
 
