@@ -430,6 +430,13 @@ function GameOver({
             ? "It's a Draw!"
             : "Nobody got an Offence."}
       </h2>
+      {view.winnerId && (
+        <p className="mt-3">
+          <span className="inline-block rounded-full bg-accent px-3 py-1 text-xs font-black uppercase tracking-wide text-white">
+            🏅 A National Disgrace
+          </span>
+        </p>
+      )}
       {draw && (
         <p className="mx-auto mt-2 max-w-md text-sm text-muted">
           The investigation has been suspended due to insufficient evidence and an alarming lack of competence.
