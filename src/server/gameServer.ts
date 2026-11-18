@@ -2,7 +2,7 @@ import { createHash, randomBytes, randomInt, scryptSync, timingSafeEqual } from 
 import type { Server, Socket } from "socket.io";
 import { z, ZodError } from "zod";
 import { DeckRegistry } from "../engine/deck";
-import { Game, GameError, LIMITS, NAME_MAX, isReservedName, nameKey } from "../engine/game";
+import { Game, GameError, LIMITS, NAME_MAX, NAME_MIN, isReservedName, nameKey } from "../engine/game";
 import { TERMS_VERSION, type ClientToServer, type OnlineStatus, type OnlineUser, type RoomListing, type ServerToClient } from "../lib/protocol";
 import { TokenBucket, WindowCounter } from "./rateLimit";
 import { ipKey, securityLog } from "./securityLog";
@@ -601,6 +601,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       const ownRoom = own ? store.get(String(previous!.code)) : undefined;
       const key = nameKey(n);
       if (key.length === 0) return { available: false, reason: "NAME_INVALID" };
+      if ([...key].length < NAME_MIN) return { available: false, reason: "NAME_TOO_SHORT" };
       if (isReservedName(n)) return { available: false, reason: "NAME_RESERVED" };
       for (const room of store.all()) {
         if (room.closed) continue;

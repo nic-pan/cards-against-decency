@@ -25,7 +25,7 @@ function setup(opts: { humans?: number; bots?: number; pick?: number; targetScor
   const onRemoved = vi.fn();
   const game = new Game({ decks, onEmpty, onRemoved, idFactory: () => `id${++seq}`, rng: mulberry(42) });
   const ids: string[] = [];
-  for (let i = 0; i < (opts.humans ?? 3); i++) ids.push(game.addPlayer(`P${i}`));
+  for (let i = 0; i < (opts.humans ?? 3); i++) ids.push(game.addPlayer(`Player${i}`));
   game.updateSettings(ids[0], { botCount: opts.bots ?? 0, targetScore: opts.targetScore ?? 3 });
   return { game, ids, host: ids[0], onEmpty, onRemoved };
 }
@@ -59,8 +59,10 @@ describe("lobby", () => {
 
   it("rejects duplicate and empty names", () => {
     const { game } = setup();
-    expect(() => game.addPlayer("p0")).toThrow(GameError);
+    expect(() => game.addPlayer("player0")).toThrow(GameError);
     expect(() => game.addPlayer("   ")).toThrow(GameError);
+    expect(() => game.addPlayer("Al")).toThrow("NAME_TOO_SHORT");
+    expect(() => game.addPlayer("Ali")).not.toThrow();
   });
 
   it("strips control characters from names", () => {
@@ -99,7 +101,7 @@ describe("lobby", () => {
   it("enforces the human player limit", () => {
     const { game, host } = setup();
     game.updateSettings(host, { maxPlayers: 3 });
-    expect(() => game.addPlayer("P9")).toThrow("ROOM_FULL");
+    expect(() => game.addPlayer("Player9")).toThrow("ROOM_FULL");
   });
 });
 
@@ -412,7 +414,7 @@ describe("spectators", () => {
 
   it("uses one name list for players and spectators", () => {
     const { game } = setup();
-    expect(() => game.addSpectator("P1")).toThrow("NAME_TAKEN");
+    expect(() => game.addSpectator("Player1")).toThrow("NAME_TAKEN");
     game.addSpectator("Watcher");
     expect(() => game.addPlayer("watcher")).toThrow("NAME_TAKEN");
   });
@@ -420,8 +422,8 @@ describe("spectators", () => {
   it("enforces the spectator limit", () => {
     const { game, host } = setup();
     game.updateSettings(host, { maxSpectators: 1 });
-    game.addSpectator("S1");
-    expect(() => game.addSpectator("S2")).toThrow("SPECTATORS_FULL");
+    game.addSpectator("Spec1");
+    expect(() => game.addSpectator("Spec2")).toThrow("SPECTATORS_FULL");
   });
 
   it("lets a spectator start to play from the next round", () => {
@@ -541,19 +543,19 @@ describe("activity log", () => {
     const czar = game.viewFor(host).round!.czarId;
     game.pick(czar, game.viewFor(czar).round!.submissions![0].id);
     const texts = game.viewFor(host).log.map((n) => n.text);
-    expect(texts[0]).toBe("P0 created the room.");
-    expect(texts).toContain("P1 joined.");
+    expect(texts[0]).toBe("Player0 created the room.");
+    expect(texts).toContain("Player1 joined.");
     expect(texts).toContain("The game started.");
-    expect(texts.some((t) => /^Round 1\. Card Czar: P\d\.$/.test(t))).toBe(true);
-    expect(texts.some((t) => /^P\d won round 1\.$/.test(t))).toBe(true);
+    expect(texts.some((t) => /^Round 1\. Card Czar: Player\d\.$/.test(t))).toBe(true);
+    expect(texts.some((t) => /^Player\d won round 1\.$/.test(t))).toBe(true);
     expect(game.viewFor(host).log.every((n) => typeof n.at === "number")).toBe(true);
   });
 
   it("keeps the last 50 entries", () => {
     const { game } = setup();
-    for (let i = 0; i < 60; i++) game.removePlayer(game.addSpectator(`S${i}`), "left");
+    for (let i = 0; i < 60; i++) game.removePlayer(game.addSpectator(`Spec${i}`), "left");
     const log = game.viewFor(game.humanIds()[0]).log;
     expect(log).toHaveLength(50);
-    expect(log.at(-1)!.text).toBe("S59 stopped watching.");
+    expect(log.at(-1)!.text).toBe("Spec59 stopped watching.");
   });
 });

@@ -130,6 +130,7 @@ export const ERROR_TEXT: Record<string, string> = {
   ROOM_FULL: "This room is full.",
   LATE_JOIN_DISABLED: "The game has started and the host does not allow late joining.",
   NAME_INVALID: "Enter a name.",
+  NAME_TOO_SHORT: "Your name needs at least 3 characters.",
   NAME_TAKEN: "Somebody is already playing with that name. Choose another name.",
   NAME_RESERVED: `${NAME_RESERVED_TEXT.title} ${NAME_RESERVED_TEXT.body}`,
   NOT_ENOUGH_PLAYERS: "You need at least 3 players. Add bots or invite more friends.",

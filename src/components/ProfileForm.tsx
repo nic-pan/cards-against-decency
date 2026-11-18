@@ -14,6 +14,12 @@ type NameProblem = { code: string } | null;
 
 /** About 16 normal letters fit on one line in the players list. Keep in sync with NAME_MAX in the engine. */
 export const NAME_MAX = 16;
+/** Keep in sync with NAME_MIN in the engine. */
+export const NAME_MIN = 3;
+
+function tooShort(name: string): boolean {
+  return [...name].length < NAME_MIN;
+}
 
 /** Name and terms form. Used on the front page and on invite links. */
 export function ProfileForm({
@@ -56,12 +62,16 @@ export function ProfileForm({
   }, []);
 
   const trimmed = name.trim();
-  const ready = trimmed.length > 0 && agreed && !busy && !checking && !problem;
+  const ready = !tooShort(trimmed) && agreed && !busy && !checking && !problem;
 
   /** Asks the server if the name is free. Names are unique on the whole server; your own previous seat does not count. */
   async function check(candidate: string): Promise<boolean> {
     if (timer.current) clearTimeout(timer.current);
     if (!candidate) return false;
+    if (tooShort(candidate)) {
+      setProblem({ code: "NAME_TOO_SHORT" });
+      return false;
+    }
     if (isBotName(candidate)) {
       setProblem({ code: "NAME_RESERVED" });
       return false;
@@ -85,7 +95,8 @@ export function ProfileForm({
     latest.current = candidate;
     if (candidate && isBotName(candidate)) return setProblem({ code: "NAME_RESERVED" });
     setProblem(null);
-    if (candidate) timer.current = setTimeout(() => void check(candidate), CHECK_DELAY_MS);
+    // A short name gets its message on blur, not while the player is still typing.
+    if (candidate && !tooShort(candidate)) timer.current = setTimeout(() => void check(candidate), CHECK_DELAY_MS);
   }
 
   async function finish(action: (name: string) => void) {

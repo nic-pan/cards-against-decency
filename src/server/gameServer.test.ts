@@ -73,8 +73,8 @@ describe("game server", () => {
 
     const b = await client();
     const c = await client();
-    expect((await b.emit("room:join", { ...T, code: created.code.toLowerCase(), name: "Bo" })).ok).toBe(true);
-    expect((await c.emit("room:join", { ...T, code: created.code, name: "Cy" })).ok).toBe(true);
+    expect((await b.emit("room:join", { ...T, code: created.code.toLowerCase(), name: "Bob" })).ok).toBe(true);
+    expect((await c.emit("room:join", { ...T, code: created.code, name: "Cyd" })).ok).toBe(true);
 
     // Only the host can start.
     expect((await b.emit("game:start")).error).toBe("NOT_HOST");
@@ -120,8 +120,8 @@ describe("game server", () => {
     const created = await a.emit("room:create", { ...T, name: nm("Host"), password: "secret" });
     const b = await client();
     expect((await b.emit("room:info", { code: created.code })).needsPassword).toBe(true);
-    expect((await b.emit("room:join", { ...T, code: created.code, name: "B" })).error).toBe("BAD_PASSWORD");
-    expect((await b.emit("room:join", { ...T, code: created.code, name: "B", password: "secret" })).ok).toBe(true);
+    expect((await b.emit("room:join", { ...T, code: created.code, name: "Bea" })).error).toBe("BAD_PASSWORD");
+    expect((await b.emit("room:join", { ...T, code: created.code, name: "Bea", password: "secret" })).ok).toBe(true);
   });
 
   it("lets the host ban a player", async () => {
@@ -142,7 +142,7 @@ describe("game server", () => {
     expect((await a.emit("room:create", { name: "Old", termsVersion: "v0" })).error).toBe("TERMS_REQUIRED");
     const created = await a.emit("room:create", { ...T, name: nm("Host") });
     const b = await client();
-    expect((await b.emit("room:join", { code: created.code, name: "B" })).error).toBe("TERMS_REQUIRED");
+    expect((await b.emit("room:join", { code: created.code, name: "Bea" })).error).toBe("TERMS_REQUIRED");
   });
 
   it("lists public rooms only, and lets people spectate", async () => {
@@ -195,6 +195,8 @@ describe("game server", () => {
     expect((await b.emit("name:check", { name: "Bot 3" })).reason).toBe("NAME_RESERVED");
     expect((await b.emit("room:create", { ...T, name: "bot 1" })).error).toBe("NAME_RESERVED");
     expect((await b.emit("name:check", { name: "s.w.a.t" })).reason).toBe("NAME_RESERVED");
+    expect((await b.emit("name:check", { name: " ab " })).reason).toBe("NAME_TOO_SHORT");
+    expect((await b.emit("name:check", { name: "abc" })).available).toBe(true);
     expect((await b.emit("name:check", { name: "fbi" })).reason).toBe("NAME_RESERVED");
     // The owner of the name can reuse it when they move to a new game.
     const previous = { code: first.code, token: first.token };

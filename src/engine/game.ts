@@ -38,6 +38,7 @@ export const MIN_PARTICIPANTS = 3;
 export const IDLE_ROUNDS_BEFORE_KICK = 2;
 export const ROUND_OVER_MS = 7_000;
 export const NAME_MAX = 16; // Fits on one line in the players list. Keep in sync with ProfileForm.tsx.
+export const NAME_MIN = 3; // Keep in sync with ProfileForm.tsx.
 /** Maximum number of imported decks in one room. */
 export const MAX_EXTERNAL_DECKS = 10;
 
@@ -67,6 +68,7 @@ export type ErrorCode =
   | "ROOM_FULL"
   | "LATE_JOIN_DISABLED"
   | "NAME_INVALID"
+  | "NAME_TOO_SHORT"
   | "NAME_TAKEN"
   | "NOT_ENOUGH_PLAYERS"
   | "NOT_ENOUGH_CARDS"
@@ -948,6 +950,7 @@ export class Game {
   private checkName(rawName: string): string {
     const name = cleanText(rawName, NAME_MAX);
     if (name.length === 0) throw new GameError("NAME_INVALID");
+    if ([...name].length < NAME_MIN) throw new GameError("NAME_TOO_SHORT");
     if (isReservedName(name)) throw new GameError("NAME_RESERVED");
     const lower = name.toLowerCase();
     if ([...this.players, ...this.spectators].some((p) => p.name.toLowerCase() === lower)) {
