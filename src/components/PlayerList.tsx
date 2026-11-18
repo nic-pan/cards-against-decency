@@ -99,14 +99,17 @@ export function PlayerList({
                   >
                     {p.score}
                   </span>}
-                {canManage && (
+                {canManage ? (
                   <button
-                    className={`${view.phase === "lobby" ? "ml-auto" : ""} rounded px-1.5 text-muted hover:bg-paper`}
+                    className={`${view.phase === "lobby" ? "ml-auto" : ""} w-7 shrink-0 rounded text-center text-muted hover:bg-paper`}
                     aria-label={`Manage ${p.name}`}
                     onClick={() => setMenuFor(menuFor === p.id ? null : p.id)}
                   >
                     ⋯
                   </button>
+                ) : (
+                  // The host's own row has no menu. An empty space as wide as the button keeps the scores in one column.
+                  isHost && <span aria-hidden className={`${view.phase === "lobby" ? "ml-auto" : ""} w-7 shrink-0`} />
                 )}
               </div>
               {p.isBot && <BotTitle name={p.name} />}
