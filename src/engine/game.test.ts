@@ -300,16 +300,19 @@ describe("leaving", () => {
     expect(game.viewFor(ids[1]).hostId).toBe(ids[1]);
   });
 
-  it("returns to the lobby when too few players remain", () => {
+  it("stops at once when fewer than 3 players remain, without waiting for the round", () => {
     const { game, ids, host } = setup();
     game.start(host);
+    while (game.viewFor(host).players.length > 3) {
+      const other = game.viewFor(host).players.find((p) => p.id !== host && p.id !== game.viewFor(host).round!.czarId)!;
+      game.removePlayer(other.id, "kicked");
+    }
+    expect(game.viewFor(host).phase).toBe("submitting");
     const nonCzar = ids.find((id) => id !== game.viewFor(host).round!.czarId && id !== host)!;
-    game.removePlayer(nonCzar, "left");
-    submitAll(game, ids.filter((id) => id !== nonCzar));
-    const czar = game.viewFor(host).round!.czarId;
-    game.pick(czar, game.viewFor(czar).round!.submissions![0].id);
-    vi.advanceTimersByTime(ROUND_OVER_MS);
-    expect(game.viewFor(host).phase).toBe("lobby");
+    game.removePlayer(nonCzar, "kicked");
+    const view = game.viewFor(host);
+    expect(view.phase).toBe("lobby");
+    expect(view.log.at(-1)!.text).toBe("There are not enough players. The game stopped and returned to the lobby.");
   });
 
   it("closes the room when the last human leaves, even with bots", () => {

@@ -225,7 +225,7 @@ function HostMenu({
         <p className="font-bold text-danger">
           Only {playersLeft} {playersLeft === 1 ? "player" : "players"} will be left.
         </p>
-        <p className="mt-0.5 text-ink">The game stops after this round, and everybody goes back to the lobby. Remove anyway?</p>
+        <p className="mt-0.5 text-ink">The game stops at once, and everybody goes back to the lobby. Remove anyway?</p>
         <div className="mt-2 flex gap-2">
           <button
             className="rounded bg-danger px-2 py-1 font-semibold text-white hover:brightness-110"

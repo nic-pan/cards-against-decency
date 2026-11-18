@@ -384,6 +384,13 @@ export class Game {
             : "left";
     this.setNotice(`${player.name} ${verb}.`, why === "idle" || why === "banned" ? "danger" : "info");
 
+    // A game needs 3 players. With fewer, it stops at once instead of waiting for the round to end.
+    const inGame = this.phase === "submitting" || this.phase === "judging" || this.phase === "roundOver";
+    if (inGame && this.players.length < MIN_PARTICIPANTS) {
+      this.toLobby("There are not enough players. The game stopped and returned to the lobby.");
+      return;
+    }
+
     const round = this.round;
     if (round && (this.phase === "submitting" || this.phase === "judging")) {
       if (round.czarId === id) {

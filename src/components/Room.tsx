@@ -39,6 +39,7 @@ export function Room({ code }: { code: string }) {
   const [ghosts, setGhosts] = useState<Ghost[]>([]);
   useTurnAlert(view, clockOffset);
   useIdleWarningSound(view);
+  useGameStoppedSound(view);
   // Players removed in the last seconds. A Czar who was removed gets the thud, not the "Czar left" sound.
   const recentlyRemoved = useRef(new Set<string>());
   useCzarLeftSound(view, recentlyRemoved);
@@ -71,8 +72,11 @@ export function Room({ code }: { code: string }) {
       const last = lastView.current;
       const index = last?.players.findIndex((p) => p.id === playerId) ?? -1;
       if (!last || index < 0) return;
+      // When this removal stops the game, useGameStoppedSound plays the "faaah" instead.
+      const inGame = last.phase === "submitting" || last.phase === "judging" || last.phase === "roundOver";
+      const stopsGame = inGame && last.players.length - 1 < 3;
       // The banned player hears the long "fahhh"; everybody else hears the short "faaah".
-      playEventSound(reason === "banned" ? "czarLeft" : "removed");
+      if (!stopsGame) playEventSound(reason === "banned" ? "czarLeft" : "removed");
       recentlyRemoved.current.add(playerId);
       setTimeout(() => recentlyRemoved.current.delete(playerId), 5000);
       const ghost: Ghost = { player: last.players[index], index, reason };
@@ -375,6 +379,21 @@ function useCzarLeftSound(view: View | null, recentlyRemoved: React.MutableRefOb
     announced.current = key;
     if (!recentlyRemoved.current.has(czarId)) playEventSound("czarLeft");
   }, [end, czarId, key, recentlyRemoved]);
+}
+
+/**
+ * Plays the short "faaah" when a running game stops at once and goes back to the lobby,
+ * for example because fewer than 3 players are left. A normal game end shows the
+ * scores (gameOver) and stays quiet.
+ */
+function useGameStoppedSound(view: View | null) {
+  const phase = view?.phase;
+  const before = useRef(phase);
+  useEffect(() => {
+    const wasPlaying = before.current === "submitting" || before.current === "judging" || before.current === "roundOver";
+    if (wasPlaying && phase === "lobby") playEventSound("czarLeft");
+    before.current = phase;
+  }, [phase]);
 }
 
 /** Plays the "suspenseful boom" once, when the player gets the red idle warning. */
