@@ -44,6 +44,35 @@ async function transparentBackground(file: string, mode: "dark" | "light", out: 
     if (i >= width) stack.push(i - width);
     if (i < width * (height - 1)) stack.push(i + width);
   }
+  // The holes in letters such as "a", "d" and "g" are background too, but the fill from
+  // the edge cannot reach them. Clear small closed areas of background colour in the
+  // "Cards Against" lines. The card faces and the "Decency" box are large or lower, so
+  // they stay as they are.
+  const textLeft = Math.round(width * 0.44);
+  const textBottom = Math.round(height * 0.6);
+  const maxHole = Math.round(width * height * 0.004);
+  for (let start = 0; start < width * height; start++) {
+    if (seen[start] || distance(start) >= 1) continue;
+    const hole: number[] = [];
+    const queue = [start];
+    seen[start] = 1;
+    let minX = width, maxY = 0;
+    while (queue.length) {
+      const i = queue.pop()!;
+      hole.push(i);
+      const x = i % width, y = (i - x) / width;
+      minX = Math.min(minX, x);
+      maxY = Math.max(maxY, y);
+      for (const n of [x > 0 ? i - 1 : -1, x < width - 1 ? i + 1 : -1, i - width, i + width]) {
+        if (n < 0 || n >= width * height || seen[n] || distance(n) >= 1) continue;
+        seen[n] = 1;
+        queue.push(n);
+      }
+    }
+    if (minX < textLeft || maxY > textBottom || hole.length > maxHole) continue;
+    for (const i of hole) data[i * 4 + 3] = Math.min(data[i * 4 + 3], Math.round(Math.max(0, distance(i)) * 255));
+  }
+
   await sharp(data, { raw: { width, height, channels: 4 } })
     .resize({ width: 960 })
     .webp({ quality: 88, alphaQuality: 90 })
