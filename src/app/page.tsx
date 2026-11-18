@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BOT_DIVISION, BOT_PROFILES } from "@/engine/bots";
 import { session } from "@/lib/socket";
@@ -72,6 +73,14 @@ export default function Home() {
       </section>
 
       <BotRoster />
+
+      <p className="mt-4 text-center text-sm text-muted">
+        Is it for kids? Can I play on my phone? Read the{" "}
+        <Link href="/faq" className="font-semibold underline">
+          FAQ
+        </Link>
+        .
+      </p>
     </main>
   );
 }

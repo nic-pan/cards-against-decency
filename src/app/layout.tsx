@@ -1,13 +1,14 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 const DESCRIPTION =
   "A party card game for people with questionable standards. Fill in the blanks. Make your friends regret inviting you.";
 
 export const metadata: Metadata = {
-  // Shared links need full URLs for the preview image. SITE_URL can point to another domain later.
-  metadataBase: new URL(process.env.SITE_URL ?? "https://cards-against-decency.onrender.com"),
+  // Shared links need full URLs for the preview image.
+  metadataBase: new URL(SITE_URL),
   title: "Cards Against Decency",
   description: DESCRIPTION,
   openGraph: { title: "Cards Against Decency", description: DESCRIPTION, siteName: "Cards Against Decency", type: "website" },
@@ -44,6 +45,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               . Adult humour, 18+.
             </p>
             <p className="flex gap-4">
+              <Link className="underline" href="/faq">
+                FAQ
+              </Link>
               <Link className="underline" href="/terms">
                 Terms of Use
               </Link>
