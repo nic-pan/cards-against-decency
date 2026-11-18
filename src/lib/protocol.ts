@@ -7,10 +7,10 @@ export type { PublicPlayer, SubmissionView, RoundView, PlayerStatus } from "../e
 export type { WhiteCard, BlackCard, DeckSummary } from "../engine/deck";
 
 /**
- * Version of the Terms of Use and Privacy Notice that players accept.
- * Change it when the documents change. Players must then accept again.
+ * Version of the Terms of Use and Privacy Notice that players accept: the date of the last change that matters.
+ * Change it, and the "Last updated" date on both pages, when the documents change. Players must then accept again.
  */
-export const TERMS_VERSION = "draft-2026-11";
+export const TERMS_VERSION = "2026-11-18";
 
 export type Ack<T = object> = ({ ok: true } & T) | { ok: false; error: string; message?: string };
 

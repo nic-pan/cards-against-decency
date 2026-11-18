@@ -3,9 +3,9 @@ import type { ReactNode } from "react";
 
 export const metadata = { title: "Terms of Use · Cards Against Decency" };
 
-// DRAFT. Before a public launch:
-// - read it again against the game (chat and player-made cards are not in the game yet),
-// - change TERMS_VERSION in src/lib/protocol.ts, so every player accepts the final text.
+// When this text changes in a way that matters, change TERMS_VERSION in src/lib/protocol.ts
+// and the date below, so every player accepts the new text.
+// Read it again when chat or player-made cards come to the game.
 
 export default function Terms() {
   return (
@@ -14,7 +14,7 @@ export default function Terms() {
         ← Back
       </Link>
       <h1 className="mt-4 text-3xl font-black">Terms of Use</h1>
-      <p className="mt-2 text-sm text-muted">Draft. Last updated 18 November 2026.</p>
+      <p className="mt-2 text-sm text-muted">Last updated 18 November 2026.</p>
 
       <p className="mt-6">
         Cards Against Decency is a free, non-commercial party card game that you play in your browser. When you tick

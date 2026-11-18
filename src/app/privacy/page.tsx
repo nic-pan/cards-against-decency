@@ -3,7 +3,8 @@ import type { ReactNode } from "react";
 
 export const metadata = { title: "Privacy Notice · Cards Against Decency" };
 
-// DRAFT. Before a public launch, check the text against the code again.
+// Check this text against the code when the game changes what it collects or keeps.
+// When a change matters, change TERMS_VERSION in src/lib/protocol.ts and the date below.
 // Log retention: Render keeps service logs for 7 days on the Hobby plan (checked 18 November 2026).
 // If the plan changes, or logs go to a Log Stream, update "How long we keep it" and "Who can see your data".
 
@@ -14,7 +15,7 @@ export default function Privacy() {
         ← Back
       </Link>
       <h1 className="mt-4 text-3xl font-black">Privacy Notice</h1>
-      <p className="mt-2 text-sm text-muted">Draft. Last updated 18 November 2026.</p>
+      <p className="mt-2 text-sm text-muted">Last updated 18 November 2026.</p>
 
       <p className="mt-6">
         Cards Against Decency is a free, non-commercial party game. You do not need an account. We collect as little as
