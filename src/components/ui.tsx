@@ -91,7 +91,7 @@ export function Toggle({
  * A "?" icon that explains a setting. The text shows on hover and on keyboard focus.
  * On touch screens, a tap opens and closes it.
  */
-export function InfoTip({ text, label }: { text: string; label: string }) {
+export function InfoTip({ text, label }: { text: React.ReactNode; label: string }) {
   const id = useId();
   const [open, setOpen] = useState(false);
   return (

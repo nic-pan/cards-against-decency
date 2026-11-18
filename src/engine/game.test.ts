@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Deck, DeckRegistry } from "./deck";
+import { BOT_PROFILES } from "./bots";
 import { Game, GameError, HAND_SIZE, ROUND_OVER_MS } from "./game";
 
 function makeDeck(id = "test", blackPick = 1): Deck {
@@ -456,6 +457,14 @@ describe("imported decks", () => {
 });
 
 describe("removing and adding bots", () => {
+  it("names bots from the bot list, with no name twice", () => {
+    const { game, host } = setup({ bots: 6 });
+    const bots = game.viewFor(host).players.filter((p) => p.isBot).map((p) => p.name);
+    expect(bots).toHaveLength(6);
+    expect(new Set(bots).size).toBe(6);
+    for (const name of bots) expect(BOT_PROFILES.map((b) => b.name)).toContain(name);
+  });
+
   it("lowers the bot count when the host removes a bot in the lobby", () => {
     const { game, host } = setup({ bots: 3 });
     const bot = game.viewFor(host).players.find((p) => p.isBot)!;

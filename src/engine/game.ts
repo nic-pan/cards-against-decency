@@ -1,5 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { BlackCard, Deck, DeckRegistry, DeckSummary, Pile, Rng, WhiteCard, shuffle, summarize } from "./deck";
+import { BOT_PROFILES, isBotName } from "./bots";
 
 // ---------------------------------------------------------------------------
 // Settings
@@ -257,9 +258,9 @@ export function cleanText(input: string, max: number): string {
     .slice(0, max);
 }
 
-/** Names like "Bot 1" belong to bots, so people cannot use them. */
+/** Bot names ("FBI", "Bot 1") belong to bots, so people cannot use them. */
 export function isReservedName(name: string): boolean {
-  return /^bot\s*\d*$/i.test(name.trim());
+  return isBotName(name);
 }
 
 /** The form of a name that is used to compare names. */
@@ -615,8 +616,7 @@ export class Game {
       return;
     }
     if (this.players.filter((p) => p.isBot).length >= this.settings.botCount) throw new GameError("TOO_MANY_BOTS");
-    this.botSeq += 1;
-    const bot = this.makePlayer(`Bot ${this.botSeq}`, true);
+    const bot = this.makePlayer(this.nextBotName(), true);
     // Like a late joiner: cards now, play from the next round.
     if (this.whitePile) this.refill(bot);
     this.players.push(bot);
@@ -913,9 +913,17 @@ export class Game {
       this.players = this.players.filter((p) => !remove.has(p.id));
     }
     for (let i = bots.length; i < this.settings.botCount; i++) {
-      this.botSeq += 1;
-      this.players.push(this.makePlayer(`Bot ${this.botSeq}`, true));
+      this.players.push(this.makePlayer(this.nextBotName(), true));
     }
+  }
+
+  /** A random free name from the bot list. "Bot N" only when all of them are taken. */
+  private nextBotName(): string {
+    const taken = new Set(this.players.map((p) => p.name));
+    const free = BOT_PROFILES.filter((b) => !taken.has(b.name));
+    if (free.length > 0) return shuffle(free, this.rng)[0].name;
+    this.botSeq += 1;
+    return `Bot ${this.botSeq}`;
   }
 
   private deck(id: string): Deck | undefined {

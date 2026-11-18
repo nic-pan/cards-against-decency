@@ -88,7 +88,7 @@ docker compose exec app npm run dev:players -- <ROOM CODE> [count] [--idle] [--p
 - Players must accept the current `TERMS_VERSION` before they create or join a room.
 - Only public rooms appear in the game list. The list never contains session tokens or player ids.
 - Spectators see the game without cards. The Card Czar's anonymity rules apply to them too.
-- Names are unique on the whole server, without case differences. Names like "Bot 1" are for bots only.
+- Names are unique on the whole server, without case differences. The bot names ("FBI", "CIA", "S.W.A.T." and the others in `src/engine/bots.ts`) are for bots only.
 - When the host leaves, the human player who joined earliest becomes host. A room with only bots closes.
 - Leaving the room screen in the app (the logo or the back button) keeps the seat for 90 seconds. The game list then shows "You are still in a game" with "Back to game" and "Leave game".
 - Creating or joining another game leaves the previous one at once. "Log out" also leaves it.

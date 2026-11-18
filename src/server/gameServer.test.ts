@@ -193,6 +193,8 @@ describe("game server", () => {
     expect((await b.emit("name:check", { name: "Unique Name" })).available).toBe(false);
     expect((await b.emit("name:check", { name: "Bot 3" })).reason).toBe("NAME_RESERVED");
     expect((await b.emit("room:create", { ...T, name: "bot 1" })).error).toBe("NAME_RESERVED");
+    expect((await b.emit("name:check", { name: "s.w.a.t" })).reason).toBe("NAME_RESERVED");
+    expect((await b.emit("name:check", { name: "fbi" })).reason).toBe("NAME_RESERVED");
     // The owner of the name can reuse it when they move to a new game.
     const previous = { code: first.code, token: first.token };
     expect((await a.emit("name:check", { name: "Unique Name", previous })).available).toBe(true);

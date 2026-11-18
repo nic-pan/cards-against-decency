@@ -97,7 +97,7 @@ export const ERROR_TEXT: Record<string, string> = {
   LATE_JOIN_DISABLED: "The game has started and the host does not allow late joining.",
   NAME_INVALID: "Enter a name.",
   NAME_TAKEN: "Somebody is already playing with that name. Choose another name.",
-  NAME_RESERVED: "Names like \"Bot 1\" are for bots. Choose another name.",
+  NAME_RESERVED: "That name belongs to one of our bots. Choose another name.",
   NOT_ENOUGH_PLAYERS: "You need at least 3 players. Add bots or invite more friends.",
   NOT_ENOUGH_CARDS: "The selected decks do not have enough cards.",
   NO_DECKS: "Select at least one deck.",

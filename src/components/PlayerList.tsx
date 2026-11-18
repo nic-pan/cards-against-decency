@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { offences, type GameView, type PlayerStatus } from "@/lib/protocol";
 import type { Act, Ghost, View } from "./Room";
-import { Badge } from "./ui";
+import { BOT_DIVISION, botProfile } from "@/engine/bots";
+import { Badge, InfoTip } from "./ui";
 
 /** The most bots a game can have (LIMITS.botCount.max in the engine). */
 const MAX_BOTS = 6;
@@ -104,6 +105,7 @@ export function PlayerList({
                   </button>
                 )}
               </div>
+              {p.isBot && <BotTitle name={p.name} />}
               {(STATUS_TEXT[p.status] || !p.connected) && (
                 <p className={`pl-4 text-xs ${p.status === "czar" ? "font-bold text-accent" : p.status === "missed" ? "font-semibold text-danger" : "text-muted"}`}>
                   {STATUS_TEXT[p.status]}
@@ -270,5 +272,25 @@ function HostMenu({
         </>
       )}
     </div>
+  );
+}
+
+/** The bot's full title under its name, with its tagline in a "?" tooltip. */
+function BotTitle({ name }: { name: string }) {
+  const profile = botProfile(name);
+  if (!profile) return null;
+  return (
+    <p className="mt-0.5 flex items-center gap-1.5 pl-4 text-xs text-muted">
+      <span className="min-w-0 truncate">{profile.title}</span>
+      <InfoTip
+        label={name}
+        text={
+          <>
+            <b className="block">{BOT_DIVISION}</b>
+            {profile.tagline}
+          </>
+        }
+      />
+    </p>
   );
 }
