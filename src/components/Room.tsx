@@ -398,7 +398,7 @@ function useGameStoppedSound(view: View | null) {
   }, [phase]);
 }
 
-/** Plays the "fail" sound once when a game ends and this player is in last place. */
+/** When a game ends: the "fail" sound for last place, the fading scream for the places between first and last. */
 function useLastPlaceSound(view: View | null) {
   const phase = view?.phase;
   const before = useRef(phase);
@@ -406,7 +406,9 @@ function useLastPlaceSound(view: View | null) {
     // Only when the game ends while the page is open, not when the page opens on the end screen.
     if (view && phase === "gameOver" && before.current && before.current !== "gameOver") {
       const ranked = [...view.players].sort((a, b) => b.score - a.score);
-      if (verdictFor(view.youId, ranked)?.title === "Clean Record") playEventSound("lastPlace");
+      const verdict = verdictFor(view.youId, ranked)?.title;
+      if (verdict === "Clean Record") playEventSound("lastPlace");
+      else if (verdict === "Within Acceptable Limits") playEventSound("middlePlace");
     }
     before.current = phase;
   }, [phase, view]);
