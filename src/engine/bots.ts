@@ -1,4 +1,4 @@
-// The bots: agents of the CADecency intelligence division.
+// The bots: agents of the CAD intelligence division.
 // The engine gives each new bot a free name from this list. The page shows
 // the full title and the tagline next to the name.
 
@@ -12,7 +12,7 @@ export type BotProfile = {
   arrival: string;
 };
 
-export const BOT_DIVISION = "The CADecency intelligence division";
+export const BOT_DIVISION = "The CAD intelligence division";
 
 export const BOT_PROFILES: readonly BotProfile[] = [
   { name: "FBI", title: "Federal Bureau of Indecency", tagline: "The obvious one.", arrival: "The FBI has entered the room. Nobody panic. Yet." },
