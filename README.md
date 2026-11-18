@@ -138,7 +138,7 @@ The game sounds come from [Pixabay](https://pixabay.com/sound-effects/) under th
 | `banned.mp3` | "fahhhhhhhhh" from myinstants.com, uploaded by v6314700, full length with a fade-out. **Licence unclear: replace with a licensed sound before a public launch.** | Banned by the host (only the banned player hears it) |
 | `czar-left.mp3` | "faaah" from myinstants.com, uploaded by SpicyIceCream, from 0.08 s. **Licence unclear: replace with a licensed sound before a public launch.** | The Card Czar leaves during a round (everybody hears it, unless the host removed the Czar). The host bans a player (everybody except the banned player hears it). A running game stops because fewer than 3 players are left. |
 | `bot-added.mp3` | "duck-toy-sound" from myinstants.com, uploaded by olyazhig15101990, 0.19–0.67 s with a fade-out. **Licence unclear: replace with a licensed sound before a public launch.** | A bot joins the room (everybody in the room hears it) |
-| `last-place.mp3` | "fail-sound-effect.mp3", 0.27–4.47 s with a fade-out. **Source and licence not recorded yet.** | The game ends and you are in last place (only you hear it) |
+| `last-place.mp3` | "fail sound effect" from myinstants.com, no uploader listed, 0.27–4.47 s with a fade-out. **Licence unclear: replace with a licensed sound before a public launch.** | The game ends and you are in last place (only you hear it) |
 
 ## Not in version 1
 
