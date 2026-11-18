@@ -45,7 +45,11 @@ export function PlayerList({
     <section className="rounded-2xl border border-line bg-surface p-4">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-3">
         <h2 className="font-bold">
-          Players <span className="font-normal text-muted">{humans}/{view.settings.maxPlayers}</span>
+          Players{" "}
+          <span className="font-normal text-muted">
+            {humans}/{view.settings.maxPlayers}
+            {botsNow > 0 && ` · ${botsNow} ${botsNow === 1 ? "bot" : "bots"}`}
+          </span>
         </h2>
         {view.phase !== "lobby" && (
           <span className="text-xs text-muted">Goal: {offences(view.settings.targetScore)}</span>

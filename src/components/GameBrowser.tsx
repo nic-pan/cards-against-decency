@@ -282,6 +282,7 @@ function GameCard({
   const [busy, setBusy] = useState(false);
 
   const humans = game.players.filter((p) => !p.isBot).length;
+  const bots = game.players.length - humans;
   const started = game.phase !== "lobby" && game.phase !== "gameOver";
   const joinBlocked =
     humans >= game.maxPlayers ? "Full" : started && !game.allowLateJoin ? "Started" : null;
@@ -323,7 +324,9 @@ function GameCard({
           </span>
         </div>
         <p className="mt-0.5 text-sm text-muted">
-          {humans}/{game.maxPlayers} players · {game.spectators.length}/{game.maxSpectators} spectators
+          {humans}/{game.maxPlayers} players
+          {bots > 0 && ` · ${bots} ${bots === 1 ? "bot" : "bots"}`} · {game.spectators.length}/{game.maxSpectators}{" "}
+          spectators
         </p>
 
         <dl className="mt-3 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
