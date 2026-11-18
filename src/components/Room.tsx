@@ -78,7 +78,7 @@ export function Room({ code }: { code: string }) {
       const inGame = last.phase === "submitting" || last.phase === "judging" || last.phase === "roundOver";
       const stopsGame = inGame && last.players.length - 1 < 3;
       // The banned player hears the long "fahhh"; everybody else hears the short "faaah".
-      if (!stopsGame) playEventSound(reason === "banned" ? "czarLeft" : "removed");
+      if (!stopsGame) playEventSound(reason === "banned" ? "faaah" : "removed");
       recentlyRemoved.current.add(playerId);
       setTimeout(() => recentlyRemoved.current.delete(playerId), 5000);
       const ghost: Ghost = { player: last.players[index], index, reason };
@@ -393,7 +393,7 @@ function useGameStoppedSound(view: View | null) {
   const before = useRef(phase);
   useEffect(() => {
     const wasPlaying = before.current === "submitting" || before.current === "judging" || before.current === "roundOver";
-    if (wasPlaying && phase === "lobby") playEventSound("czarLeft");
+    if (wasPlaying && phase === "lobby") playEventSound("faaah");
     before.current = phase;
   }, [phase]);
 }
