@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { BOT_DIVISION, BOT_PROFILES } from "@/engine/bots";
 import { session } from "@/lib/socket";
 import { GameBrowser } from "@/components/GameBrowser";
 import { ProfileForm } from "@/components/ProfileForm";
@@ -57,17 +58,20 @@ export default function Home() {
 
       <section className="mt-12 grid gap-4 text-sm text-muted sm:grid-cols-3">
         <p>
-          <b className="text-ink">How to play.</b> Each round, one player is the Card Czar and reads a black card.
-          Everybody else plays their funniest white card.
+          <b className="text-ink">How to play.</b> Each round, one player takes the role of Card Czar and reads a black
+          card. Everyone else plays their funniest white card. Poor judgement is strongly encouraged.
         </p>
         <p>
           <b className="text-ink">Who wins.</b> The Card Czar chooses the best answer without knowing who played it.
-          That player gets an Offence. Offences are the points in this game.
+          The winning player gets an Offence. Offences are the points in this game. Your record will follow you.
         </p>
         <p>
-          <b className="text-ink">Small group?</b> Add bots. They play random cards from the deck. Humans always judge.
+          <b className="text-ink">Small group?</b> Call in the bots. The FBI, CIA, MI6 and other fine institutions will
+          play random cards from the deck. Humans always judge. We have standards. Somewhere.
         </p>
       </section>
+
+      <BotRoster />
     </main>
   );
 }
@@ -89,5 +93,34 @@ function Wordmark({ className }: { className: string }) {
         className={className}
       />
     </picture>
+  );
+}
+
+/** The list of bots, closed by default, under the instructions. */
+function BotRoster() {
+  return (
+    <details className="group mt-4 rounded-2xl border border-line bg-surface text-sm">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-3 font-semibold [&::-webkit-details-marker]:hidden">
+        <span>
+          🕵️ Meet the bots <span className="font-normal text-muted">({BOT_PROFILES.length} agents)</span>
+        </span>
+        <span aria-hidden className="text-muted transition group-open:rotate-180">
+          ▾
+        </span>
+      </summary>
+      <div className="border-t border-line px-4 pb-4 pt-3">
+        <p className="mb-3 text-muted">{BOT_DIVISION}. A bot gets one of these names when the host adds it to a game.</p>
+        <ul className="grid gap-2 sm:grid-cols-2">
+          {BOT_PROFILES.map((b) => (
+            <li key={b.name} className="rounded-lg border border-line bg-paper px-3 py-2">
+              <p>
+                <b>{b.name}</b> <span className="text-muted">· {b.title}</span>
+              </p>
+              <p className="mt-0.5 text-xs italic text-muted">{b.tagline}</p>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </details>
   );
 }
