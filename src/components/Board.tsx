@@ -418,6 +418,7 @@ function GameOver({
   const place = (score: number) => ranked.findIndex((p) => p.score === score) + 1;
   // The host can end a game early. When the top score is shared, nobody wins.
   const draw = !view.winnerId && (ranked[0]?.score ?? 0) > 0;
+  const verdict = verdictFor(view.youId, ranked);
   return (
     <section className="rounded-2xl border border-line bg-surface p-6 text-center">
       <p className="text-sm font-bold uppercase tracking-wide text-muted">{draw ? "Case Closed (Sort Of)" : "Case Closed"}</p>
@@ -442,6 +443,12 @@ function GameOver({
           The investigation has been suspended due to insufficient evidence and an alarming lack of competence.
         </p>
       )}
+      {verdict && (
+        <div className="mx-auto mt-5 max-w-md rounded-xl border border-line bg-paper px-4 py-3">
+          <p className="font-bold">{verdict.title}</p>
+          <p className="mt-0.5 text-sm text-muted">{verdict.text}</p>
+        </div>
+      )}
       <ol className="mx-auto mt-6 max-w-xs space-y-1 text-left">
         {ranked.map((p) => (
           <li key={p.id} className="flex justify-between">
@@ -465,6 +472,27 @@ function GameOver({
       )}
     </section>
   );
+}
+
+/**
+ * A personal line for a player who did not finish first. Players in last place get
+ * "Clean Record", everybody between first and last "Within Acceptable Limits".
+ * Nothing for the winner, for players who share first place, for spectators, or when
+ * all players have the same score.
+ */
+function verdictFor(youId: string, ranked: GameView["players"]): { title: string; text: string } | null {
+  const you = ranked.find((p) => p.id === youId);
+  if (!you || ranked.length < 2) return null;
+  const top = ranked[0].score;
+  const bottom = ranked[ranked.length - 1].score;
+  if (top === bottom || you.score === top) return null;
+  if (you.score === bottom) {
+    return { title: "Clean Record", text: "Suspiciously well-behaved. We'll be keeping an eye on you." };
+  }
+  return {
+    title: "Within Acceptable Limits",
+    text: "Your performance met the minimum requirements. Try not to get comfortable.",
+  };
 }
 
 function HostBar({ act }: { act: Act }) {
