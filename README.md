@@ -144,7 +144,7 @@ The game sounds come from [Pixabay](https://pixabay.com/sound-effects/) under th
 | `czar-left.mp3` | "bruh" from myinstants.com, uploaded by doldrumszz, first 0.6 s with a fade-out. **Licence unclear: replace with a licensed sound before a public launch.** | The Card Czar leaves during a round (everybody hears it, unless the host removed the Czar) |
 | `gunshot.mp3` | "gun-shot-meme" from myinstants.com, uploaded by noface1, from 0.05 s with a fade-out. **Licence unclear: replace with a licensed sound before a public launch.** | The host removes the same connection from a room for the 3rd time or more (everybody hears it, instead of the thud) |
 | `bot-added.mp3` | "duck-toy-sound" from myinstants.com, uploaded by olyazhig15101990, 0.19–0.67 s with a fade-out. **Licence unclear: replace with a licensed sound before a public launch.** | A bot joins the room (everybody in the room hears it) |
-| `last-place.mp3` | "fail sound effect" from myinstants.com, no uploader listed, 0.27–4.47 s with a fade-out. **Licence unclear: replace with a licensed sound before a public launch.** | The game ends and you are in last place (only you hear it) |
+| `last-place.mp3` | "fail sound effect" from myinstants.com, no uploader listed, 0.27–4.47 s with a fade-out. **Licence unclear: replace with a licensed sound before a public launch.** | The game ends and you are in last place (only you hear it), or nobody scored (every player hears it) |
 | `middle-place.mp3` | "fading scream" from myinstants.com, uploaded by ivan3217, 0.73–4.00 s with a fade-out. **Licence unclear: replace with a licensed sound before a public launch.** | The game ends and you are between first and last place (only you hear it) |
 
 ## Not in version 1

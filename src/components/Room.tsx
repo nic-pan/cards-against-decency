@@ -402,7 +402,7 @@ function useGameStoppedSound(view: View | null) {
   }, [phase]);
 }
 
-/** When a game ends: the "fail" sound for last place, the fading scream for the places between first and last. */
+/** When a game ends: the "fail" sound for last place and when nobody scored, the fading scream for the places between first and last. */
 function useLastPlaceSound(view: View | null) {
   const phase = view?.phase;
   const before = useRef(phase);
@@ -411,7 +411,11 @@ function useLastPlaceSound(view: View | null) {
     if (view && phase === "gameOver" && before.current && before.current !== "gameOver") {
       const ranked = [...view.players].sort((a, b) => b.score - a.score);
       const verdict = verdictFor(view.youId, ranked)?.title;
-      if (verdict === "Clean Record") playEventSound("lastPlace");
+      // Nobody scored ("An Embarrassment to the Department"): everybody hears the fail sound.
+      const nobodyScored = (ranked[0]?.score ?? 0) === 0;
+      const watching = !view.players.some((p) => p.id === view.youId);
+      if (nobodyScored && !watching) playEventSound("lastPlace");
+      else if (verdict === "Clean Record") playEventSound("lastPlace");
       else if (verdict === "Within Acceptable Limits") playEventSound("middlePlace");
     }
     before.current = phase;
