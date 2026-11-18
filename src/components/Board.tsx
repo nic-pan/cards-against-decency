@@ -420,7 +420,7 @@ function GameOver({
   const draw = !view.winnerId && (ranked[0]?.score ?? 0) > 0;
   return (
     <section className="rounded-2xl border border-line bg-surface p-6 text-center">
-      <p className="text-sm font-bold uppercase tracking-wide text-muted">{draw ? "Case Closed (Sort Of)" : "Game over"}</p>
+      <p className="text-sm font-bold uppercase tracking-wide text-muted">{draw ? "Case Closed (Sort Of)" : "Case Closed"}</p>
       <h2 className="mt-2 text-3xl font-black">
         {view.winnerId
           ? view.winnerId === view.youId
