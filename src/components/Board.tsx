@@ -483,7 +483,7 @@ function GameOver({
  * Nothing for the winner, for players who share first place, for spectators, or when
  * all players have the same score.
  */
-function verdictFor(youId: string, ranked: GameView["players"]): { title: string; text: string } | null {
+export function verdictFor(youId: string, ranked: GameView["players"]): { title: string; text: string } | null {
   const you = ranked.find((p) => p.id === youId);
   if (!you || ranked.length < 2) return null;
   const top = ranked[0].score;

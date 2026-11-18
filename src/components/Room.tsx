@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { call, getSocket, session } from "@/lib/socket";
 import { TERMS_VERSION, type GameView, type JoinAs, type JoinResult } from "@/lib/protocol";
-import { Board } from "./Board";
+import { Board, verdictFor } from "./Board";
 import { Lobby } from "./Lobby";
 import { PlayerList } from "./PlayerList";
 import { ProfileForm } from "./ProfileForm";
@@ -41,6 +41,7 @@ export function Room({ code }: { code: string }) {
   useIdleWarningSound(view);
   useGameStoppedSound(view);
   useBotAddedSound(view);
+  useLastPlaceSound(view);
   // Players removed in the last seconds. A Czar who was removed gets the thud, not the "Czar left" sound.
   const recentlyRemoved = useRef(new Set<string>());
   useCzarLeftSound(view, recentlyRemoved);
@@ -395,6 +396,20 @@ function useGameStoppedSound(view: View | null) {
     if (wasPlaying && phase === "lobby") playEventSound("czarLeft");
     before.current = phase;
   }, [phase]);
+}
+
+/** Plays the "fail" sound once when a game ends and this player is in last place. */
+function useLastPlaceSound(view: View | null) {
+  const phase = view?.phase;
+  const before = useRef(phase);
+  useEffect(() => {
+    // Only when the game ends while the page is open, not when the page opens on the end screen.
+    if (view && phase === "gameOver" && before.current && before.current !== "gameOver") {
+      const ranked = [...view.players].sort((a, b) => b.score - a.score);
+      if (verdictFor(view.youId, ranked)?.title === "Clean Record") playEventSound("lastPlace");
+    }
+    before.current = phase;
+  }, [phase, view]);
 }
 
 /** Plays the duck toy once when one or more bots join the room. Bots already there when the page opens stay quiet. */

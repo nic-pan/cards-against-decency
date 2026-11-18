@@ -105,6 +105,7 @@ const FILES = {
   banned: "/sounds/banned.mp3",
   czarLeft: "/sounds/czar-left.mp3",
   botAdded: "/sounds/bot-added.mp3",
+  lastPlace: "/sounds/last-place.mp3",
 } as const;
 
 type SoundFile = keyof typeof FILES;
@@ -145,9 +146,12 @@ async function playFile(name: SoundFile, volume: number): Promise<boolean> {
 }
 
 /** Sounds for game events. Nothing plays when the player has turned sounds off. */
-export function playEventSound(event: "idleWarning" | "removed" | "banned" | "czarLeft" | "botAdded"): void {
+export function playEventSound(
+  event: "idleWarning" | "removed" | "banned" | "czarLeft" | "botAdded" | "lastPlace",
+): void {
   if (isMuted()) return;
-  void playFile(event, 0.7);
+  // The last-place sound is long and loud, so it plays more quietly.
+  void playFile(event, event === "lastPlace" ? 0.45 : 0.7);
 }
 
 /** The turn horn. Falls back to a generated sound when the file does not load. */
