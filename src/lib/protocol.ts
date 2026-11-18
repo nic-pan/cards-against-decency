@@ -90,6 +90,12 @@ export interface ServerToClient {
 }
 
 /** Plain-language messages for error codes. */
+/** The bot-name message has a title and a body, so the name field can show it in two parts. */
+export const NAME_RESERVED_TEXT = {
+  title: "That name is classified.",
+  body: "One of our agencies has already claimed it. Changing the capitalisation or adding punctuation won't fool anyone. Try another name.",
+};
+
 export const ERROR_TEXT: Record<string, string> = {
   NOT_HOST: "Only the host can do that.",
   WRONG_PHASE: "You can't do that right now.",
@@ -97,7 +103,7 @@ export const ERROR_TEXT: Record<string, string> = {
   LATE_JOIN_DISABLED: "The game has started and the host does not allow late joining.",
   NAME_INVALID: "Enter a name.",
   NAME_TAKEN: "Somebody is already playing with that name. Choose another name.",
-  NAME_RESERVED: "That name belongs to one of our bots. Choose another name.",
+  NAME_RESERVED: `${NAME_RESERVED_TEXT.title} ${NAME_RESERVED_TEXT.body}`,
   NOT_ENOUGH_PLAYERS: "You need at least 3 players. Add bots or invite more friends.",
   NOT_ENOUGH_CARDS: "The selected decks do not have enough cards.",
   NO_DECKS: "Select at least one deck.",
