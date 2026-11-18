@@ -2,9 +2,16 @@ import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import "./globals.css";
 
+const DESCRIPTION =
+  "A party card game for people with questionable standards. Fill in the blanks. Make your friends regret inviting you.";
+
 export const metadata: Metadata = {
+  // Shared links need full URLs for the preview image. SITE_URL can point to another domain later.
+  metadataBase: new URL(process.env.SITE_URL ?? "https://cards-against-decency.onrender.com"),
   title: "Cards Against Decency",
-  description: "A party card game for people with questionable standards. Fill in the blanks. Make your friends regret inviting you.",
+  description: DESCRIPTION,
+  openGraph: { title: "Cards Against Decency", description: DESCRIPTION, siteName: "Cards Against Decency", type: "website" },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

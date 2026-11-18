@@ -104,4 +104,15 @@ await sharp(MARK)
   .png({ compressionLevel: 9 })
   .toFile("src/app/apple-icon.png");
 
-console.log("Wrote public/logo/wordmark.webp, public/logo/wordmark-dark.webp, public/logo/mark.webp, src/app/icon.png, src/app/apple-icon.png");
+// Preview image for shared links (WhatsApp, Slack and others): the dark logo with its own
+// background, 1200 x 630. Next.js serves src/app/opengraph-image.png on every page.
+const darkBackground = { r: 17, g: 17, b: 17, alpha: 1 }; // #111111, the designer's background
+await sharp(WORDMARK_DARK)
+  .resize({ width: 1200, height: 630, fit: "contain", background: darkBackground })
+  .flatten({ background: darkBackground })
+  .png({ compressionLevel: 9 })
+  .toFile("src/app/opengraph-image.png");
+
+console.log(
+  "Wrote public/logo/wordmark.webp, public/logo/wordmark-dark.webp, public/logo/mark.webp, src/app/icon.png, src/app/apple-icon.png, src/app/opengraph-image.png",
+);
