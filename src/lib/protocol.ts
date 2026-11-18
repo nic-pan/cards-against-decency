@@ -154,6 +154,7 @@ export const ERROR_TEXT: Record<string, string> = {
   BANNED: "You can't join this room.",
   BLOCKED_IN_ROOM: "Someone you blocked is in this game. Unblock them on the game list first.",
   REMOVAL_COOLDOWN: "The host removed you from this room 3 times. You can join again in a few minutes.",
+  HOSTED_GAMES_LIMIT: "Your network already hosts as many games as it can. Join one of them, or close one first.",
   RATE_LIMITED: "Slow down a little and try again.",
   BAD_REQUEST: "That request was not valid.",
   NOT_IN_ROOM: "You are not in a room.",

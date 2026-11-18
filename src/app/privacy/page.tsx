@@ -80,9 +80,10 @@ export default function Privacy() {
             flood the game. These counts exist only in the server&apos;s memory.
           </li>
           <li>
-            <b>Bans and removals in a room.</b> When the host bans someone, or removes the same connection 3 times, the
-            server keeps a one-way hash of the IP address. The hash uses a secret key that belongs to that room only. It
-            blocks the ban, or a 5-minute wait before rejoining. Everything is deleted when the room closes.
+            <b>Bans, removals and hosted games.</b> For each person in a room, the server keeps a one-way hash of the
+            IP address. The hash uses a secret key that belongs to that room only. The server uses it to enforce a ban,
+            the 5-minute wait after 3 removals, and the limit on how many games one network can host at the same time.
+            Everything is deleted when the room closes.
           </li>
           <li>
             <b>Security logs.</b> Events such as wrong room passwords, bans and blocked requests go to the server log.
@@ -91,7 +92,7 @@ export default function Privacy() {
         </ul>
         <p className="mt-3 text-sm text-muted">
           People who share a network, for example the same Wi-Fi, usually share an IP address. A ban or a wait can
-          then affect all of them in that room.
+          then affect all of them in that room, and they share the limit on hosted games.
         </p>
       </Section>
 

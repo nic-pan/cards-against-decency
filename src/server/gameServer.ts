@@ -37,7 +37,7 @@ export interface Room {
   sockets: Map<string, Set<string>>;
   /** Secret for this room's IP hashes. It lives only in memory and disappears with the room. */
   salt: Buffer;
-  /** Player id -> hashed IP of the last connection (with the room's salt). Used for bans only. */
+  /** Player id -> hashed IP of the last connection (with the room's salt). Used for bans and the hosted-games limit. */
   ipKeys: Map<string, string>;
   /** Ban id -> ban. Exists only while the room exists. */
   bans: Map<string, Ban>;
@@ -190,7 +190,22 @@ export interface GameServerOptions {
   lookupsPerMinute?: number;
   /** Seals blocks. Defaults to the BLOCK_KEY environment variable. */
   blockSeal?: BlockSeal;
+  /** Open games that one IP address can host at the same time. Defaults to HOSTED_GAMES_PER_IP, or 3. */
+  hostedGamesPerIp?: number;
 }
+
+/** Reads HOSTED_GAMES_PER_IP. A missing or invalid value gives the default. */
+export function hostedGamesFromEnv(value: string | undefined): number {
+  const n = Number(value);
+  if (value === undefined || value.trim() === "") return DEFAULT_HOSTED_GAMES_PER_IP;
+  if (!Number.isInteger(n) || n < 1) {
+    console.warn(`HOSTED_GAMES_PER_IP must be a whole number of 1 or more. Using ${DEFAULT_HOSTED_GAMES_PER_IP}.`);
+    return DEFAULT_HOSTED_GAMES_PER_IP;
+  }
+  return n;
+}
+
+const DEFAULT_HOSTED_GAMES_PER_IP = 3;
 
 export function attachGameServer(server: Server, decks: DeckRegistry, options: GameServerOptions = {}) {
   const store = options.store ?? new MemoryRoomStore();
@@ -204,6 +219,21 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
   // Deck imports call an outside service, so they have their own, lower limit.
   const deckImports = new WindowCounter(10, 60_000);
   const seal = options.blockSeal ?? BlockSeal.fromEnv(process.env.BLOCK_KEY);
+  const hostedGamesPerIp = options.hostedGamesPerIp ?? hostedGamesFromEnv(process.env.HOSTED_GAMES_PER_IP);
+
+  /** Open games whose current host connects from this IP address. The game in `leaving` does not count. */
+  function hostedGames(ip: string | null | undefined, leaving?: { code: string; token: string }): number {
+    if (!ip) return 0;
+    const left = leaving && store.get(String(leaving.code));
+    const leftHost = left && left.tokens.get(String(leaving.token)) === left.game.host() ? left : undefined;
+    let n = 0;
+    for (const room of store.all()) {
+      if (room.closed || room === leftHost) continue;
+      const hostIp = room.ipKeys.get(room.game.host());
+      if (hostIp && hostIp === roomIpHash(room, ip)) n += 1;
+    }
+    return n;
+  }
 
   // ----- Public game list ----------------------------------------------
 
@@ -644,6 +674,12 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       checkJoinRate(s);
       const { name: n, password: pw, isPublic, termsVersion, previous } = schemas.create.parse(p);
       requireTerms(termsVersion);
+      // Friends on one Wi-Fi share one IP address, so this limit is for the whole network.
+      // Check it before anything changes. The game that the player leaves does not count.
+      if (hostedGames(s.data.ip, previous) >= hostedGamesPerIp) {
+        securityLog("hosted_games_limit", { ip: s.data.ip });
+        throw new RequestError("HOSTED_GAMES_LIMIT");
+      }
       // Moving to a new game leaves the previous one, so the old seat does not block the name.
       detach(s);
       abandon(previous, true);

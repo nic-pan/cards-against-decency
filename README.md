@@ -37,6 +37,7 @@ What `render.yaml` sets:
 - Health check: `/healthz`. It answers `ok` without rendering a page.
 - `CLIENT_IP_HEADER=cf-connecting-ip`: the player's address comes from Cloudflare's header, which a browser cannot fake.
 - `TRUST_PROXY=3`: the fallback. Render's `X-Forwarded-For` has 3 proxy entries (checked on 2026-11-17).
+- `HOSTED_GAMES_PER_IP=3`: how many open games one IP address can host at the same time. Without it, the server uses 3.
 - `BLOCK_KEY`: a secret that seals players' blocks (32 bytes, base64). Render does not copy variables from `render.yaml` to an existing service, so add it in the dashboard. Make one with `openssl rand -base64 32`. Keep it the same: a new key makes all saved blocks stop working. Without it, blocks stop working after every restart.
 
 Limits of the free plan:
@@ -91,6 +92,8 @@ docker compose exec app npm run dev:players -- <ROOM CODE> [count] [--idle] [--p
 - Spectators see the game without cards. The Card Czar's anonymity rules apply to them too.
 - Names are unique on the whole server, without case differences. The bot names ("FBI", "CIA", "S.W.A.T." and the others in `src/engine/bots.ts`) are for bots only.
 - The host can remove a player any number of times. From the 3rd removal of the same connection (hashed IP address) in a room, that connection waits 5 minutes before it can join that room again. The count and the wait last only as long as the room.
+- One IP address can host at most 3 open games at the same time (`HOSTED_GAMES_PER_IP`). The count uses the current host of each game, so a game counts against the network of whoever hosts it now. Friends on one Wi-Fi share the limit. Moving to a new game frees the old game first.
+- An idle host is removed like any other player. The host role then passes on.
 - When the host leaves, the human player who joined earliest becomes host. A room with only bots closes.
 - Leaving the room screen in the app (the logo or the back button) keeps the seat for 90 seconds. The game list then shows "You are still in a game" with "Back to game" and "Leave game".
 - Creating or joining another game leaves the previous one at once. "Log out" also leaves it.

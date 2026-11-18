@@ -6,7 +6,7 @@ import { io as connect, type Socket } from "socket.io-client";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { GameView } from "../engine/game";
 import { loadDecks } from "./decks";
-import { attachGameServer } from "./gameServer";
+import { attachGameServer, hostedGamesFromEnv } from "./gameServer";
 import { TERMS_VERSION } from "../lib/protocol";
 
 const T = { termsVersion: TERMS_VERSION };
@@ -23,7 +23,11 @@ beforeAll(async () => {
   server = createServer();
   ioServer = new Server(server);
   // All test clients share one IP address, so the test server allows more joins.
-  attachGameServer(ioServer, loadDecks(join(process.cwd(), "data/decks")), { joinsPerMinute: 1000, lookupsPerMinute: 1000 });
+  attachGameServer(ioServer, loadDecks(join(process.cwd(), "data/decks")), {
+    joinsPerMinute: 1000,
+    lookupsPerMinute: 1000,
+    hostedGamesPerIp: 1000,
+  });
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
@@ -393,5 +397,57 @@ describe("game server", () => {
     expect((await a.emit("settings:update", { botCount: "lots" })).error).toBe("BAD_REQUEST");
     expect((await a.emit("settings:update", { isAdmin: true })).error).toBe("BAD_REQUEST");
     expect((await a.emit("room:join", { ...T, code: "<script>", name: "x" })).error).toBe("BAD_REQUEST");
+  });
+});
+
+describe("hosted games limit", () => {
+  it("reads the limit from HOSTED_GAMES_PER_IP", () => {
+    expect(hostedGamesFromEnv(undefined)).toBe(3);
+    expect(hostedGamesFromEnv("5")).toBe(5);
+    expect(hostedGamesFromEnv("0")).toBe(3);
+    expect(hostedGamesFromEnv("abc")).toBe(3);
+  });
+
+  it("stops one IP address from hosting more open games than the limit", async () => {
+    // A limit of 1 keeps the test short. All test clients share 127.0.0.1.
+    const http = createServer();
+    const io = new Server(http);
+    attachGameServer(io, loadDecks(join(process.cwd(), "data/decks")), {
+      joinsPerMinute: 1000,
+      lookupsPerMinute: 1000,
+      hostedGamesPerIp: 1,
+    });
+    await new Promise<void>((r) => http.listen(0, "127.0.0.1", r));
+    const at = `http://127.0.0.1:${(http.address() as AddressInfo).port}`;
+    const open = async () => {
+      const s = connect(at, { transports: ["websocket"], forceNew: true });
+      await new Promise<void>((r) => s.once("connect", () => r()));
+      return s;
+    };
+    const a = await open();
+    const b = await open();
+    try {
+      const first = await a.emitWithAck("room:create", { ...T, name: "Hostess" });
+      expect(first.ok).toBe(true);
+      // The host moves to a new game: the old seat is left first, so this works.
+      const moved = await a.emitWithAck("room:create", { ...T, name: "Hostess", previous: { code: first.code, token: first.token } });
+      expect(moved.ok).toBe(true);
+      // Someone else on the same network cannot host a second game.
+      expect((await b.emitWithAck("room:create", { ...T, name: "Second" })).error).toBe("HOSTED_GAMES_LIMIT");
+      // Joining that game is fine.
+      const joined = await b.emitWithAck("room:join", { ...T, code: moved.code, name: "Second" });
+      expect(joined.ok).toBe(true);
+      // When the host leaves, the host role passes to b, so b still cannot host another game.
+      await a.emitWithAck("room:leave");
+      expect((await b.emitWithAck("room:create", { ...T, name: "Third" })).error).toBe("HOSTED_GAMES_LIMIT");
+      // When the game closes, the network can host again.
+      await b.emitWithAck("room:leave");
+      expect((await b.emitWithAck("room:create", { ...T, name: "Third" })).ok).toBe(true);
+    } finally {
+      a.close();
+      b.close();
+      io.close();
+      await new Promise((r) => http.close(r));
+    }
   });
 });

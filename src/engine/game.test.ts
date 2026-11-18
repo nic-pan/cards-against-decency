@@ -239,6 +239,31 @@ describe("timeouts and inactive players", () => {
     expect(game.viewFor(host).phase).toBe("judging");
   });
 
+  it("removes an idle host like any other player, and passes the host role on", () => {
+    const { game, ids, host, onRemoved } = setup({ humans: 4 });
+    game.updateSettings(host, { submitSeconds: 20, judgeSeconds: 20 });
+    game.start(host);
+    // The host plays nothing and never chooses as the Card Czar.
+    for (let round = 0; round < 4 && game.hasPlayer(host); round++) {
+      for (const id of ids) {
+        const v = game.viewFor(id);
+        if (id !== host && game.hasPlayer(id) && v.mustSubmit) game.submit(id, [v.hand[0].id]);
+      }
+      if (game.viewFor(ids[1]).phase === "submitting") vi.advanceTimersByTime(20_000);
+      const czar = game.viewFor(ids[1]).round?.czarId;
+      if (game.hasPlayer(host) && game.viewFor(ids[1]).phase === "judging") {
+        if (czar === host) vi.advanceTimersByTime(20_000);
+        else game.pick(czar!, game.viewFor(czar!).round!.submissions![0].id);
+      }
+      vi.advanceTimersByTime(ROUND_OVER_MS);
+    }
+    expect(game.hasPlayer(host)).toBe(false);
+    expect(onRemoved).toHaveBeenCalledWith(host, "idle", expect.any(String));
+    const next = game.host();
+    expect(next).not.toBe(host);
+    expect(ids).toContain(next);
+  });
+
   it("resets the missed rounds when the player plays again", () => {
     const { game, ids, host, onRemoved } = setup({ humans: 4 });
     game.updateSettings(host, { submitSeconds: 20, judgeSeconds: 20 });

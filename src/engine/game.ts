@@ -515,6 +515,11 @@ export class Game {
     return this.hostId === id;
   }
 
+  /** The current host's id. Empty in a room with no humans. */
+  host(): string {
+    return this.hostId;
+  }
+
   playerName(id: string): string | undefined {
     return this.find(id)?.name;
   }

@@ -25,6 +25,9 @@ services:
         value: "3"
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
+      # Open games that one IP address can host at the same time.
+      - key: HOSTED_GAMES_PER_IP
+        value: "3"
       # Secret that seals players' blocks (32 bytes, base64). Keep it the same, or all blocks stop working.
       - key: BLOCK_KEY
         generateValue: true
