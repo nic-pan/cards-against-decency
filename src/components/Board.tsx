@@ -414,17 +414,32 @@ function GameOver({
   nameOf: (id: string | null) => string;
 }) {
   const ranked = [...view.players].sort((a, b) => b.score - a.score);
+  // Players with the same score share a place: 1, 1, 3.
+  const place = (score: number) => ranked.findIndex((p) => p.score === score) + 1;
+  // The host can end a game early. When the top score is shared, nobody wins.
+  const draw = !view.winnerId && (ranked[0]?.score ?? 0) > 0;
   return (
     <section className="rounded-2xl border border-line bg-surface p-6 text-center">
-      <p className="text-sm font-bold uppercase tracking-wide text-muted">Game over</p>
+      <p className="text-sm font-bold uppercase tracking-wide text-muted">{draw ? "Case Closed (Sort Of)" : "Game over"}</p>
       <h2 className="mt-2 text-3xl font-black">
-        {view.winnerId ? (view.winnerId === view.youId ? "You win!" : `${nameOf(view.winnerId)} wins!`) : "Nobody got an Offence."}
+        {view.winnerId
+          ? view.winnerId === view.youId
+            ? "You win!"
+            : `${nameOf(view.winnerId)} wins!`
+          : draw
+            ? "It's a Draw!"
+            : "Nobody got an Offence."}
       </h2>
+      {draw && (
+        <p className="mx-auto mt-2 max-w-md text-sm text-muted">
+          The investigation has been suspended due to insufficient evidence and an alarming lack of competence.
+        </p>
+      )}
       <ol className="mx-auto mt-6 max-w-xs space-y-1 text-left">
-        {ranked.map((p, i) => (
+        {ranked.map((p) => (
           <li key={p.id} className="flex justify-between">
             <span>
-              {i + 1}. {p.name}
+              {place(p.score)}. {p.name}
               {p.isBot && <span className="text-muted"> (bot)</span>}
             </span>
             <span className="font-bold tabular-nums">{offences(p.score)}</span>

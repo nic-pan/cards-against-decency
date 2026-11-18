@@ -976,10 +976,11 @@ export class Game {
     return round.submissions.length >= round.participants.size;
   }
 
+  /** The player with the most Offences. Null when nobody scored, or when two or more share the top score (a draw). */
   private leader(): string | null {
-    let best: Player | null = null;
-    for (const p of this.players) if (!best || p.score > best.score) best = p;
-    return best && best.score > 0 ? best.id : null;
+    const top = Math.max(0, ...this.players.map((p) => p.score));
+    const leaders = this.players.filter((p) => p.score === top);
+    return top > 0 && leaders.length === 1 ? leaders[0].id : null;
   }
 
   private humans(): Player[] {

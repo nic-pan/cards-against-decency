@@ -180,6 +180,28 @@ describe("rounds", () => {
     expect(v.phase).toBe("gameOver");
     expect(v.winnerId).not.toBeNull();
   });
+
+  it("has no winner when the host ends a game with a shared top score", () => {
+    const { game, ids, host } = setup({ targetScore: 5 });
+    game.start(host);
+    // Set the scores directly: two players share the lead.
+    const players = (game as unknown as { players: { id: string; score: number }[] }).players;
+    players.find((p) => p.id === ids[0])!.score = 2;
+    players.find((p) => p.id === ids[1])!.score = 2;
+    players.find((p) => p.id === ids[2])!.score = 1;
+    game.endGame(host);
+    expect(game.viewFor(host).winnerId).toBeNull();
+  });
+
+  it("names the leader as winner when the host ends a game early", () => {
+    const { game, ids, host } = setup({ targetScore: 5 });
+    game.start(host);
+    const players = (game as unknown as { players: { id: string; score: number }[] }).players;
+    players.find((p) => p.id === ids[1])!.score = 3;
+    players.find((p) => p.id === ids[2])!.score = 1;
+    game.endGame(host);
+    expect(game.viewFor(host).winnerId).toBe(ids[1]);
+  });
 });
 
 describe("timeouts and inactive players", () => {
