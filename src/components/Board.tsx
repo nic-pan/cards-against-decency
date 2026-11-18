@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { offences, type GameView, type WhiteCard } from "@/lib/protocol";
 import { BlackCardView, CARD_GRID, CardBack, CardSlot, CombinedAnswer, WhiteCardView, deckIdOf } from "./Cards";
 import type { Act } from "./Room";
-import { Button } from "./ui";
+import { Badge, Button } from "./ui";
 
 function useSecondsLeft(deadline: number | null, offset: number): number | null {
   const [now, setNow] = useState(() => Date.now());
@@ -444,17 +444,20 @@ function GameOver({
         </p>
       )}
       {verdict && (
-        <div className="mx-auto mt-5 max-w-md rounded-xl border border-line bg-paper px-4 py-3">
+        <div className="mx-auto mt-5 max-w-xs rounded-xl border border-line bg-paper px-4 py-3">
           <p className="font-bold">{verdict.title}</p>
           <p className="mt-0.5 text-sm text-muted">{verdict.text}</p>
         </div>
       )}
       <ol className="mx-auto mt-6 max-w-xs space-y-1 text-left">
         {ranked.map((p) => (
-          <li key={p.id} className="flex justify-between">
-            <span>
-              {place(p.score)}. {p.name}
-              {p.isBot && <span className="text-muted"> (bot)</span>}
+          <li key={p.id} className="flex items-center justify-between gap-3">
+            <span className={`flex min-w-0 items-center gap-1.5 ${p.id === view.youId ? "font-bold" : ""}`}>
+              <span className="truncate">
+                {place(p.score)}. {p.name}
+                {p.isBot && <span className="font-normal text-muted"> (bot)</span>}
+              </span>
+              {p.id === view.youId && <Badge tone="accent">You</Badge>}
             </span>
             <span className="font-bold tabular-nums">{offences(p.score)}</span>
           </li>
