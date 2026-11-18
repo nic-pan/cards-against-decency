@@ -46,6 +46,16 @@ export default function Privacy() {
               "To run the game",
             ],
             [
+              "A random browser id",
+              "Your browser makes it. It lets a block still work when someone changes their username. Other players never see it.",
+              "To keep blocks working",
+            ],
+            [
+              "People you blocked",
+              "Kept in your browser in a sealed form that only our server can read.",
+              "To keep blocked people apart",
+            ],
+            [
               "What you do in the game",
               "The cards you play, your Offences (points), and whether you are the host, a player or a spectator.",
               "To run the game",
@@ -96,6 +106,10 @@ export default function Privacy() {
             players and spectators, and the settings. Private games do not show in the list.
           </li>
           <li>
+            <b>Everyone on the game list</b> sees who is online: the username, and whether the person is in a game,
+            watching one or on the game list. Not which game. People you blocked do not see you there.
+          </li>
+          <li>
             <b>Only the host of a room</b> sees the usernames of people banned from that room.
           </li>
           <li>
@@ -119,6 +133,8 @@ export default function Privacy() {
             ["Your current game and session token", "So you can return to your seat."],
             ["Sound on or off", "Your sound setting."],
             ["Phone notice seen", "So the phone tip shows only once."],
+            ["A random browser id", "So a block still works when someone changes their username."],
+            ["People you blocked", "Sealed, so your browser does not learn who they are. Only our server can read it."],
             ["How often a host removed you from a room", "For the message on the removal screen."],
           ]}
         />
@@ -130,7 +146,8 @@ export default function Privacy() {
 
       <Section title="What we do not collect">
         <p>
-          No account, email address, phone number, real name, location, contacts or payment details. No advertising, no
+          No account, email address, phone number, real name, location, contacts or payment details. Nobody is told
+          that you blocked them. No advertising, no
           analytics, no tracking cookies, and no fonts or scripts from other websites. No generative AI processes your
           data.
         </p>
@@ -144,6 +161,10 @@ export default function Privacy() {
           </li>
           <li>
             <b>Your seat</b> stays for 90 seconds after your connection drops. Then the game removes you.
+          </li>
+          <li>
+            <b>Your blocks</b> stay in your browser until you unblock, log out or clear it. The server reads them only
+            while you are connected.
           </li>
           <li>
             <b>Security logs</b> stay for 7 days. Then our hosting provider deletes them.

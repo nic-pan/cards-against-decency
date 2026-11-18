@@ -3,11 +3,12 @@ import type { Server, Socket } from "socket.io";
 import { z, ZodError } from "zod";
 import { DeckRegistry } from "../engine/deck";
 import { Game, GameError, LIMITS, NAME_MAX, isReservedName, nameKey } from "../engine/game";
-import { TERMS_VERSION, type ClientToServer, type RoomListing, type ServerToClient } from "../lib/protocol";
+import { TERMS_VERSION, type ClientToServer, type OnlineStatus, type OnlineUser, type RoomListing, type ServerToClient } from "../lib/protocol";
 import { TokenBucket, WindowCounter } from "./rateLimit";
 import { ipKey, securityLog } from "./securityLog";
 import { DeckImportError, fetchManyDeck, normalizeCode } from "./manyDecks";
 import { clientIpFrom, ipHeaderFromEnv, trustedHopsFromEnv } from "./clientIp";
+import { BlockSeal, hasBlocked, identityInput, type Identity } from "./identity";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -44,6 +45,8 @@ export interface Room {
   removals: Map<string, number>;
   /** Hashed IP -> time (ms) until which this connection cannot join the room again. */
   cooldowns: Map<string, number>;
+  /** Member id -> who they are and whom they blocked. Used to keep blocked people apart. */
+  who: Map<string, Identity>;
   removeTimers: Map<string, ReturnType<typeof setTimeout>>;
   lastActivity: number;
   broadcastQueued: boolean;
@@ -151,6 +154,7 @@ const schemas = {
   kick: z.object({ playerId: id, ban: z.boolean() }),
   deckAdd: z.object({ code: z.string().max(20) }),
   nameCheck: z.object({ name }),
+  block: z.object({ handle: z.string().max(32).optional(), playerId: id.optional() }),
   deckRemove: z.object({ deckId: id }),
   unban: z.object({ banId: id }),
   botRemove: z.object({ playerId: id }),
@@ -171,6 +175,8 @@ interface SocketData {
   bucket: TokenBucket;
   code?: string;
   playerId?: string;
+  /** Sent by the page when it connects. Missing for old pages. */
+  who?: Identity;
 }
 
 type IO = Server<ClientToServer, ServerToClient, Record<string, never>, SocketData>;
@@ -182,6 +188,8 @@ export interface GameServerOptions {
   joinsPerMinute?: number;
   /** Name and seat checks each minute from one IP address. They change nothing, so the limit is higher. */
   lookupsPerMinute?: number;
+  /** Seals blocks. Defaults to the BLOCK_KEY environment variable. */
+  blockSeal?: BlockSeal;
 }
 
 export function attachGameServer(server: Server, decks: DeckRegistry, options: GameServerOptions = {}) {
@@ -195,6 +203,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
   const passwordFailures = new WindowCounter(5, 10 * 60_000);
   // Deck imports call an outside service, so they have their own, lower limit.
   const deckImports = new WindowCounter(10, 60_000);
+  const seal = options.blockSeal ?? BlockSeal.fromEnv(process.env.BLOCK_KEY);
 
   // ----- Public game list ----------------------------------------------
 
@@ -202,10 +211,29 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
   const LIST_MAX = 100;
   let lobbyTimer: ReturnType<typeof setTimeout> | null = null;
 
-  function listGames(): RoomListing[] {
+  /** Who is in a room now: players and spectators who told us who they are. */
+  function membersOf(room: Room): Identity[] {
+    return room.game.memberIds().flatMap((m) => {
+      const who = room.who.get(m);
+      return who ? [who] : [];
+    });
+  }
+
+  /** "blockedYou": somebody in the room blocked the viewer. "youBlocked": the viewer blocked somebody there. */
+  function blockConflict(room: Room, viewer: Identity | undefined): "blockedYou" | "youBlocked" | null {
+    if (!viewer) return null;
+    const members = membersOf(room);
+    if (members.some((m) => hasBlocked(m, viewer))) return "blockedYou";
+    if (members.some((m) => hasBlocked(viewer, m))) return "youBlocked";
+    return null;
+  }
+
+  /** Public games, without the games where the viewer and somebody inside have blocked each other. */
+  function listGames(viewer?: Identity): RoomListing[] {
     const games: RoomListing[] = [];
     for (const room of store.all()) {
       if (room.closed) continue;
+      if (blockConflict(room, viewer)) continue;
       const { isPublic, ...summary } = room.game.summary();
       if (!isPublic || !summary.hostName) continue;
       games.push({ code: room.code, hasPassword: !!room.password, ...summary });
@@ -216,13 +244,60 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
     return games.slice(0, LIST_MAX);
   }
 
-  /** Sends the game list to subscribers at most 4 times each second. */
+  /** Sends the game list and the online list to subscribers at most 4 times each second. Each viewer gets their own lists. */
   function lobbyChanged(): void {
     if (lobbyTimer) return;
     lobbyTimer = setTimeout(() => {
       lobbyTimer = null;
-      io.to(LOBBY).emit("lobby", { games: listGames() });
+      const online = onlineEntries();
+      for (const sid of io.sockets.adapter.rooms.get(LOBBY) ?? []) {
+        const s = io.sockets.sockets.get(sid);
+        if (!s) continue;
+        s.emit("lobby", { games: listGames(s.data.who) });
+        s.emit("online", { users: onlineFor(online, s.data.who) });
+      }
     }, 250);
+  }
+
+  // ----- Online list ---------------------------------------------------
+
+  const ONLINE_MAX = 200;
+  type OnlineEntry = { who: Identity; status: OnlineStatus };
+  const STATUS_ORDER: Record<OnlineStatus, number> = { playing: 0, watching: 1, browsing: 2 };
+
+  /** One entry for each browser with a name: in a game, watching one, or on the game list. */
+  function onlineEntries(): OnlineEntry[] {
+    const byBrowser = new Map<string, OnlineEntry>();
+    for (const s of io.sockets.sockets.values()) {
+      const who = s.data.who;
+      if (!who || !who.nameKey) continue;
+      let status: OnlineStatus | null = null;
+      const room = s.data.code ? store.get(s.data.code) : undefined;
+      if (room && s.data.playerId && room.game.hasMember(s.data.playerId)) {
+        status = room.game.hasPlayer(s.data.playerId) ? "playing" : "watching";
+      } else if (s.rooms.has(LOBBY)) {
+        status = "browsing";
+      }
+      if (!status) continue;
+      const known = byBrowser.get(who.browser);
+      if (!known || STATUS_ORDER[status] < STATUS_ORDER[known.status]) byBrowser.set(who.browser, { who, status });
+    }
+    return [...byBrowser.values()];
+  }
+
+  /** The online list for one viewer. People who blocked the viewer do not show. */
+  function onlineFor(entries: OnlineEntry[], viewer: Identity | undefined): OnlineUser[] {
+    return entries
+      .filter((e) => !hasBlocked(e.who, viewer))
+      .slice(0, ONLINE_MAX)
+      .map((e) => ({
+        handle: seal.handle(e.who.browser),
+        name: e.who.name,
+        status: e.status,
+        you: e.who.browser === viewer?.browser,
+        blocked: hasBlocked(viewer, e.who),
+      }))
+      .sort((a, b) => Number(b.you) - Number(a.you) || a.name.localeCompare(b.name));
   }
 
   // ----- Room lifecycle ------------------------------------------------
@@ -248,6 +323,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       bans: new Map(),
       removals: new Map(),
       cooldowns: new Map(),
+      who: new Map(),
       removeTimers: new Map(),
       lastActivity: Date.now(),
       broadcastQueued: false,
@@ -323,6 +399,8 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
     set.add(socket.id);
     room.sockets.set(playerId, set);
     room.ipKeys.set(playerId, roomIpHash(room, socket.data.ip));
+    if (socket.data.who) room.who.set(playerId, socket.data.who);
+    lobbyChanged();
     const timer = room.removeTimers.get(playerId);
     if (timer) {
       clearTimeout(timer);
@@ -338,6 +416,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
     socket.data.code = undefined;
     socket.data.playerId = undefined;
     if (!roomCode || !playerId) return;
+    lobbyChanged();
     const room = store.get(roomCode);
     if (!room || room.closed) return;
     const set = room.sockets.get(playerId);
@@ -475,17 +554,43 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
     });
     // 12 actions at once, then 4 each second.
     socket.data.bucket = new TokenBucket(12, 4);
+    // The page says who it is when it connects (see src/lib/socket.ts).
+    const hello = identityInput.safeParse(socket.handshake.auth);
+    if (hello.success) socket.data.who = seal.identity(hello.data);
+
+    on(socket, "identity:update", (s, p) => {
+      const who = seal.identity(identityInput.parse(p));
+      s.data.who = who;
+      if (s.data.code && s.data.playerId) store.get(s.data.code)?.who.set(s.data.playerId, who);
+      lobbyChanged();
+    });
+
+    /** Seals a person for the blocker's browser: someone from the online list, or a member of the blocker's room. */
+    on(socket, "block:create", (s, p) => {
+      const { handle, playerId } = schemas.block.parse(p);
+      let target: Identity | undefined;
+      if (handle) {
+        target = [...io.sockets.sockets.values()].map((x) => x.data.who).find((w) => w && seal.handle(w.browser) === handle);
+      } else if (playerId && s.data.code) {
+        const room = store.get(s.data.code);
+        if (room?.game.hasMember(playerId)) target = room.who.get(playerId);
+      }
+      if (!target || target.browser === s.data.who?.browser) throw new RequestError("UNKNOWN_PLAYER");
+      return { token: seal.seal(target.browser, target.name), name: target.name };
+    });
 
     on(socket, "lobby:subscribe", (s) => {
       // A player who opens the game list is no longer looking at their room.
       // Their seat waits for the reconnect window, like a lost connection.
       detach(s);
       void s.join(LOBBY);
-      return { games: listGames() };
+      lobbyChanged();
+      return { games: listGames(s.data.who), online: onlineFor(onlineEntries(), s.data.who) };
     });
 
     on(socket, "lobby:unsubscribe", (s) => {
       void s.leave(LOBBY);
+      lobbyChanged();
     });
 
     on(socket, "name:check", (s, p) => {
@@ -529,7 +634,9 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       checkLookupRate(s);
       const { code: c } = schemas.info.parse(p);
       const room = store.get(c);
-      return { exists: !!room, needsPassword: !!room?.password };
+      // For somebody that a member blocked, the room looks closed.
+      if (!room || blockConflict(room, s.data.who) === "blockedYou") return { exists: false, needsPassword: false };
+      return { exists: true, needsPassword: !!room.password };
     });
 
     on(socket, "room:create", (s, p) => {
@@ -563,6 +670,10 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
         securityLog("banned_join", { ip: s.data.ip, room: c });
         throw new RequestError("BANNED");
       }
+      // Somebody inside blocked this person: the room looks closed, so the block stays private.
+      const conflict = blockConflict(room, s.data.who);
+      if (conflict === "blockedYou") throw new RequestError("ROOM_NOT_FOUND");
+      if (conflict === "youBlocked") throw new RequestError("BLOCKED_IN_ROOM");
       if (s.data.ip && (room.cooldowns.get(roomIpHash(room, s.data.ip)) ?? 0) > Date.now()) {
         throw new RequestError("REMOVAL_COOLDOWN");
       }
@@ -727,7 +838,10 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       queueBroadcast(room);
     });
 
-    socket.on("disconnect", () => detach(socket));
+    socket.on("disconnect", () => {
+      detach(socket);
+      lobbyChanged();
+    });
   });
 
   // Close idle rooms and clear old rate-limit entries.

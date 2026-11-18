@@ -2,8 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { call, getSocket, session } from "@/lib/socket";
-import { TERMS_VERSION, offences, type JoinAs, type JoinResult, type RoomListing } from "@/lib/protocol";
+import { blocks, call, getSocket, session, type BlockedPerson } from "@/lib/socket";
+import { TERMS_VERSION, offences, type JoinAs, type JoinResult, type OnlineUser, type RoomListing } from "@/lib/protocol";
 import { Badge, Button, inputClass } from "./ui";
 
 /** The public game list. Shown after the player chooses a name and accepts the terms. */
@@ -19,6 +19,7 @@ export function GameBrowser({
 }) {
   const router = useRouter();
   const [games, setGames] = useState<RoomListing[] | null>(null);
+  const [online, setOnline] = useState<OnlineUser[]>([]);
   const [filter, setFilter] = useState("");
   const [creating, setCreating] = useState(false);
   const [code, setCode] = useState("");
@@ -45,13 +46,20 @@ export function GameBrowser({
   useEffect(() => {
     const socket = getSocket();
     const onLobby = (p: { games: RoomListing[] }) => setGames(p.games);
+    const onOnline = (p: { users: OnlineUser[] }) => setOnline(p.users);
     const subscribe = () =>
-      void call<{ games: RoomListing[] }>("lobby:subscribe").then((r) => r.ok && setGames(r.data.games));
+      void call<{ games: RoomListing[]; online: OnlineUser[] }>("lobby:subscribe").then((r) => {
+        if (!r.ok) return;
+        setGames(r.data.games);
+        setOnline(r.data.online ?? []);
+      });
     socket.on("lobby", onLobby);
+    socket.on("online", onOnline);
     socket.on("connect", subscribe);
     if (socket.connected) subscribe();
     return () => {
       socket.off("lobby", onLobby);
+      socket.off("online", onOnline);
       socket.off("connect", subscribe);
       void call("lobby:unsubscribe");
     };
@@ -163,11 +171,112 @@ export function GameBrowser({
           ))}
         </ul>
       )}
+
+      <OnlinePanel users={online} />
     </div>
   );
 }
 
 // ---------------------------------------------------------------------------
+
+const STATUS_LABEL: Record<OnlineUser["status"], string> = {
+  playing: "In a game",
+  watching: "Watching a game",
+  browsing: "Browsing games",
+};
+
+/** Who is online, without the room they are in. You can block people here, and unblock them. */
+function OnlinePanel({ users }: { users: OnlineUser[] }) {
+  const [blocked, setBlocked] = useState<BlockedPerson[]>([]);
+  const [confirm, setConfirm] = useState<OnlineUser | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => setBlocked(blocks.list()), []);
+
+  async function block(u: OnlineUser) {
+    setError(await blocks.add({ handle: u.handle }));
+    setConfirm(null);
+    setBlocked(blocks.list());
+  }
+
+  return (
+    <section className="mt-8 rounded-2xl border border-line bg-surface p-4" aria-label="Online now">
+      <h2 className="mb-2 font-bold">
+        Online now <span className="font-normal text-muted">({users.length})</span>
+      </h2>
+      {users.length === 0 ? (
+        <p className="text-sm text-muted">Nobody else is here right now.</p>
+      ) : (
+        <ul className="grid gap-x-6 sm:grid-cols-2">
+          {users.map((u) => (
+            <li key={u.handle} className="border-b border-line py-2 text-sm last:border-0">
+              <div className="flex items-center gap-2">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-ok" aria-hidden />
+                <span className="min-w-0 truncate font-semibold" title={u.name}>
+                  {u.name}
+                </span>
+                {u.you && <Badge tone="accent">You</Badge>}
+                <span className="ml-auto shrink-0 text-xs text-muted">{STATUS_LABEL[u.status]}</span>
+                {u.blocked ? (
+                  <span className="shrink-0 px-1.5 text-xs font-semibold text-danger">Blocked</span>
+                ) : !u.you && (
+                  <button
+                    type="button"
+                    className="shrink-0 rounded px-1.5 text-xs text-muted underline hover:text-danger"
+                    onClick={() => setConfirm(confirm?.handle === u.handle ? null : u)}
+                  >
+                    Block
+                  </button>
+                )}
+              </div>
+              {confirm?.handle === u.handle && (
+                <div role="alert" className="mt-2 rounded-lg border border-danger bg-danger-soft p-2.5 text-xs">
+                  <p className="font-bold text-danger">Block {u.name}?</p>
+                  <p className="mt-0.5 text-ink">
+                    You will not see each other&apos;s games, and you cannot join the same game. They will not see you
+                    online. They are not told.
+                  </p>
+                  <div className="mt-2 flex gap-2">
+                    <button type="button" className="rounded bg-danger px-2.5 py-1 font-bold text-white" onClick={() => void block(u)}>
+                      Block
+                    </button>
+                    <button type="button" className="rounded border border-line px-2.5 py-1" onClick={() => setConfirm(null)}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {error && <p className="mt-2 text-sm text-danger">{error}</p>}
+      {blocked.length > 0 && (
+        <details className="mt-3 border-t border-line pt-3 text-sm">
+          <summary className="cursor-pointer font-semibold">
+            Blocked <span className="font-normal text-muted">({blocked.length}, only you see this)</span>
+          </summary>
+          <ul className="mt-2 space-y-1">
+            {blocked.map((b) => (
+              <li key={b.token} className="flex items-center justify-between gap-2">
+                <span className="min-w-0 truncate">{b.name}</span>
+                <button
+                  type="button"
+                  className="shrink-0 text-xs font-semibold text-accent underline"
+                  onClick={() => {
+                    blocks.remove(b.token);
+                    setBlocked(blocks.list());
+                  }}
+                >
+                  Unblock
+                </button>
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </section>
+  );
+}
 
 function CreatePanel({ name }: { name: string }) {
   const router = useRouter();

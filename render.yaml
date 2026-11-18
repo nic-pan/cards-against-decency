@@ -25,3 +25,6 @@ services:
         value: "3"
       - key: NEXT_TELEMETRY_DISABLED
         value: "1"
+      # Secret that seals players' blocks (32 bytes, base64). Keep it the same, or all blocks stop working.
+      - key: BLOCK_KEY
+        generateValue: true

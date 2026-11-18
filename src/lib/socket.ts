@@ -1,7 +1,7 @@
 "use client";
 
 import { io, type Socket } from "socket.io-client";
-import type { Ack, ClientToServer, ServerToClient } from "./protocol";
+import type { Ack, ClientToServer, IdentityPayload, ServerToClient } from "./protocol";
 import { ERROR_TEXT, TERMS_VERSION } from "./protocol";
 
 export type GameSocket = Socket<ServerToClient, ClientToServer>;
@@ -9,9 +9,70 @@ export type GameSocket = Socket<ServerToClient, ClientToServer>;
 let socket: GameSocket | null = null;
 
 export function getSocket(): GameSocket {
-  if (!socket) socket = io({ transports: ["websocket", "polling"] });
+  // The identity goes with every (re)connection, so the server knows it before the first request.
+  if (!socket) socket = io({ transports: ["websocket", "polling"], auth: (cb) => cb(identity()) });
   return socket;
 }
+
+/** A random id for this browser. It lets a block cover a person who changes their name. Log out deletes it. */
+function browserId(): string {
+  try {
+    let id = localStorage.getItem("bs.browser");
+    if (!id) {
+      const bytes = crypto.getRandomValues(new Uint8Array(16));
+      id = btoa(String.fromCharCode(...bytes)).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+      localStorage.setItem("bs.browser", id);
+    }
+    return id;
+  } catch {
+    // Without storage, the id lasts only while the page is open.
+    return (fallbackId ??= Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join(""));
+  }
+}
+let fallbackId: string | null = null;
+
+function identity(): IdentityPayload {
+  return { name: session.name() || undefined, browser: browserId(), blocks: blocks.list().map((b) => b.token) };
+}
+
+/** Tells the server about a new name or new blocks. */
+export function sendIdentity(): void {
+  if (socket?.connected) void call("identity:update", identity());
+}
+
+export interface BlockedPerson {
+  name: string;
+  /** Sealed by the server. Only the server can read it. */
+  token: string;
+}
+
+/** People this browser blocked. Stored in this browser only. */
+export const blocks = {
+  list(): BlockedPerson[] {
+    try {
+      const v = JSON.parse(localStorage.getItem("bs.blocks") ?? "[]");
+      return Array.isArray(v) ? v.filter((b) => typeof b?.name === "string" && typeof b?.token === "string") : [];
+    } catch {
+      return [];
+    }
+  },
+  /** Blocks someone from the online list (handle) or from your room (playerId). */
+  async add(target: { handle?: string; playerId?: string }): Promise<string | null> {
+    const r = await call<{ token: string; name: string }>("block:create", target);
+    if (!r.ok) return r.text;
+    try {
+      localStorage.setItem("bs.blocks", JSON.stringify([...blocks.list(), { name: r.data.name, token: r.data.token }]));
+    } catch {}
+    sendIdentity();
+    return null;
+  },
+  remove(token: string): void {
+    try {
+      localStorage.setItem("bs.blocks", JSON.stringify(blocks.list().filter((b) => b.token !== token)));
+    } catch {}
+    sendIdentity();
+  },
+};
 
 type Result<T> = { ok: true; data: T } | { ok: false; error: string; text: string };
 
@@ -67,6 +128,7 @@ export const session = {
     try {
       for (const k of Object.keys(localStorage)) if (k.startsWith("bs.")) localStorage.removeItem(k);
     } catch {}
+    sendIdentity();
   },
   name(): string {
     try {
@@ -79,6 +141,7 @@ export const session = {
     try {
       localStorage.setItem("bs.name", name);
     } catch {}
+    sendIdentity();
   },
   /** True when this browser accepted the current version of the terms. */
   termsAccepted(): boolean {

@@ -13,6 +13,8 @@ services:
       PORT: "3000"
       WATCHPACK_POLLING: "true"
       NEXT_TELEMETRY_DISABLED: "1"
+      # Development only. Seals blocks, so they survive a restart. Production uses its own secret.
+      BLOCK_KEY: "VKOhXGyPiBXn306F3LeEq3W2g+znk+51oLsmtqtXkog="
     volumes:
       - .:/app
       - node_modules:/app/node_modules

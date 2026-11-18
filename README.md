@@ -37,6 +37,7 @@ What `render.yaml` sets:
 - Health check: `/healthz`. It answers `ok` without rendering a page.
 - `CLIENT_IP_HEADER=cf-connecting-ip`: the player's address comes from Cloudflare's header, which a browser cannot fake.
 - `TRUST_PROXY=3`: the fallback. Render's `X-Forwarded-For` has 3 proxy entries (checked on 2026-11-17).
+- `BLOCK_KEY`: a secret that seals players' blocks (32 bytes, base64). Render does not copy variables from `render.yaml` to an existing service, so add it in the dashboard. Make one with `openssl rand -base64 32`. Keep it the same: a new key makes all saved blocks stop working. Without it, blocks stop working after every restart.
 
 Limits of the free plan:
 
@@ -93,6 +94,8 @@ docker compose exec app npm run dev:players -- <ROOM CODE> [count] [--idle] [--p
 - When the host leaves, the human player who joined earliest becomes host. A room with only bots closes.
 - Leaving the room screen in the app (the logo or the back button) keeps the seat for 90 seconds. The game list then shows "You are still in a game" with "Back to game" and "Leave game".
 - Creating or joining another game leaves the previous one at once. "Log out" also leaves it.
+- The game list shows who is online: username and "In a game", "Watching a game" or "Browsing games", never which room.
+- A player can block another person, from the online list or the players list. A block covers the username and the browser (a random id in local storage). When either of two people blocked the other, neither sees rooms where the other is a member, and neither can join them. The blocked person sees the room as closed. The blocker does not show in their online list. The blocker's browser keeps the block as a value sealed with `BLOCK_KEY`, so it never learns the other person's browser id. A new name in a new browser gets around a block.
 
 ## Assumptions in version 1
 

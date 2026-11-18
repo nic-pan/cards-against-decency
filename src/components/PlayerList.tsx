@@ -4,6 +4,7 @@ import { useState } from "react";
 import { offences, type GameView, type PlayerStatus } from "@/lib/protocol";
 import type { Act, Ghost, View } from "./Room";
 import { BOT_DIVISION, botProfile } from "@/engine/bots";
+import { blocks } from "@/lib/socket";
 import { Badge, InfoTip } from "./ui";
 
 /** The most bots a game can have (LIMITS.botCount.max in the engine). */
@@ -76,7 +77,8 @@ export function PlayerList({
             );
           }
           const you = p.id === view.youId;
-          const canManage = isHost && !you;
+          // The host manages everybody else. Everybody can block another person (not a bot).
+          const canManage = !you && (isHost || !p.isBot);
           return (
             <li key={p.id} className="py-2">
               <div className="flex items-center gap-2">
@@ -103,8 +105,8 @@ export function PlayerList({
                     ⋯
                   </button>
                 ) : (
-                  // The host's own row has no menu. An empty space as wide as the button keeps the scores in one column.
-                  isHost && <span aria-hidden className={`${view.phase === "lobby" ? "ml-auto" : ""} w-7 shrink-0`} />
+                  // Rows without a menu get an empty space as wide as the button, so the scores stay in one column.
+                  <span aria-hidden className={`${view.phase === "lobby" ? "ml-auto" : ""} w-7 shrink-0`} />
                 )}
               </div>
               {/* Badges and status sit on their own line, so the name gets the full first line. */}
@@ -124,7 +126,14 @@ export function PlayerList({
               {p.isBot && <BotTitle name={p.name} />}
               {menuFor === p.id && (
                 <HostMenu
+                  isHost={isHost}
                   isBot={p.isBot}
+                  name={p.name}
+                  onBlock={async () => {
+                    const err = await blocks.add({ playerId: p.id });
+                    if (!err) setMenuFor(null);
+                    return err;
+                  }}
                   // During a game, a game needs 3 players. Ask first when a removal leaves fewer.
                   playersLeft={inGame ? view.players.length - 1 : null}
                   onRemove={(ban) =>
@@ -221,16 +230,25 @@ const MIN_PLAYERS = 3;
 
 /** The host's actions for one player or bot. Asks first when the removal would stop the game. */
 function HostMenu({
+  isHost,
   isBot,
+  name,
   playersLeft,
   onRemove,
+  onBlock,
 }: {
+  isHost: boolean;
   isBot: boolean;
+  name: string;
+  /** Returns an error text, or null when the block worked. */
+  onBlock: () => Promise<string | null>;
   /** Players after the removal, during a game. Null in the lobby. */
   playersLeft: number | null;
   onRemove: (ban: boolean) => void;
 }) {
   const [confirm, setConfirm] = useState<{ ban: boolean } | null>(null);
+  const [confirmBlock, setConfirmBlock] = useState(false);
+  const [blockError, setBlockError] = useState<string | null>(null);
   const stopsGame = playersLeft !== null && playersLeft < MIN_PLAYERS;
   const ask = (ban: boolean) => (stopsGame ? setConfirm({ ban }) : onRemove(ban));
 
@@ -256,8 +274,42 @@ function HostMenu({
     );
   }
 
+  if (confirmBlock) {
+    return (
+      <div role="alert" className="mt-2 ml-4 rounded-lg border border-danger bg-danger-soft p-2.5 text-xs">
+        <p className="font-bold text-danger">Block {name}?</p>
+        <p className="mt-0.5 text-ink">
+          Nothing changes in this game. From now on, you will not see each other&apos;s games, and you cannot join the
+          same game. They are not told.
+        </p>
+        {blockError && <p className="mt-1 font-semibold text-danger">{blockError}</p>}
+        <div className="mt-2 flex gap-2">
+          <button
+            className="rounded bg-danger px-2 py-1 font-semibold text-white hover:brightness-110"
+            onClick={async () => setBlockError(await onBlock())}
+          >
+            Block
+          </button>
+          <button className="rounded border border-line px-2 py-1 font-semibold hover:bg-paper" onClick={() => setConfirmBlock(false)}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const blockButton = !isBot && (
+    <button
+      className="rounded border border-line px-2 py-1 text-xs font-semibold text-muted hover:bg-paper hover:text-danger"
+      onClick={() => setConfirmBlock(true)}
+    >
+      Block
+    </button>
+  );
+  if (!isHost) return <div className="mt-2 flex gap-2 pl-4">{blockButton}</div>;
+
   return (
-    <div className="mt-2 flex gap-2 pl-4">
+    <div className="mt-2 flex flex-wrap gap-2 pl-4">
       {isBot ? (
         <button
           className="rounded border border-line px-2 py-1 text-xs font-semibold hover:bg-paper"
@@ -279,6 +331,7 @@ function HostMenu({
           >
             Remove and ban
           </button>
+          {blockButton}
         </>
       )}
     </div>

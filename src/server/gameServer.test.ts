@@ -36,8 +36,9 @@ afterAll(async () => {
 
 type View = GameView & { code: string };
 
-async function client() {
-  const s = connect(url, { transports: ["websocket"], forceNew: true });
+/** auth is what the page sends as its identity (src/lib/socket.ts). */
+async function client(auth?: { name?: string; browser: string; blocks?: string[] }) {
+  const s = connect(url, { transports: ["websocket"], forceNew: true, auth });
   clients.push(s);
   await new Promise<void>((r) => s.once("connect", () => r()));
   let latest: View | null = null;
@@ -314,6 +315,48 @@ describe("game server", () => {
     expect((view as any).log.at(-1)).toMatchObject({ tone: "danger" });
     const again = await client();
     expect((await again.emit("room:join", { ...T, code: room.code, name: nm("Pest4") })).error).toBe("REMOVAL_COOLDOWN");
+  });
+
+  it("keeps blocked people apart, and hides the blocker from the online list", async () => {
+    const browserA = "browser-of-blocker-0001";
+    const browserB = "browser-of-pest-000001";
+    const nameA = nm("Blocker");
+    const nameB = nm("Pest");
+    const a = await client({ name: nameA, browser: browserA });
+    const room = await a.emit("room:create", { ...T, name: nameA });
+    // B joins, and A blocks B from the players list.
+    const b = await client({ name: nameB, browser: browserB });
+    const joined = await b.emit("room:join", { ...T, code: room.code, name: nameB });
+    const blocked = await a.emit("block:create", { playerId: joined.playerId });
+    expect(blocked).toMatchObject({ ok: true, name: nameB });
+    expect(typeof blocked.token).toBe("string");
+    await b.emit("room:leave");
+    expect((await a.emit("identity:update", { name: nameA, browser: browserA, blocks: [blocked.token] })).ok).toBe(true);
+
+    // B, even with a new name in the same browser, cannot see or join A's room.
+    const b2 = await client({ name: nm("Renamed"), browser: browserB });
+    const listB = await b2.emit("lobby:subscribe");
+    expect(listB.games.map((g: { code: string }) => g.code)).not.toContain(room.code);
+    expect(listB.online.map((u: { name: string }) => u.name)).not.toContain(nameA);
+    expect((await b2.emit("room:join", { ...T, code: room.code, name: nm("Renamed") })).error).toBe("ROOM_NOT_FOUND");
+    expect((await b2.emit("room:info", { code: room.code })).exists).toBe(false);
+    expect((await b2.emit("room:join", { ...T, code: room.code, name: nm("Watcher"), as: "spectator" })).error).toBe("ROOM_NOT_FOUND");
+
+    // Somebody else sees A's room, and sees A as "playing".
+    const c = await client({ name: nm("Bystander"), browser: "browser-of-bystander-01" });
+    const listC = await c.emit("lobby:subscribe");
+    expect(listC.games.map((g: { code: string }) => g.code)).toContain(room.code);
+    expect(listC.online).toContainEqual(expect.objectContaining({ name: nameA, status: "playing" }));
+
+    // A cannot join a room where B is.
+    const other = await b2.emit("room:create", { ...T, name: nm("PestHost") });
+    const a2 = await client({ name: nm("BlockerTwo"), browser: browserA, blocks: [blocked.token] });
+    expect((await a2.emit("room:join", { ...T, code: other.code, name: nm("BlockerTwo") })).error).toBe("BLOCKED_IN_ROOM");
+  });
+
+  it("ignores block tokens that the server did not make", async () => {
+    const x = await client({ name: nm("Faker"), browser: "browser-of-faker-00001", blocks: ["not-a-real-token"] });
+    expect((await x.emit("lobby:subscribe")).ok).toBe(true);
   });
 
   it("lets the host unban a player, and shows bans only to the host", async () => {

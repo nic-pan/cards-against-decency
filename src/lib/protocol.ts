@@ -43,14 +43,39 @@ export interface PreviousSeat {
   token: string;
 }
 
+/** Where an online person is. Never which room. */
+export type OnlineStatus = "playing" | "watching" | "browsing";
+
+export interface OnlineUser {
+  /** Opaque id for blocking. It changes when the server restarts. */
+  handle: string;
+  name: string;
+  status: OnlineStatus;
+  you: boolean;
+  /** The viewer blocked this person. */
+  blocked: boolean;
+}
+
+/** Who this browser is. Sent when the socket connects (as auth) and with identity:update. */
+export interface IdentityPayload {
+  name?: string;
+  browser: string;
+  /** Sealed blocks from block:create. Only the server can read them. */
+  blocks?: string[];
+}
+
 export interface ClientToServer {
+  /** The name or the blocks changed. */
+  "identity:update": (p: IdentityPayload, ack: (r: Ack) => void) => void;
+  /** Block someone from the online list (handle) or from your room (playerId). Store the token and send it back with your identity. */
+  "block:create": (p: { handle?: string; playerId?: string }, ack: (r: Ack<{ token: string; name: string }>) => void) => void;
   /** Is this name free on the whole server? The player's own previous seat does not count. */
   "name:check": (p: { name: string; previous?: PreviousSeat }, ack: (r: Ack<{ available: boolean; reason?: string }>) => void) => void;
   /** Does this seat still exist? Used for the "You are still in a game" banner. */
   "room:seat": (p: PreviousSeat, ack: (r: Ack<{ valid: boolean; hostName?: string }>) => void) => void;
   /** Leave a seat by its token, without being connected to the room. Used by "Leave game" and "Log out". */
   "room:abandon": (p: PreviousSeat, ack: (r: Ack) => void) => void;
-  "lobby:subscribe": (ack: (r: Ack<{ games: RoomListing[] }>) => void) => void;
+  "lobby:subscribe": (ack: (r: Ack<{ games: RoomListing[]; online: OnlineUser[] }>) => void) => void;
   "lobby:unsubscribe": (ack: (r: Ack) => void) => void;
   "room:create": (p: { name: string; password?: string; isPublic?: boolean; termsVersion: string; previous?: PreviousSeat }, ack: (r: Ack<JoinResult>) => void) => void;
   "room:join": (p: { code: string; name: string; password?: string; as?: JoinAs; termsVersion: string; previous?: PreviousSeat }, ack: (r: Ack<JoinResult>) => void) => void;
@@ -81,6 +106,8 @@ export interface ClientToServer {
 export interface ServerToClient {
   /** The public game list changed. Sent only to sockets that subscribed. */
   lobby: (p: { games: RoomListing[] }) => void;
+  /** Who is online. Sent with the game list, only to sockets that subscribed. */
+  online: (p: { users: OnlineUser[] }) => void;
   /** bans is empty for everybody but the host. */
   state: (view: GameView & { code: string; bans: { id: string; name: string }[] }) => void;
   /** Another player was removed, by the host or for being idle. Everybody else sees and hears it. */
@@ -118,6 +145,7 @@ export const ERROR_TEXT: Record<string, string> = {
   ROOM_NOT_FOUND: "This room does not exist or has closed.",
   BAD_PASSWORD: "Wrong room password.",
   BANNED: "You can't join this room.",
+  BLOCKED_IN_ROOM: "Someone you blocked is in this game. Unblock them on the game list first.",
   REMOVAL_COOLDOWN: "The host removed you from this room 3 times. You can join again in a few minutes.",
   RATE_LIMITED: "Slow down a little and try again.",
   BAD_REQUEST: "That request was not valid.",
