@@ -92,12 +92,14 @@ export function Room({ code }: { code: string }) {
       setView(v);
     };
     const onRemoved = ({ reason }: { reason: string }) => {
+      const timesRemoved = reason === "kicked" ? countRemoval(code) : undefined;
       if (reason === "banned") playEventSound("banned");
+      // The third removal from the same room gets the gunshot instead of the thud.
+      else if (reason === "kicked" && (timesRemoved ?? 0) >= 3) playEventSound("gunshot");
       else if (reason === "idle" || reason === "kicked") playEventSound("removed");
       session.clear(code);
       setView(null);
       if (reason === "idle" || reason === "kicked" || reason === "banned") {
-        const timesRemoved = reason === "kicked" ? countRemoval(code) : undefined;
         return setStatus({ kind: "gone", message: "", removed: reason, timesRemoved });
       }
       setStatus({
