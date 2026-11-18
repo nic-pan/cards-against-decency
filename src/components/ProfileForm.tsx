@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { isBotName } from "@/engine/bots";
 import { call, session } from "@/lib/socket";
-import { ERROR_TEXT, NAME_RESERVED_TEXT } from "@/lib/protocol";
+import { ERROR_TEXT, NAME_RESERVED_TEXT, NAME_TOO_SHORT_TEXT } from "@/lib/protocol";
 import { Button, inputClass } from "./ui";
 
 /** How long the player stops typing before the server checks the name. */
@@ -183,14 +183,20 @@ export function ProfileForm({
   );
 }
 
+/** Messages with a bold title and a body. */
+const TWO_PART: Record<string, { title: string; body: string }> = {
+  NAME_RESERVED: NAME_RESERVED_TEXT,
+  NAME_TOO_SHORT: NAME_TOO_SHORT_TEXT,
+};
+
 /** The message under the name field when the name cannot be used. */
 function NameError({ code }: { code: string }) {
   return (
     <div role="alert" className="mt-2 rounded-lg border border-danger bg-danger-soft px-3 py-2 text-sm">
-      {code === "NAME_RESERVED" ? (
+      {TWO_PART[code] ? (
         <>
-          <b className="block text-danger">{NAME_RESERVED_TEXT.title}</b>
-          <span className="mt-0.5 block text-ink">{NAME_RESERVED_TEXT.body}</span>
+          <b className="block text-danger">{TWO_PART[code].title}</b>
+          <span className="mt-0.5 block text-ink">{TWO_PART[code].body}</span>
         </>
       ) : (
         <span className="font-semibold text-danger">{ERROR_TEXT[code] ?? ERROR_TEXT.NAME_TAKEN}</span>
