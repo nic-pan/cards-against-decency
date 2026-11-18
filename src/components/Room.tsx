@@ -71,7 +71,8 @@ export function Room({ code }: { code: string }) {
       const last = lastView.current;
       const index = last?.players.findIndex((p) => p.id === playerId) ?? -1;
       if (!last || index < 0) return;
-      playEventSound("removed");
+      // The banned player hears the long "fahhh"; everybody else hears the short "faaah".
+      playEventSound(reason === "banned" ? "czarLeft" : "removed");
       recentlyRemoved.current.add(playerId);
       setTimeout(() => recentlyRemoved.current.delete(playerId), 5000);
       const ghost: Ghost = { player: last.players[index], index, reason };
