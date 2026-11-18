@@ -40,6 +40,7 @@ export function Room({ code }: { code: string }) {
   useTurnAlert(view, clockOffset);
   useIdleWarningSound(view);
   useGameStoppedSound(view);
+  useBotAddedSound(view);
   // Players removed in the last seconds. A Czar who was removed gets the thud, not the "Czar left" sound.
   const recentlyRemoved = useRef(new Set<string>());
   useCzarLeftSound(view, recentlyRemoved);
@@ -394,6 +395,19 @@ function useGameStoppedSound(view: View | null) {
     if (wasPlaying && phase === "lobby") playEventSound("czarLeft");
     before.current = phase;
   }, [phase]);
+}
+
+/** Plays the duck toy once when one or more bots join the room. Bots already there when the page opens stay quiet. */
+function useBotAddedSound(view: View | null) {
+  const bots = view?.players.filter((p) => p.isBot).map((p) => p.id) ?? [];
+  const key = bots.join(",");
+  const known = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (!view) return;
+    const ids = key ? key.split(",") : [];
+    if (known.current && ids.some((id) => !known.current!.has(id))) playEventSound("botAdded");
+    known.current = new Set(ids);
+  }, [key, view]);
 }
 
 /** Plays the "suspenseful boom" once, when the player gets the red idle warning. */
