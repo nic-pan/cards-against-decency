@@ -3,10 +3,9 @@ import type { ReactNode } from "react";
 
 export const metadata = { title: "Privacy Notice · Cards Against Decency" };
 
-// DRAFT. Before a public launch:
-// - add the name and contact address of the person who runs the game (search for "[to be added]"),
-// - check how long Render keeps service logs, and update "How long we keep it",
-// - have the text checked against the code again.
+// DRAFT. Before a public launch, check the text against the code again.
+// Log retention: Render keeps service logs for 7 days on the Hobby plan (checked 18 November 2026).
+// If the plan changes, or logs go to a Log Stream, update "How long we keep it" and "Who can see your data".
 
 export default function Privacy() {
   return (
@@ -25,7 +24,11 @@ export default function Privacy() {
       <Section title="Who is responsible">
         <p>
           The person who runs this game is responsible for your data under the EU General Data Protection Regulation
-          (GDPR). Contact: <b>[to be added]</b>.
+          (GDPR). Contact:{" "}
+          <a className="font-semibold underline" href="mailto:iridescentburst@gmail.com">
+            iridescentburst@gmail.com
+          </a>
+          .
         </p>
       </Section>
 
@@ -143,7 +146,7 @@ export default function Privacy() {
             <b>Your seat</b> stays for 90 seconds after your connection drops. Then the game removes you.
           </li>
           <li>
-            <b>Security logs</b> stay as long as our hosting provider keeps service logs. <b>[to be added]</b>
+            <b>Security logs</b> stay for 7 days. Then our hosting provider deletes them.
           </li>
           <li>
             <b>Your browser&apos;s storage</b> stays until you log out or clear it.
