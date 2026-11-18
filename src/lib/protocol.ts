@@ -84,7 +84,7 @@ export interface ServerToClient {
   /** bans is empty for everybody but the host. */
   state: (view: GameView & { code: string; bans: { id: string; name: string }[] }) => void;
   /** Another player was removed, by the host or for being idle. Everybody else sees and hears it. */
-  "player:removed": (p: { playerId: string; name: string; reason: "kicked" | "idle" }) => void;
+  "player:removed": (p: { playerId: string; name: string; reason: "kicked" | "banned" | "idle" }) => void;
   /** You were removed from the room. */
   removed: (p: { reason: "kicked" | "banned" | "closed" | "left" | "idle" }) => void;
 }

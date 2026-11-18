@@ -226,7 +226,7 @@ export interface GameView {
 // Game
 // ---------------------------------------------------------------------------
 
-export type RemoveReason = "left" | "kicked" | "timeout" | "idle";
+export type RemoveReason = "left" | "kicked" | "banned" | "timeout" | "idle";
 
 export interface GameOptions {
   decks: DeckRegistry;
@@ -353,7 +353,8 @@ export class Game {
     const spectator = this.spectators.find((s) => s.id === id);
     if (spectator) {
       this.spectators = this.spectators.filter((s) => s.id !== id);
-      this.setNotice(why === "kicked" ? `${spectator.name} was removed.` : `${spectator.name} stopped watching.`);
+      if (why === "banned") this.setNotice(`${spectator.name} was banned from this game room.`, "danger");
+      else this.setNotice(why === "kicked" ? `${spectator.name} was removed.` : `${spectator.name} stopped watching.`);
       this.changed();
       return;
     }
@@ -374,12 +375,14 @@ export class Game {
     const verb =
       why === "kicked"
         ? "was removed"
-        : why === "timeout"
+        : why === "banned"
+          ? "was banned from this game room"
+          : why === "timeout"
           ? "lost connection"
           : why === "idle"
             ? `was removed for missing ${IDLE_ROUNDS_BEFORE_KICK} rounds in a row`
             : "left";
-    this.setNotice(`${player.name} ${verb}.`, why === "idle" ? "danger" : "info");
+    this.setNotice(`${player.name} ${verb}.`, why === "idle" || why === "banned" ? "danger" : "info");
 
     const round = this.round;
     if (round && (this.phase === "submitting" || this.phase === "judging")) {

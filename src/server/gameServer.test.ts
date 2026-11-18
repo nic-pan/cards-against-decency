@@ -305,6 +305,8 @@ describe("game server", () => {
     const hostView = await host.until((v: any) => v.bans?.length === 1);
     const ban = (hostView as any).bans[0];
     expect(ban.name).toBe("Saboteur");
+    // Everybody in the room can see the ban in the activity log.
+    expect((hostView as any).log.at(-1)).toMatchObject({ text: "Saboteur was banned from this game room.", tone: "danger" });
 
     // A new name from the same connection is still blocked.
     const again = await client();

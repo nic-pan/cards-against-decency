@@ -62,7 +62,7 @@ export function PlayerList({
                   )}
                 </div>
                 <p className="pl-4 text-xs font-semibold text-danger">
-                  {ghost.reason === "idle" ? "Removed for being idle" : "Removed by the host"}
+                  {ghost.reason === "idle" ? "Removed for being idle" : ghost.reason === "banned" ? "Banned by the host" : "Removed by the host"}
                 </p>
               </li>
             );

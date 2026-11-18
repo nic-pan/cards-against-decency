@@ -67,7 +67,7 @@ export function Room({ code }: { code: string }) {
 
   useEffect(() => {
     const socket = getSocket();
-    const onPlayerRemoved = ({ playerId, reason }: { playerId: string; name: string; reason: "kicked" | "idle" }) => {
+    const onPlayerRemoved = ({ playerId, reason }: { playerId: string; name: string; reason: "kicked" | "banned" | "idle" }) => {
       const last = lastView.current;
       const index = last?.players.findIndex((p) => p.id === playerId) ?? -1;
       if (!last || index < 0) return;
@@ -238,7 +238,7 @@ function canJoin(view: View): boolean {
 }
 
 /** A removed player's row that stays visible while it fades out. */
-export type Ghost = { player: GameView["players"][number]; index: number; reason: "kicked" | "idle" };
+export type Ghost = { player: GameView["players"][number]; index: number; reason: "kicked" | "banned" | "idle" };
 /** A little longer than the fade, so the row is gone before React removes it. */
 const GHOST_MS = 1900;
 
