@@ -31,8 +31,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <footer className="border-t border-line px-4 py-4 text-xs leading-relaxed text-muted">
           <div className="mx-auto max-w-6xl space-y-1">
             <p>
-              Cards Against Decency is a free, non-commercial fan project. It is not affiliated with or endorsed by Cards
-              Against Humanity LLC. Card text from Cards Against Humanity, used under{" "}
+              Cards Against Decency is a free, non-commercial fan project. It is not affiliated with, endorsed by or
+              sponsored by Cards Against Humanity LLC. &quot;Cards Against Humanity&quot; is a trademark of Cards Against
+              Humanity LLC. Card text from Cards Against Humanity, used under{" "}
               <a className="underline" href="https://creativecommons.org/licenses/by-nc-sa/2.0/" rel="noreferrer">
                 CC BY-NC-SA 2.0
               </a>

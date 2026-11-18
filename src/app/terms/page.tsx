@@ -112,7 +112,8 @@ export default function Terms() {
         <p>
           The base cards come from Cards Against Humanity, under the Creative Commons BY-NC-SA 2.0 licence, through JSON
           Against Humanity. The same licence applies when you share them. Cards Against Decency is not affiliated with,
-          endorsed by or sponsored by Cards Against Humanity LLC.
+          endorsed by or sponsored by Cards Against Humanity LLC. &quot;Cards Against Humanity&quot; is a trademark of Cards
+          Against Humanity LLC.
         </p>
         <p className="mt-2">
           The game&apos;s name, logo, bots and other original content belong to the people who run the game. Do not copy
