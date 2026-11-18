@@ -40,6 +40,10 @@ export interface Room {
   ipKeys: Map<string, string>;
   /** Ban id -> ban. Exists only while the room exists. */
   bans: Map<string, Ban>;
+  /** Hashed IP -> how often the host removed someone from this connection. */
+  removals: Map<string, number>;
+  /** Hashed IP -> time (ms) until which this connection cannot join the room again. */
+  cooldowns: Map<string, number>;
   removeTimers: Map<string, ReturnType<typeof setTimeout>>;
   lastActivity: number;
   broadcastQueued: boolean;
@@ -54,6 +58,10 @@ export interface Ban {
   ipHash: string | null;
   tokens: string[];
 }
+
+/** After this many removals by the host, a connection must wait before it joins the room again. */
+export const REMOVALS_BEFORE_COOLDOWN = 3;
+export const REMOVAL_COOLDOWN_MS = 5 * 60_000;
 
 /** Hashes an IP address with the room's salt. The hash stays the same for the life of the room. */
 function roomIpHash(room: Room, ip: string): string {
@@ -238,6 +246,8 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       ipKeys: new Map(),
       salt: randomBytes(16),
       bans: new Map(),
+      removals: new Map(),
+      cooldowns: new Map(),
       removeTimers: new Map(),
       lastActivity: Date.now(),
       broadcastQueued: false,
@@ -250,7 +260,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       // The game removes players who miss too many rounds. Tell them why and end their session.
       onRemoved: (playerId, why, name) => {
         // Everybody else sees and hears a removal by the host or for being idle.
-        if (why === "idle" || why === "kicked" || why === "banned") {
+        if (why === "idle" || why === "kicked" || why === "kickedAgain" || why === "banned") {
           for (const [otherId, ids] of room.sockets) {
             if (otherId === playerId) continue;
             for (const sid of ids) io.to(sid).emit("player:removed", { playerId, name, reason: why });
@@ -553,6 +563,9 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
         securityLog("banned_join", { ip: s.data.ip, room: c });
         throw new RequestError("BANNED");
       }
+      if (s.data.ip && (room.cooldowns.get(roomIpHash(room, s.data.ip)) ?? 0) > Date.now()) {
+        throw new RequestError("REMOVAL_COOLDOWN");
+      }
       if (room.password) {
         const failKey = `${ipKey(s.data.ip)}|${c}`;
         // Check the limit first, so a correct guess after the limit does not work.
@@ -668,10 +681,22 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
         });
       }
       securityLog(ban ? "ban" : "kick", { ip: s.data.ip, room: room.code });
+      // Count removals for each connection. From the 3rd one, the connection waits before it can join again.
+      let times: number | undefined;
+      let cooldownMs: number | undefined;
+      const ipHash = room.ipKeys.get(target);
+      if (!ban && ipHash) {
+        times = (room.removals.get(ipHash) ?? 0) + 1;
+        room.removals.set(ipHash, times);
+        if (times >= REMOVALS_BEFORE_COOLDOWN) {
+          cooldownMs = REMOVAL_COOLDOWN_MS;
+          room.cooldowns.set(ipHash, Date.now() + REMOVAL_COOLDOWN_MS);
+        }
+      }
       for (const sid of room.sockets.get(target) ?? []) {
         const other = io.sockets.sockets.get(sid);
         if (!other) continue;
-        other.emit("removed", { reason: ban ? "banned" : "kicked" });
+        other.emit("removed", ban ? { reason: "banned" } : { reason: "kicked", times, cooldownMs });
         other.data.code = undefined;
         other.data.playerId = undefined;
       }
@@ -680,7 +705,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       if (timer) clearTimeout(timer);
       room.removeTimers.delete(target);
       revoke(room, target);
-      room.game.removePlayer(target, ban ? "banned" : "kicked");
+      room.game.removePlayer(target, ban ? "banned" : (times ?? 0) >= REMOVALS_BEFORE_COOLDOWN ? "kickedAgain" : "kicked");
     });
 
     on(socket, "bot:remove", (s, p) => {

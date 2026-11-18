@@ -230,7 +230,8 @@ export interface GameView {
 // Game
 // ---------------------------------------------------------------------------
 
-export type RemoveReason = "left" | "kicked" | "banned" | "timeout" | "idle";
+/** "kickedAgain": the host removed this connection from the room for the 3rd time or more. */
+export type RemoveReason = "left" | "kicked" | "kickedAgain" | "banned" | "timeout" | "idle";
 
 export interface GameOptions {
   decks: DeckRegistry;
@@ -358,6 +359,7 @@ export class Game {
     if (spectator) {
       this.spectators = this.spectators.filter((s) => s.id !== id);
       if (why === "banned") this.setNotice(`${spectator.name} was banned from this game room.`, "danger");
+      else if (why === "kickedAgain") this.setNotice(`${spectator.name} was removed. The host has had enough. Understandably.`, "danger");
       else this.setNotice(why === "kicked" ? `${spectator.name} was removed.` : `${spectator.name} stopped watching.`);
       this.changed();
       return;
@@ -379,14 +381,17 @@ export class Game {
     const verb =
       why === "kicked"
         ? "was removed"
-        : why === "banned"
+        : why === "kickedAgain"
+          ? "was removed. The host has had enough. Understandably"
+          : why === "banned"
           ? "was banned from this game room"
           : why === "timeout"
           ? "lost connection"
           : why === "idle"
             ? `was removed for missing ${IDLE_ROUNDS_BEFORE_KICK} rounds in a row`
             : "left";
-    this.setNotice(`${player.name} ${verb}.`, why === "idle" || why === "banned" ? "danger" : "info");
+    const danger = why === "idle" || why === "banned" || why === "kickedAgain";
+    this.setNotice(`${player.name} ${verb}.`, danger ? "danger" : "info");
 
     // A game needs 3 players. With fewer, it stops at once instead of waiting for the round to end.
     const inGame = this.phase === "submitting" || this.phase === "judging" || this.phase === "roundOver";

@@ -27,7 +27,7 @@ type Status =
   | { kind: "connecting" }
   | { kind: "join"; needsPassword: boolean }
   | { kind: "in" }
-  | { kind: "gone"; message: string; removed?: "idle" | "kicked" | "banned"; timesRemoved?: number };
+  | { kind: "gone"; message: string; removed?: "idle" | "kicked" | "banned"; timesRemoved?: number; cooldownMs?: number };
 
 export function Room({ code }: { code: string }) {
   const [status, setStatus] = useState<Status>({ kind: "connecting" });
@@ -70,7 +70,7 @@ export function Room({ code }: { code: string }) {
 
   useEffect(() => {
     const socket = getSocket();
-    const onPlayerRemoved = ({ playerId, reason }: { playerId: string; name: string; reason: "kicked" | "banned" | "idle" }) => {
+    const onPlayerRemoved = ({ playerId, reason }: { playerId: string; name: string; reason: Ghost["reason"] }) => {
       const last = lastView.current;
       const index = last?.players.findIndex((p) => p.id === playerId) ?? -1;
       if (!last || index < 0) return;
@@ -78,7 +78,8 @@ export function Room({ code }: { code: string }) {
       const inGame = last.phase === "submitting" || last.phase === "judging" || last.phase === "roundOver";
       const stopsGame = inGame && last.players.length - 1 < 3;
       // The banned player hears the long "fahhh"; everybody else hears the short "faaah".
-      if (!stopsGame) playEventSound(reason === "banned" ? "faaah" : "removed");
+      // A 3rd removal of the same connection gets the gunshot for everybody.
+      if (!stopsGame) playEventSound(reason === "banned" ? "faaah" : reason === "kickedAgain" ? "gunshot" : "removed");
       recentlyRemoved.current.add(playerId);
       setTimeout(() => recentlyRemoved.current.delete(playerId), 5000);
       const ghost: Ghost = { player: last.players[index], index, reason };
@@ -91,8 +92,9 @@ export function Room({ code }: { code: string }) {
       lastView.current = v;
       setView(v);
     };
-    const onRemoved = ({ reason }: { reason: string }) => {
-      const timesRemoved = reason === "kicked" ? countRemoval(code) : undefined;
+    const onRemoved = ({ reason, times, cooldownMs }: { reason: string; times?: number; cooldownMs?: number }) => {
+      // The server counts removals for each connection. The browser's own count is the fallback.
+      const timesRemoved = reason === "kicked" ? (times ?? countRemoval(code)) : undefined;
       if (reason === "banned") playEventSound("banned");
       // The third removal from the same room gets the gunshot instead of the thud.
       else if (reason === "kicked" && (timesRemoved ?? 0) >= 3) playEventSound("gunshot");
@@ -100,7 +102,7 @@ export function Room({ code }: { code: string }) {
       session.clear(code);
       setView(null);
       if (reason === "idle" || reason === "kicked" || reason === "banned") {
-        return setStatus({ kind: "gone", message: "", removed: reason, timesRemoved });
+        return setStatus({ kind: "gone", message: "", removed: reason, timesRemoved, cooldownMs });
       }
       setStatus({
         kind: "gone",
@@ -157,7 +159,7 @@ export function Room({ code }: { code: string }) {
   if (status.kind === "connecting") return <Centered>Connecting…</Centered>;
   if (status.kind === "gone" && status.removed === "idle") return <IdleRemoved />;
   if (status.kind === "gone" && status.removed === "banned") return <Banned />;
-  if (status.kind === "gone" && status.removed) return <HostRemoved timesRemoved={status.timesRemoved ?? 1} />;
+  if (status.kind === "gone" && status.removed) return <HostRemoved timesRemoved={status.timesRemoved ?? 1} cooldownMs={status.cooldownMs} />;
   if (status.kind === "gone")
     return (
       <Centered>
@@ -247,7 +249,7 @@ function canJoin(view: View): boolean {
 }
 
 /** A removed player's row that stays visible while it fades out. */
-export type Ghost = { player: GameView["players"][number]; index: number; reason: "kicked" | "banned" | "idle" };
+export type Ghost = { player: GameView["players"][number]; index: number; reason: "kicked" | "kickedAgain" | "banned" | "idle" };
 /** A little longer than the fade, so the row is gone before React removes it. */
 const GHOST_MS = 1900;
 
@@ -607,7 +609,7 @@ function countRemoval(code: string): number {
 }
 
 /** Shown to a player whom the host removed. In the page, not a browser pop-up. */
-function HostRemoved({ timesRemoved }: { timesRemoved: number }) {
+function HostRemoved({ timesRemoved, cooldownMs }: { timesRemoved: number; cooldownMs?: number }) {
   return (
     <RemovalCard icon="🚪" title="The host removed you from this room.">
       <p className="mt-3 text-sm leading-relaxed text-ink">
@@ -615,6 +617,11 @@ function HostRemoved({ timesRemoved }: { timesRemoved: number }) {
           ? "The host has had enough. Understandably."
           : "Take it up with management. There is no management."}
       </p>
+      {cooldownMs && (
+        <p className="mt-3 text-sm font-semibold leading-relaxed text-danger">
+          You can join this room again in {Math.round(cooldownMs / 60_000)} minutes.
+        </p>
+      )}
     </RemovalCard>
   );
 }

@@ -298,6 +298,24 @@ describe("game server", () => {
     expect(seenByTarget).toBe(false);
   });
 
+  it("makes a connection wait after the host removes it 3 times", async () => {
+    const host = await client();
+    const room = await host.emit("room:create", { ...T, name: nm("Strict") });
+    let last: unknown = null;
+    for (let i = 1; i <= 3; i++) {
+      const c = await client();
+      const joined = await c.emit("room:join", { ...T, code: room.code, name: nm(`Pest${i}`) });
+      const removed = new Promise((r) => c.s.once("removed", r));
+      await host.emit("player:kick", { playerId: joined.playerId, ban: false });
+      last = await removed;
+    }
+    expect(last).toEqual({ reason: "kicked", times: 3, cooldownMs: 5 * 60_000 });
+    const view = await host.until((v: any) => v.log.at(-1)?.text.includes("has had enough"));
+    expect((view as any).log.at(-1)).toMatchObject({ tone: "danger" });
+    const again = await client();
+    expect((await again.emit("room:join", { ...T, code: room.code, name: nm("Pest4") })).error).toBe("REMOVAL_COOLDOWN");
+  });
+
   it("lets the host unban a player, and shows bans only to the host", async () => {
     const host = await client();
     const room = await host.emit("room:create", { ...T, name: nm("Judge") });

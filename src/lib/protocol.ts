@@ -84,9 +84,10 @@ export interface ServerToClient {
   /** bans is empty for everybody but the host. */
   state: (view: GameView & { code: string; bans: { id: string; name: string }[] }) => void;
   /** Another player was removed, by the host or for being idle. Everybody else sees and hears it. */
-  "player:removed": (p: { playerId: string; name: string; reason: "kicked" | "banned" | "idle" }) => void;
+  "player:removed": (p: { playerId: string; name: string; reason: "kicked" | "kickedAgain" | "banned" | "idle" }) => void;
   /** You were removed from the room. */
-  removed: (p: { reason: "kicked" | "banned" | "closed" | "left" | "idle" }) => void;
+  /** times and cooldownMs come with "kicked": the removal count from this connection, and the wait before rejoining. */
+  removed: (p: { reason: "kicked" | "banned" | "closed" | "left" | "idle"; times?: number; cooldownMs?: number }) => void;
 }
 
 /** Plain-language messages for error codes. */
@@ -117,6 +118,7 @@ export const ERROR_TEXT: Record<string, string> = {
   ROOM_NOT_FOUND: "This room does not exist or has closed.",
   BAD_PASSWORD: "Wrong room password.",
   BANNED: "You can't join this room.",
+  REMOVAL_COOLDOWN: "The host removed you from this room 3 times. You can join again in a few minutes.",
   RATE_LIMITED: "Slow down a little and try again.",
   BAD_REQUEST: "That request was not valid.",
   NOT_IN_ROOM: "You are not in a room.",
