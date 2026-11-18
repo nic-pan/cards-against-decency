@@ -50,7 +50,7 @@ export default function Home() {
       ) : (
         <section className="mx-auto max-w-md rounded-2xl border border-line bg-surface p-5 sm:p-6">
           <h2 className="mb-1 text-xl font-bold">Choose a username</h2>
-          <p className="mb-5 text-sm text-muted">You need a name and the terms to start playing.</p>
+          <p className="mb-5 text-sm text-muted">You need a name and to agree to the terms to start playing.</p>
           <ProfileForm submitLabel="Continue" onSubmit={(name) => setStep({ kind: "browse", name })} />
         </section>
       )}
