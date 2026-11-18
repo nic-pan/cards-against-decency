@@ -154,7 +154,12 @@ export function GameBrowser({
       ) : (
         <ul className="grid gap-4 lg:grid-cols-2">
           {shown.map((g) => (
-            <GameCard key={g.code} game={g} onJoin={join} />
+            <GameCard
+              key={g.code}
+              game={g}
+              onJoin={join}
+              onRejoin={seat?.code === g.code ? () => router.push(`/r/${g.code}`) : undefined}
+            />
           ))}
         </ul>
       )}
@@ -264,9 +269,12 @@ const STATUS: Record<RoomListing["phase"], { text: string; tone: "ok" | "accent"
 function GameCard({
   game,
   onJoin,
+  onRejoin,
 }: {
   game: RoomListing;
   onJoin: (g: RoomListing, as: JoinAs, password?: string) => Promise<string | null>;
+  /** Set when this browser still has a seat in this game. The seat is kept, so no join is needed. */
+  onRejoin?: () => void;
 }) {
   const [pending, setPending] = useState<JoinAs | null>(null);
   const [password, setPassword] = useState("");
@@ -366,16 +374,17 @@ function GameCard({
       <div className="flex border-t border-line sm:w-36 sm:flex-col sm:border-l sm:border-t-0">
         <button
           type="button"
-          onClick={() => go("player")}
-          disabled={!!joinBlocked || busy}
+          onClick={() => (onRejoin ? onRejoin() : go("player"))}
+          disabled={onRejoin ? false : !!joinBlocked || busy}
           className="flex min-h-12 flex-1 items-center justify-center bg-accent px-3 text-sm font-black uppercase tracking-wide text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-paper disabled:text-muted sm:flex-[2]"
         >
-          {joinBlocked ?? "Join"}
+          {onRejoin ? "Rejoin" : (joinBlocked ?? "Join")}
         </button>
         <button
           type="button"
           onClick={() => go("spectator")}
-          disabled={!!spectateBlocked || busy}
+          disabled={!!onRejoin || !!spectateBlocked || busy}
+          title={onRejoin ? "You already have a seat in this game." : undefined}
           className="flex min-h-12 flex-1 items-center justify-center border-l border-line px-3 text-sm font-bold uppercase tracking-wide transition hover:bg-paper disabled:cursor-not-allowed disabled:text-muted sm:border-l-0 sm:border-t"
         >
           {spectateBlocked && spectateBlocked !== "Full" ? spectateBlocked : spectateBlocked ? "Watch full" : "Spectate"}
