@@ -42,6 +42,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <Link className="underline" href="/privacy">
                 Privacy Notice
               </Link>
+              {/* Optional tip jar. Kept quiet on purpose: the game is free and stays free. */}
+              <a
+                className="ml-auto opacity-70 hover:underline hover:opacity-100"
+                href="https://buymeacoffee.com/nickelfront"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                ☕ Buy me a coffee
+              </a>
             </p>
           </div>
         </footer>
