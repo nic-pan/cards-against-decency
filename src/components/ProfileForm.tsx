@@ -12,7 +12,8 @@ const CHECK_DELAY_MS = 500;
 
 type NameProblem = { code: string } | null;
 
-export const NAME_MAX = 24;
+/** About 16 normal letters fit on one line in the players list. Keep in sync with NAME_MAX in the engine. */
+export const NAME_MAX = 16;
 
 /** Name and terms form. Used on the front page and on invite links. */
 export function ProfileForm({
@@ -46,7 +47,8 @@ export function ProfileForm({
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    setName(session.name());
+    // Names saved before the limit was lowered may be too long.
+    setName(session.name().slice(0, NAME_MAX));
     setAgreed(session.termsAccepted());
     return () => {
       if (timer.current) clearTimeout(timer.current);

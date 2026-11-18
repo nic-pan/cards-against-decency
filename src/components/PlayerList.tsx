@@ -84,13 +84,8 @@ export function PlayerList({
                   className={`h-2 w-2 shrink-0 rounded-full ${p.connected ? "bg-ok" : "bg-line"}`}
                   title={p.connected ? "Online" : "Offline"}
                 />
-                <span className={`min-w-0 truncate font-semibold `}>
+                <span className="min-w-0 truncate font-semibold" title={p.name}>
                   {p.name}
-                  {you && <span className="font-normal text-muted"> (you)</span>}
-                </span>
-                <span className="flex shrink-0 gap-1">
-                  {p.isHost && <Badge tone="accent">Host</Badge>}
-                  {p.isBot && <Badge>Bot</Badge>}
                 </span>
                 {view.phase !== "lobby" && <span
                     className="ml-auto pl-2 text-lg font-black tabular-nums"
@@ -112,13 +107,21 @@ export function PlayerList({
                   isHost && <span aria-hidden className={`${view.phase === "lobby" ? "ml-auto" : ""} w-7 shrink-0`} />
                 )}
               </div>
-              {p.isBot && <BotTitle name={p.name} />}
-              {(STATUS_TEXT[p.status] || !p.connected) && (
-                <p className={`pl-4 text-xs ${p.status === "czar" ? "font-bold text-accent" : p.status === "missed" ? "font-semibold text-danger" : "text-muted"}`}>
-                  {STATUS_TEXT[p.status]}
-                  {!p.connected && (STATUS_TEXT[p.status] ? " · offline" : "Offline, can reconnect")}
+              {/* Badges and status sit on their own line, so the name gets the full first line. */}
+              {(p.isHost || you || p.isBot || STATUS_TEXT[p.status] || !p.connected) && (
+                <p className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 pl-4 text-xs">
+                  {p.isHost && <Badge tone="accent">Host</Badge>}
+                  {you && <Badge tone="accent">You</Badge>}
+                  {p.isBot && <Badge>Bot</Badge>}
+                  {(STATUS_TEXT[p.status] || !p.connected) && (
+                    <span className={p.status === "czar" ? "font-bold text-accent" : p.status === "missed" ? "font-semibold text-danger" : "text-muted"}>
+                      {STATUS_TEXT[p.status]}
+                      {!p.connected && (STATUS_TEXT[p.status] ? " · offline" : "Offline, can reconnect")}
+                    </span>
+                  )}
                 </p>
               )}
+              {p.isBot && <BotTitle name={p.name} />}
               {menuFor === p.id && (
                 <HostMenu
                   isBot={p.isBot}

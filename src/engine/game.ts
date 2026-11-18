@@ -37,7 +37,7 @@ export const MIN_PARTICIPANTS = 3;
 /** Rounds in a row that a player can miss before the game removes them. */
 export const IDLE_ROUNDS_BEFORE_KICK = 2;
 export const ROUND_OVER_MS = 7_000;
-export const NAME_MAX = 24;
+export const NAME_MAX = 16; // Fits on one line in the players list. Keep in sync with ProfileForm.tsx.
 /** Maximum number of imported decks in one room. */
 export const MAX_EXTERNAL_DECKS = 10;
 
