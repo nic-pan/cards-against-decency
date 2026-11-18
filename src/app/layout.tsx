@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Cards Against Decency",
-  description: "A fill-in-the-blank party card game for friends. Free, no account needed.",
+  description: "A party card game for people with questionable standards. Fill in the blanks. Make your friends regret inviting you.",
 };
 
 export const viewport: Viewport = {
