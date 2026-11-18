@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto";
 import { BlackCard, Deck, DeckRegistry, DeckSummary, Pile, Rng, WhiteCard, shuffle, summarize } from "./deck";
-import { BOT_PROFILES, isBotName } from "./bots";
+import { BOT_PROFILES, botProfile, isBotName } from "./bots";
 
 // ---------------------------------------------------------------------------
 // Settings
@@ -134,8 +134,11 @@ interface Round {
 export interface Notice {
   id: number;
   text: string;
-  /** "danger" entries show in red, for example when a player is removed for being idle. */
-  tone: "info" | "danger";
+  /**
+   * "danger" entries show in red, for example when a player is removed for being idle.
+   * "bot" entries announce a bot and look different from the lines about people.
+   */
+  tone: "info" | "danger" | "bot";
   /** Server time in milliseconds. */
   at: number;
 }
@@ -617,10 +620,10 @@ export class Game {
     }
     if (this.players.filter((p) => p.isBot).length >= this.settings.botCount) throw new GameError("TOO_MANY_BOTS");
     const bot = this.makePlayer(this.nextBotName(), true);
+    this.announceBot(bot.name);
     // Like a late joiner: cards now, play from the next round.
     if (this.whitePile) this.refill(bot);
     this.players.push(bot);
-    this.setNotice(`The host added ${bot.name}. It plays from the next round.`);
     this.changed();
   }
 
@@ -913,8 +916,15 @@ export class Game {
       this.players = this.players.filter((p) => !remove.has(p.id));
     }
     for (let i = bots.length; i < this.settings.botCount; i++) {
-      this.players.push(this.makePlayer(this.nextBotName(), true));
+      const bot = this.makePlayer(this.nextBotName(), true);
+      this.players.push(bot);
+      this.announceBot(bot.name);
     }
+  }
+
+  /** Writes the bot's own arrival line to the activity log. */
+  private announceBot(name: string): void {
+    this.setNotice(botProfile(name)?.arrival ?? `${name} joined.`, "bot");
   }
 
   /** A random free name from the bot list. "Bot N" only when all of them are taken. */

@@ -533,7 +533,15 @@ function ActivityLog({ log }: { log: View["log"] }) {
             <time className="shrink-0 tabular-nums text-muted" dateTime={new Date(n.at).toISOString()}>
               {time(n.at)}
             </time>
-            <span className={n.tone === "danger" ? "font-semibold text-danger" : ""}>{n.text}</span>
+            {n.tone === "bot" ? (
+              // Bot arrivals look like a field report, so nobody takes them for a person.
+              <span className="border-l-2 border-dashed border-muted pl-2 italic text-muted">
+                <span aria-hidden>🕵️ </span>
+                {n.text}
+              </span>
+            ) : (
+              <span className={n.tone === "danger" ? "font-semibold text-danger" : ""}>{n.text}</span>
+            )}
           </li>
         ))}
       </ol>

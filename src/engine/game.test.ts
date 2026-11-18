@@ -465,6 +465,14 @@ describe("removing and adding bots", () => {
     for (const name of bots) expect(BOT_PROFILES.map((b) => b.name)).toContain(name);
   });
 
+  it("announces each bot with its own arrival line", () => {
+    const { game, host } = setup({ bots: 2 });
+    const view = game.viewFor(host);
+    const arrivals = view.log.filter((n) => n.tone === "bot").map((n) => n.text);
+    const expected = view.players.filter((p) => p.isBot).map((p) => BOT_PROFILES.find((b) => b.name === p.name)!.arrival);
+    expect(arrivals).toEqual(expected);
+  });
+
   it("lowers the bot count when the host removes a bot in the lobby", () => {
     const { game, host } = setup({ bots: 3 });
     const bot = game.viewFor(host).players.find((p) => p.isBot)!;
