@@ -12,6 +12,11 @@ export type { WhiteCard, BlackCard, DeckSummary } from "../engine/deck";
  */
 export const TERMS_VERSION = "2026-11-19";
 
+/** A room that waits this long between games closes. Keep in sync with LOBBY_MAX_MS in src/engine/game.ts. */
+export const LOBBY_MAX_MINUTES = 30;
+/** The room asks "Is anyone still here?" this long before it closes. Keep in sync with LOBBY_WARNING_MS. */
+export const LOBBY_WARNING_SECONDS = 120;
+
 export type Ack<T = object> = ({ ok: true } & T) | { ok: false; error: string; message?: string };
 
 export interface JoinResult {
@@ -95,6 +100,8 @@ export interface ClientToServer {
   /** A spectator starts to play. */
   "player:play": (ack: (r: Ack) => void) => void;
   "player:kick": (p: { playerId: string; ban: boolean }, ack: (r: Ack) => void) => void;
+  /** A player or spectator keeps a waiting room open for another 30 minutes. */
+  "room:keepOpen": (ack: (r: Ack) => void) => void;
   /** A player starts a vote to remove another player. Not for the host, who can remove players directly. */
   "vote:start": (p: { playerId: string }, ack: (r: Ack) => void) => void;
   /** A voter votes yes or no in the open vote. */
@@ -117,8 +124,9 @@ export interface ServerToClient {
   /** Another player was removed, by the host, by a vote or for being idle. Everybody else sees and hears it. */
   "player:removed": (p: { playerId: string; name: string; reason: "kicked" | "kickedAgain" | "banned" | "idle" | "voted" }) => void;
   /** You were removed from the room. */
+  /** "lobbyExpired": nobody started a game or kept the room open for 30 minutes. */
   /** times and cooldownMs come with "kicked": the removal count from this connection, and the wait before rejoining. "voted" has cooldownMs. */
-  removed: (p: { reason: "kicked" | "banned" | "closed" | "left" | "idle" | "voted"; times?: number; cooldownMs?: number }) => void;
+  removed: (p: { reason: "kicked" | "banned" | "closed" | "lobbyExpired" | "left" | "idle" | "voted"; times?: number; cooldownMs?: number }) => void;
 }
 
 /** Plain-language messages for error codes. */

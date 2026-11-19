@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Deck, DeckRegistry } from "./deck";
 import { BOT_PROFILES } from "./bots";
-import { Game, GameError, HAND_SIZE, ROUND_OVER_MS, VOTE_COOLDOWN_MS, VOTE_SECONDS } from "./game";
+import { Game, GameError, HAND_SIZE, LOBBY_MAX_MS, LOBBY_WARNING_MS, ROUND_OVER_MS, VOTE_COOLDOWN_MS, VOTE_SECONDS } from "./game";
 
 function makeDeck(id = "test", blackPick = 1): Deck {
   return {
@@ -751,5 +751,69 @@ describe("vote to remove a player: one vote for each network", () => {
     expect(() => game.castVote(amy, false)).toThrow("NOT_A_VOTER");
     game.castVote(cat, true);
     expect(game.hasPlayer(ann)).toBe(false);
+  });
+});
+
+describe("rooms that wait too long between games", () => {
+  function lobbyGame(humans = 3) {
+    const decks = new DeckRegistry([makeDeck()]);
+    let seq = 0;
+    const onLobbyExpired = vi.fn();
+    const game = new Game({ decks, idFactory: () => `id${++seq}`, rng: mulberry(3), onLobbyExpired });
+    const ids = Array.from({ length: humans }, (_, i) => game.addPlayer(`Player${i}`));
+    return { game, ids, host: ids[0], onLobbyExpired };
+  }
+
+  it("closes a lobby that never starts a game, and shows when", () => {
+    const { game, host, onLobbyExpired } = lobbyGame();
+    expect(game.viewFor(host).lobbyClosesAt).toBe(Date.now() + LOBBY_MAX_MS);
+    vi.advanceTimersByTime(LOBBY_MAX_MS - 1);
+    expect(onLobbyExpired).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(onLobbyExpired).toHaveBeenCalledTimes(1);
+  });
+
+  it("lets a player or a spectator keep the room open", () => {
+    const { game, ids, onLobbyExpired } = lobbyGame();
+    const watcher = game.addSpectator("Watcher");
+    vi.advanceTimersByTime(LOBBY_MAX_MS - LOBBY_WARNING_MS);
+    game.keepOpen(ids[2]);
+    expect(game.viewFor(ids[0]).log.at(-1)!.text).toBe("Player2 kept the room open.");
+    vi.advanceTimersByTime(LOBBY_MAX_MS - 1);
+    game.keepOpen(watcher);
+    vi.advanceTimersByTime(LOBBY_MAX_MS - 1);
+    expect(onLobbyExpired).not.toHaveBeenCalled();
+    expect(() => game.keepOpen("nobody")).toThrow("UNKNOWN_PLAYER");
+  });
+
+  it("starts the clock again when someone joins", () => {
+    const { game, onLobbyExpired } = lobbyGame();
+    vi.advanceTimersByTime(LOBBY_MAX_MS - 1000);
+    game.addPlayer("Latecomer");
+    vi.advanceTimersByTime(LOBBY_MAX_MS - 1000);
+    expect(onLobbyExpired).not.toHaveBeenCalled();
+  });
+
+  it("stops during a game, and starts again on the game-over screen", () => {
+    const { game, host, onLobbyExpired } = lobbyGame();
+    game.start(host);
+    expect(game.viewFor(host).lobbyClosesAt).toBeNull();
+    expect(() => game.keepOpen(host)).toThrow("WRONG_PHASE");
+    vi.advanceTimersByTime(60_000);
+    game.endGame(host);
+    expect(game.viewFor(host).phase).toBe("gameOver");
+    // A new clock: the one from the lobby before the game is gone.
+    expect(game.viewFor(host).lobbyClosesAt).toBe(Date.now() + LOBBY_MAX_MS);
+    vi.advanceTimersByTime(LOBBY_MAX_MS - 1);
+    expect(onLobbyExpired).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(onLobbyExpired).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops when the room closes", () => {
+    const { game, ids, onLobbyExpired } = lobbyGame(1);
+    game.removePlayer(ids[0], "left");
+    vi.advanceTimersByTime(LOBBY_MAX_MS);
+    expect(onLobbyExpired).not.toHaveBeenCalled();
   });
 });

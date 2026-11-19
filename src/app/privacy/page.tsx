@@ -160,8 +160,9 @@ export default function Privacy() {
       <Section title="How long we keep it">
         <ul className="list-disc space-y-2 pl-5">
           <li>
-            <b>Rooms</b> exist only in the server&apos;s memory. The server deletes a room when the last person leaves, or
-            after 2 hours without activity. A restart of the server deletes all rooms.
+            <b>Rooms</b> exist only in the server&apos;s memory. The server deletes a room when the last person leaves,
+            after 2 hours without activity, or after 30 minutes without a game when nobody keeps it open. A restart of the
+            server deletes all rooms.
           </li>
           <li>
             <b>Your seat</b> stays for 90 seconds after your connection drops. Then the game removes you.

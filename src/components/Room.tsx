@@ -3,12 +3,13 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { call, getSocket, session } from "@/lib/socket";
-import { TERMS_VERSION, type GameView, type JoinAs, type JoinResult } from "@/lib/protocol";
+import { LOBBY_MAX_MINUTES, TERMS_VERSION, type GameView, type JoinAs, type JoinResult } from "@/lib/protocol";
 import { Board, verdictFor } from "./Board";
 import { Lobby } from "./Lobby";
 import { PlayerList } from "./PlayerList";
 import { ProfileForm } from "./ProfileForm";
 import { VoteBanner } from "./VoteBanner";
+import { StillThereDialog } from "./StillThereDialog";
 import { Button, Field, inputClass } from "./ui";
 import {
   installActivityTracker,
@@ -28,7 +29,7 @@ type Status =
   | { kind: "connecting" }
   | { kind: "join"; needsPassword: boolean }
   | { kind: "in" }
-  | { kind: "gone"; message: string; removed?: "idle" | "kicked" | "banned" | "voted"; timesRemoved?: number; cooldownMs?: number };
+  | { kind: "gone"; message: string; removed?: "idle" | "kicked" | "banned" | "voted" | "lobbyExpired"; timesRemoved?: number; cooldownMs?: number };
 
 export function Room({ code }: { code: string }) {
   const [status, setStatus] = useState<Status>({ kind: "connecting" });
@@ -102,7 +103,7 @@ export function Room({ code }: { code: string }) {
       else if (reason === "idle" || reason === "kicked" || reason === "voted") playEventSound("removed");
       session.clear(code);
       setView(null);
-      if (reason === "idle" || reason === "kicked" || reason === "banned" || reason === "voted") {
+      if (reason === "idle" || reason === "kicked" || reason === "banned" || reason === "voted" || reason === "lobbyExpired") {
         return setStatus({ kind: "gone", message: "", removed: reason, timesRemoved, cooldownMs });
       }
       setStatus({
@@ -161,6 +162,7 @@ export function Room({ code }: { code: string }) {
   if (status.kind === "gone" && status.removed === "idle") return <IdleRemoved />;
   if (status.kind === "gone" && status.removed === "banned") return <Banned />;
   if (status.kind === "gone" && status.removed === "voted") return <VotedOut cooldownMs={status.cooldownMs} />;
+  if (status.kind === "gone" && status.removed === "lobbyExpired") return <LobbyExpired />;
   if (status.kind === "gone" && status.removed) return <HostRemoved timesRemoved={status.timesRemoved ?? 1} cooldownMs={status.cooldownMs} />;
   if (status.kind === "gone")
     return (
@@ -231,6 +233,8 @@ export function Room({ code }: { code: string }) {
           )}
         </main>
       </div>
+
+      <StillThereDialog closesAt={view.lobbyClosesAt} clockOffset={clockOffset.current} act={act} onLeave={leave} />
 
       {toast && (
         <div
@@ -629,6 +633,20 @@ function HostRemoved({ timesRemoved, cooldownMs }: { timesRemoved: number; coold
           You can join this room again in {Math.round(cooldownMs / 60_000)} minutes.
         </p>
       )}
+    </RemovalCard>
+  );
+}
+
+/** Shown to everybody when a room closes because nobody started a game for LOBBY_MAX_MINUTES. */
+function LobbyExpired() {
+  return (
+    <RemovalCard icon="⌛" title="This room closed.">
+      <p className="mt-3 text-sm leading-relaxed text-ink">
+        Nobody started a game for {LOBBY_MAX_MINUTES} minutes, and nobody kept the room open.
+      </p>
+      <p className="mt-3 text-sm leading-relaxed text-ink">
+        Rooms don&apos;t wait forever. Create a new game from the game list when your friends are ready.
+      </p>
     </RemovalCard>
   );
 }

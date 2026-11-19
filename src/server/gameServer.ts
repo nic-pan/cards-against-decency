@@ -369,6 +369,8 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       onEmpty: () => closeRoom(room, null),
       // Votes count once for each network, so one person with two seats has one vote.
       voterKey: (playerId) => room.ipKeys.get(playerId) ?? playerId,
+      // Nobody started a game or kept the room open for LOBBY_MAX_MS.
+      onLobbyExpired: () => closeRoom(room, "lobbyExpired"),
       // The game removes players who miss too many rounds. Tell them why and end their session.
       onRemoved: (playerId, why, name) => {
         // Everybody else sees and hears a removal by the host, by a vote or for being idle.
@@ -398,7 +400,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
     return room;
   }
 
-  function closeRoom(room: Room, reason: "closed" | null): void {
+  function closeRoom(room: Room, reason: "closed" | "lobbyExpired" | null): void {
     if (room.closed) return;
     room.closed = true;
     room.game.dispose();
@@ -872,6 +874,11 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       room.removeTimers.delete(target);
       revoke(room, target);
       room.game.removePlayer(target, ban ? "banned" : (times ?? 0) >= REMOVALS_BEFORE_COOLDOWN ? "kickedAgain" : "kicked");
+    });
+
+    on(socket, "room:keepOpen", (s) => {
+      const { room, playerId } = current(s);
+      room.game.keepOpen(playerId);
     });
 
     on(socket, "vote:start", (s, p) => {

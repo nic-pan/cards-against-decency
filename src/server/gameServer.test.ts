@@ -349,6 +349,19 @@ describe("game server", () => {
     expect((await b.emit("vote:start", { playerId: target.playerId })).error).toBe("VOTE_TOO_FEW");
   });
 
+  it("shows when a waiting room closes, and lets anyone in the room keep it open", async () => {
+    const host = await client();
+    const room = await host.emit("room:create", { ...T, name: nm("Waiter") });
+    const first = await host.until((v) => v.lobbyClosesAt !== null);
+    expect(first.lobbyClosesAt! - Date.now()).toBeGreaterThan(29 * 60_000);
+    const watcher = await client();
+    await watcher.emit("room:join", { ...T, code: room.code, name: nm("Watcher"), as: "spectator" });
+    expect((await watcher.emit("room:keepOpen")).ok).toBe(true);
+    const kept = await host.until((v) => v.log.at(-1)?.text.endsWith("kept the room open.") ?? false);
+    expect(kept.lobbyClosesAt).toBeGreaterThanOrEqual(first.lobbyClosesAt!);
+    expect((await (await client()).emit("room:keepOpen")).error).toBe("NOT_IN_ROOM");
+  });
+
   it("removes a player when the others vote them out, and makes them wait", () => withTestIps(async () => {
     const host = await client(undefined, "10.0.0.1");
     const room = await host.emit("room:create", { ...T, name: nm("Chair") });

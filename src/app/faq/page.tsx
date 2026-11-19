@@ -180,7 +180,7 @@ const GROUPS: Group[] = [
       {
         q: "Why did my game disappear?",
         a: [
-          "Games exist only in the server's memory. An update or a restart of the server ends all games, and a game closes after 2 hours without activity. Scores are not saved.",
+          "Games exist only in the server's memory. An update or a restart of the server ends all games, and a game closes after 2 hours without activity. A room that waits 30 minutes without a game also closes, unless someone in it chooses Keep the room open. Scores are not saved.",
         ],
       },
     ],

@@ -41,6 +41,10 @@ export const NAME_MAX = 16; // Fits on one line in the players list. Keep in syn
 export const NAME_MIN = 3; // Keep in sync with ProfileForm.tsx.
 /** Maximum number of imported decks in one room. */
 export const MAX_EXTERNAL_DECKS = 10;
+/** A room that waits this long in the lobby or on the game-over screen closes. Players can keep it open. */
+export const LOBBY_MAX_MS = 30 * 60_000;
+/** The room warns everybody this long before it closes. */
+export const LOBBY_WARNING_MS = 2 * 60_000;
 /** Seconds that a vote to remove a player stays open. */
 export const VOTE_SECONDS = 60;
 /** After a failed vote, its starter waits this long before they can start another one. */
@@ -268,6 +272,8 @@ export interface GameView {
   log: Notice[];
   /** The open vote to remove a player, or null. */
   vote: VoteView | null;
+  /** Server time when the room closes if nobody starts a game or keeps it open. Null during a game. */
+  lobbyClosesAt: number | null;
   decks: DeckSummary[];
   serverNow: number;
 }
@@ -296,6 +302,8 @@ export interface GameOptions {
    * Votes count once for each key. Without it, each player is their own key.
    */
   voterKey?: (playerId: string) => string;
+  /** Called when the room waited too long in the lobby or on the game-over screen. The server closes the room. */
+  onLobbyExpired?: () => void;
   idFactory?: () => string;
 }
 
@@ -336,6 +344,7 @@ export class Game {
   private pendingKicks: string[] = [];
   private readonly newId: () => string;
   private readonly voterKey: (playerId: string) => string;
+  private readonly onLobbyExpired: () => void;
 
   private players: Player[] = [];
   private spectators: Spectator[] = [];
@@ -357,6 +366,8 @@ export class Game {
   private disposed = false;
   private vote: Vote | null = null;
   private voteTimer: ReturnType<typeof setTimeout> | null = null;
+  private lobbyTimer: ReturnType<typeof setTimeout> | null = null;
+  private lobbyDeadline: number | null = null;
   /** Voter key -> the time when that network can start a vote again. */
   private voteCooldowns = new Map<string, number>();
 
@@ -368,6 +379,7 @@ export class Game {
     this.onRemoved = opts.onRemoved ?? (() => {});
     this.newId = opts.idFactory ?? randomId;
     this.voterKey = opts.voterKey ?? ((id) => id);
+    this.onLobbyExpired = opts.onLobbyExpired ?? (() => {});
     this.settings = defaultSettings(opts.decks);
   }
 
@@ -383,6 +395,7 @@ export class Game {
     this.players.push(player);
     this.setNotice(this.hostId ? `${name} joined.` : `${name} created the room.`);
     if (!this.hostId) this.hostId = player.id;
+    this.restartLobbyClock();
     this.changed();
     return player.id;
   }
@@ -395,6 +408,7 @@ export class Game {
     const spectator: Spectator = { id: this.newId(), name, connected: true };
     this.spectators.push(spectator);
     this.setNotice(`${name} is watching.`);
+    this.restartLobbyClock();
     this.changed();
     return spectator.id;
   }
@@ -743,6 +757,46 @@ export class Game {
     this.endRound("winner");
   }
 
+  // ----- Lobby clock ---------------------------------------------------
+
+  /** A player or spectator keeps a waiting room open for another LOBBY_MAX_MS. */
+  keepOpen(byId: string): void {
+    const name = this.find(byId)?.name ?? this.spectators.find((s) => s.id === byId)?.name;
+    if (!name) throw new GameError("UNKNOWN_PLAYER");
+    if (this.phase !== "lobby" && this.phase !== "gameOver") throw new GameError("WRONG_PHASE");
+    this.restartLobbyClock();
+    this.setNotice(`${name} kept the room open.`);
+    this.changed();
+  }
+
+  /** Starts the lobby clock again from now. Only while the room waits between games. */
+  private restartLobbyClock(): void {
+    this.stopLobbyClock();
+    this.syncLobbyClock();
+  }
+
+  /** Runs the lobby clock while the room waits between games, and stops it during a game. */
+  private syncLobbyClock(): void {
+    if (this.disposed) return;
+    const waiting = this.phase === "lobby" || this.phase === "gameOver";
+    if (!waiting) {
+      this.stopLobbyClock();
+      return;
+    }
+    if (this.lobbyDeadline !== null) return;
+    this.lobbyDeadline = Date.now() + LOBBY_MAX_MS;
+    this.lobbyTimer = setTimeout(() => {
+      this.lobbyTimer = null;
+      if (!this.disposed) this.onLobbyExpired();
+    }, LOBBY_MAX_MS);
+  }
+
+  private stopLobbyClock(): void {
+    if (this.lobbyTimer) clearTimeout(this.lobbyTimer);
+    this.lobbyTimer = null;
+    this.lobbyDeadline = null;
+  }
+
   // ----- Votes ---------------------------------------------------------
 
   /** A player starts a vote to remove another human player. The starter votes yes. */
@@ -923,6 +977,7 @@ export class Game {
       winnerId: this.winnerId,
       log: this.log,
       vote: this.voteViewFor(playerId),
+      lobbyClosesAt: this.lobbyDeadline,
       decks: [...this.decks.list(), ...[...this.externalDecks.values()].map((d) => ({ ...summarize(d), external: true }))],
       serverNow: Date.now(),
     };
@@ -936,6 +991,7 @@ export class Game {
     this.disposed = true;
     this.clearTimer();
     this.clearVote();
+    this.stopLobbyClock();
   }
 
   // ----- Internals -----------------------------------------------------
@@ -1223,6 +1279,9 @@ export class Game {
   }
 
   private changed(): void {
-    if (!this.disposed) this.onChange();
+    if (this.disposed) return;
+    // Every phase change passes here, so the lobby clock starts and stops with the phase.
+    this.syncLobbyClock();
+    this.onChange();
   }
 }
