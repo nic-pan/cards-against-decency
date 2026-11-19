@@ -41,6 +41,15 @@ export const NAME_MAX = 16; // Fits on one line in the players list. Keep in syn
 export const NAME_MIN = 3; // Keep in sync with ProfileForm.tsx.
 /** Maximum number of imported decks in one room. */
 export const MAX_EXTERNAL_DECKS = 10;
+/** Seconds that a vote to remove a player stays open. */
+export const VOTE_SECONDS = 60;
+/** After a failed vote, its starter waits this long before they can start another one. */
+export const VOTE_COOLDOWN_MS = 2 * 60_000;
+/**
+ * A vote needs human players from at least this many networks (voter keys) in the room, the target included.
+ * One person with two seats on one network cannot outvote a host alone.
+ */
+export const VOTE_MIN_NETWORKS = 3;
 
 export function defaultSettings(decks: DeckRegistry): Settings {
   return {
@@ -84,7 +93,12 @@ export type ErrorCode =
   | "SPECTATORS_FULL"
   | "TOO_MANY_DECKS"
   | "NAME_RESERVED"
-  | "TOO_MANY_BOTS";
+  | "TOO_MANY_BOTS"
+  | "VOTE_IN_PROGRESS"
+  | "VOTE_TOO_FEW"
+  | "VOTE_COOLDOWN"
+  | "NO_VOTE"
+  | "NOT_A_VOTER";
 
 export class GameError extends Error {
   constructor(public readonly code: ErrorCode, message?: string) {
@@ -130,6 +144,18 @@ interface Round {
   winnerSubmissionId: string | null;
   end: RoundEnd | null;
   deadline: number | null;
+}
+
+/**
+ * A vote of the players to remove one player. One vote at a time.
+ * Votes count per voter key (one network), not per seat: yes and no hold voter keys.
+ */
+interface Vote {
+  targetId: string;
+  startedBy: string;
+  yes: Set<string>;
+  no: Set<string>;
+  deadline: number;
 }
 
 /** One entry in the room's activity log. */
@@ -184,6 +210,22 @@ export interface RoundView {
   end: RoundEnd | null;
 }
 
+/** The open vote, as one person sees it. */
+export interface VoteView {
+  targetId: string;
+  targetName: string;
+  startedByName: string;
+  yes: number;
+  no: number;
+  /** Yes votes that remove the player: more than half of the voters. One vote for each network. */
+  needed: number;
+  deadline: number;
+  /** Your vote. Null when you did not vote or cannot vote. */
+  yourVote: "yes" | "no" | null;
+  /** False for the target, spectators and bots. */
+  canVote: boolean;
+}
+
 export interface SpectatorView {
   id: string;
   name: string;
@@ -224,6 +266,8 @@ export interface GameView {
   winnerId: string | null;
   /** The room's activity log, oldest first. */
   log: Notice[];
+  /** The open vote to remove a player, or null. */
+  vote: VoteView | null;
   decks: DeckSummary[];
   serverNow: number;
 }
@@ -232,8 +276,11 @@ export interface GameView {
 // Game
 // ---------------------------------------------------------------------------
 
-/** "kickedAgain": the host removed this connection from the room for the 3rd time or more. */
-export type RemoveReason = "left" | "kicked" | "kickedAgain" | "banned" | "timeout" | "idle";
+/**
+ * "kickedAgain": the host removed this connection from the room for the 3rd time or more.
+ * "voted": the players voted to remove this player.
+ */
+export type RemoveReason = "left" | "kicked" | "kickedAgain" | "banned" | "timeout" | "idle" | "voted";
 
 export interface GameOptions {
   decks: DeckRegistry;
@@ -244,6 +291,11 @@ export interface GameOptions {
   onEmpty?: () => void;
   /** Called when the game removes a player. The server uses it to tell an idle player why. */
   onRemoved?: (playerId: string, why: RemoveReason, name: string) => void;
+  /**
+   * The voter key of a player: the same key for all seats on one network (the server uses the hashed IP).
+   * Votes count once for each key. Without it, each player is their own key.
+   */
+  voterKey?: (playerId: string) => string;
   idFactory?: () => string;
 }
 
@@ -283,6 +335,7 @@ export class Game {
   /** Idle players to remove after the current phase change. */
   private pendingKicks: string[] = [];
   private readonly newId: () => string;
+  private readonly voterKey: (playerId: string) => string;
 
   private players: Player[] = [];
   private spectators: Spectator[] = [];
@@ -302,6 +355,10 @@ export class Game {
   private whitePile: Pile<WhiteCard> | null = null;
   private blackPile: Pile<BlackCard> | null = null;
   private disposed = false;
+  private vote: Vote | null = null;
+  private voteTimer: ReturnType<typeof setTimeout> | null = null;
+  /** Voter key -> the time when that network can start a vote again. */
+  private voteCooldowns = new Map<string, number>();
 
   constructor(opts: GameOptions) {
     this.decks = opts.decks;
@@ -310,6 +367,7 @@ export class Game {
     this.onEmpty = opts.onEmpty ?? (() => {});
     this.onRemoved = opts.onRemoved ?? (() => {});
     this.newId = opts.idFactory ?? randomId;
+    this.voterKey = opts.voterKey ?? ((id) => id);
     this.settings = defaultSettings(opts.decks);
   }
 
@@ -357,6 +415,12 @@ export class Game {
   }
 
   removePlayer(id: string, why: RemoveReason): void {
+    this.removeMember(id, why);
+    // A removal can decide or cancel the open vote. This runs after the removal is complete.
+    this.settleVote();
+  }
+
+  private removeMember(id: string, why: RemoveReason): void {
     const spectator = this.spectators.find((s) => s.id === id);
     if (spectator) {
       this.spectators = this.spectators.filter((s) => s.id !== id);
@@ -391,8 +455,10 @@ export class Game {
           ? "lost connection"
           : why === "idle"
             ? `was removed for missing ${IDLE_ROUNDS_BEFORE_KICK} rounds in a row`
-            : "left";
-    const danger = why === "idle" || why === "banned" || why === "kickedAgain";
+            : why === "voted"
+              ? "was voted out by the players"
+              : "left";
+    const danger = why === "idle" || why === "banned" || why === "kickedAgain" || why === "voted";
     this.setNotice(`${player.name} ${verb}.`, danger ? "danger" : "info");
 
     // A game needs 3 players. With fewer, it stops at once instead of waiting for the round to end.
@@ -677,6 +743,133 @@ export class Game {
     this.endRound("winner");
   }
 
+  // ----- Votes ---------------------------------------------------------
+
+  /** A player starts a vote to remove another human player. The starter votes yes. */
+  startVote(byId: string, targetId: string): void {
+    const starter = this.find(byId);
+    if (!starter || starter.isBot) throw new GameError("NOT_A_VOTER");
+    const target = this.find(targetId);
+    if (!target || target.isBot || target.id === byId) throw new GameError("UNKNOWN_PLAYER");
+    if (this.vote) throw new GameError("VOTE_IN_PROGRESS");
+    if (new Set(this.humans().map((p) => this.voterKey(p.id))).size < VOTE_MIN_NETWORKS) {
+      throw new GameError("VOTE_TOO_FEW");
+    }
+    const key = this.voterKey(byId);
+    // A seat on the target's own network cannot vote against them.
+    if (key === this.voterKey(targetId)) throw new GameError("NOT_A_VOTER");
+    if ((this.voteCooldowns.get(key) ?? 0) > Date.now()) throw new GameError("VOTE_COOLDOWN");
+
+    this.vote = { targetId, startedBy: byId, yes: new Set([key]), no: new Set(), deadline: Date.now() + VOTE_SECONDS * 1000 };
+    this.setNotice(`${starter.name} started a vote to remove ${target.name}.`);
+    this.voteTimer = setTimeout(() => {
+      this.voteTimer = null;
+      if (!this.disposed) this.failVote("The vote ended without enough yes votes.");
+    }, VOTE_SECONDS * 1000);
+    if (!this.settleVote()) this.changed();
+  }
+
+  /** A voter votes yes or no. A later vote from the same network replaces the earlier one. */
+  castVote(byId: string, yes: boolean): void {
+    const vote = this.vote;
+    if (!vote) throw new GameError("NO_VOTE");
+    if (!this.canVote(byId)) throw new GameError("NOT_A_VOTER");
+    const key = this.voterKey(byId);
+    (yes ? vote.no : vote.yes).delete(key);
+    (yes ? vote.yes : vote.no).add(key);
+    if (!this.settleVote()) this.changed();
+  }
+
+  /** The networks that can vote: those of the human players, except the target's network. */
+  private voterKeys(): Set<string> {
+    if (!this.vote) return new Set();
+    const targetKey = this.voterKey(this.vote.targetId);
+    const keys = new Set(this.humans().map((p) => this.voterKey(p.id)));
+    keys.delete(targetKey);
+    return keys;
+  }
+
+  private canVote(playerId: string): boolean {
+    const player = this.find(playerId);
+    return !!player && !player.isBot && player.id !== this.vote?.targetId && this.voterKeys().has(this.voterKey(playerId));
+  }
+
+  /** Counts the yes and no votes of networks that can still vote, and the yes votes needed. */
+  private tally(): { yes: number; no: number; needed: number; voters: number } {
+    const keys = this.voterKeys();
+    const vote = this.vote!;
+    return {
+      yes: [...vote.yes].filter((k) => keys.has(k)).length,
+      no: [...vote.no].filter((k) => keys.has(k)).length,
+      needed: Math.floor(keys.size / 2) + 1,
+      voters: keys.size,
+    };
+  }
+
+  /** Ends the open vote when it passed, cannot pass any more, or has too few players. Returns true when it ended. */
+  private settleVote(): boolean {
+    const vote = this.vote;
+    if (!vote || this.disposed) return false;
+    const target = this.find(vote.targetId);
+    if (!target) {
+      // The target left. Nothing to decide.
+      this.clearVote();
+      this.changed();
+      return true;
+    }
+    if (new Set(this.humans().map((p) => this.voterKey(p.id))).size < VOTE_MIN_NETWORKS) {
+      this.clearVote();
+      this.setNotice("The vote was cancelled. There are not enough players.");
+      this.changed();
+      return true;
+    }
+    const { yes, no, needed, voters } = this.tally();
+    if (yes >= needed) {
+      this.clearVote();
+      this.removePlayer(target.id, "voted");
+      return true;
+    }
+    if (voters - no < needed) {
+      this.failVote(`The vote to remove ${target.name} failed.`);
+      return true;
+    }
+    return false;
+  }
+
+  private failVote(message: string): void {
+    const vote = this.vote;
+    if (!vote) return;
+    this.voteCooldowns.set(this.voterKey(vote.startedBy), Date.now() + VOTE_COOLDOWN_MS);
+    this.clearVote();
+    this.setNotice(message);
+    this.changed();
+  }
+
+  private clearVote(): void {
+    if (this.voteTimer) clearTimeout(this.voteTimer);
+    this.voteTimer = null;
+    this.vote = null;
+  }
+
+  private voteViewFor(viewerId: string): VoteView | null {
+    const vote = this.vote;
+    if (!vote) return null;
+    const { yes, no, needed } = this.tally();
+    const canVote = this.canVote(viewerId);
+    const key = this.voterKey(viewerId);
+    return {
+      targetId: vote.targetId,
+      targetName: this.find(vote.targetId)?.name ?? "",
+      startedByName: this.find(vote.startedBy)?.name ?? "Someone who left",
+      yes,
+      no,
+      needed,
+      deadline: vote.deadline,
+      yourVote: !canVote ? null : vote.yes.has(key) ? "yes" : vote.no.has(key) ? "no" : null,
+      canVote,
+    };
+  }
+
   // ----- Views ---------------------------------------------------------
 
   viewFor(playerId: string): GameView {
@@ -729,6 +922,7 @@ export class Game {
         this.phase === "submitting" && !!round && round.participants.has(playerId) && !mySubmission,
       winnerId: this.winnerId,
       log: this.log,
+      vote: this.voteViewFor(playerId),
       decks: [...this.decks.list(), ...[...this.externalDecks.values()].map((d) => ({ ...summarize(d), external: true }))],
       serverNow: Date.now(),
     };
@@ -741,6 +935,7 @@ export class Game {
   dispose(): void {
     this.disposed = true;
     this.clearTimer();
+    this.clearVote();
   }
 
   // ----- Internals -----------------------------------------------------

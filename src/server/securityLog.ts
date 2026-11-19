@@ -24,6 +24,7 @@ export type SecurityEvent =
   | "banned_join"
   | "kick"
   | "ban"
+  | "vote_kick"
   | "unban"
   | "hosted_games_limit"
   | "invalid_payload";

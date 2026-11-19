@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Deck, DeckRegistry } from "./deck";
 import { BOT_PROFILES } from "./bots";
-import { Game, GameError, HAND_SIZE, ROUND_OVER_MS } from "./game";
+import { Game, GameError, HAND_SIZE, ROUND_OVER_MS, VOTE_COOLDOWN_MS, VOTE_SECONDS } from "./game";
 
 function makeDeck(id = "test", blackPick = 1): Deck {
   return {
@@ -582,5 +582,174 @@ describe("activity log", () => {
     const log = game.viewFor(game.humanIds()[0]).log;
     expect(log).toHaveLength(50);
     expect(log.at(-1)!.text).toBe("Spec59 stopped watching.");
+  });
+});
+
+describe("vote to remove a player", () => {
+  it("removes the target when more than half of the voters vote yes", () => {
+    const { game, ids, onRemoved } = setup({ humans: 4 });
+    const [, a, b, target] = ids;
+    game.startVote(a, target);
+    expect(game.viewFor(b).vote).toMatchObject({ targetId: target, yes: 1, no: 0, needed: 2, canVote: true, yourVote: null });
+    expect(game.viewFor(target).vote).toMatchObject({ canVote: false });
+    game.castVote(b, true);
+    expect(game.hasPlayer(target)).toBe(false);
+    expect(game.viewFor(a).vote).toBeNull();
+    expect(onRemoved).toHaveBeenCalledWith(target, "voted", "Player3");
+    expect(game.viewFor(a).log.at(-1)).toMatchObject({ text: "Player3 was voted out by the players.", tone: "danger" });
+  });
+
+  it("can remove the host, and the host role moves on", () => {
+    const { game, ids, host } = setup();
+    game.startVote(ids[1], host);
+    game.castVote(ids[2], true);
+    expect(game.hasPlayer(host)).toBe(false);
+    expect(game.viewFor(ids[1]).hostId).toBe(ids[1]);
+  });
+
+  it("fails at once when it cannot pass any more, and the starter must wait", () => {
+    const { game, ids } = setup({ humans: 4 });
+    const [host, a, b, target] = ids;
+    game.startVote(a, target);
+    game.castVote(host, false);
+    expect(game.viewFor(a).vote).not.toBeNull();
+    game.castVote(b, false);
+    expect(game.viewFor(a).vote).toBeNull();
+    expect(game.hasPlayer(target)).toBe(true);
+    expect(game.viewFor(a).log.at(-1)!.text).toBe("The vote to remove Player3 failed.");
+    expect(() => game.startVote(a, target)).toThrow("VOTE_COOLDOWN");
+    // Another player can still start a vote.
+    game.startVote(b, target);
+    expect(game.viewFor(a).vote).not.toBeNull();
+  });
+
+  it("ends after the time limit, and the starter can vote again after the cooldown", () => {
+    const { game, ids } = setup();
+    game.startVote(ids[1], ids[2]);
+    vi.advanceTimersByTime(VOTE_SECONDS * 1000);
+    expect(game.viewFor(ids[0]).vote).toBeNull();
+    expect(game.viewFor(ids[0]).log.at(-1)!.text).toBe("The vote ended without enough yes votes.");
+    expect(game.hasPlayer(ids[2])).toBe(true);
+    vi.advanceTimersByTime(VOTE_COOLDOWN_MS);
+    expect(() => game.startVote(ids[1], ids[2])).not.toThrow();
+  });
+
+  it("lets a voter change their vote", () => {
+    const { game, ids } = setup({ humans: 5 });
+    game.startVote(ids[1], ids[4]);
+    game.castVote(ids[2], false);
+    expect(game.viewFor(ids[2]).vote).toMatchObject({ yes: 1, no: 1, yourVote: "no" });
+    game.castVote(ids[2], true);
+    expect(game.viewFor(ids[2]).vote).toMatchObject({ yes: 2, no: 0, yourVote: "yes" });
+  });
+
+  it("allows one vote at a time and needs 3 humans; bots and spectators do not count", () => {
+    const { game, ids } = setup({ humans: 2, bots: 3 });
+    const watcher = game.addSpectator("Watcher");
+    expect(() => game.startVote(ids[0], ids[1])).toThrow("VOTE_TOO_FEW");
+    const third = game.addPlayer("Third");
+    game.startVote(ids[1], third);
+    expect(() => game.startVote(ids[0], ids[1])).toThrow("VOTE_IN_PROGRESS");
+    expect(() => game.castVote(watcher, true)).toThrow("NOT_A_VOTER");
+    expect(() => game.castVote(third, false)).toThrow("NOT_A_VOTER");
+    expect(game.viewFor(watcher).vote).toMatchObject({ canVote: false, needed: 2 });
+  });
+
+  it("does not allow votes against bots, yourself or spectators", () => {
+    const { game, ids } = setup({ humans: 3, bots: 1 });
+    const bot = game.viewFor(ids[0]).players.find((p) => p.isBot)!.id;
+    const watcher = game.addSpectator("Watcher");
+    expect(() => game.startVote(ids[1], bot)).toThrow("UNKNOWN_PLAYER");
+    expect(() => game.startVote(ids[1], ids[1])).toThrow("UNKNOWN_PLAYER");
+    expect(() => game.startVote(ids[1], watcher)).toThrow("UNKNOWN_PLAYER");
+    expect(() => game.startVote(watcher, ids[1])).toThrow("NOT_A_VOTER");
+  });
+
+  it("ends quietly when the target leaves", () => {
+    const { game, ids } = setup({ humans: 4 });
+    game.startVote(ids[1], ids[3]);
+    game.removePlayer(ids[3], "left");
+    expect(game.viewFor(ids[1]).vote).toBeNull();
+    expect(() => game.startVote(ids[1], ids[2])).not.toThrow();
+  });
+
+  it("counts again when a voter leaves", () => {
+    const { game, ids } = setup({ humans: 6 });
+    // 5 voters: 3 yes votes needed.
+    game.startVote(ids[1], ids[5]);
+    game.castVote(ids[2], true);
+    expect(game.viewFor(ids[1]).vote).toMatchObject({ yes: 2, needed: 3 });
+    // 4 voters, and the voter who left had not voted: still 3 needed.
+    game.removePlayer(ids[4], "left");
+    expect(game.viewFor(ids[1]).vote).toMatchObject({ yes: 2, needed: 3 });
+    // 3 voters: 2 yes votes are enough.
+    game.removePlayer(ids[3], "left");
+    expect(game.hasPlayer(ids[5])).toBe(false);
+  });
+
+  it("is cancelled when fewer than 3 humans remain", () => {
+    const { game, ids } = setup();
+    game.startVote(ids[1], ids[2]);
+    game.removePlayer(ids[0], "left");
+    expect(game.viewFor(ids[1]).vote).toBeNull();
+    expect(game.hasPlayer(ids[2])).toBe(true);
+    expect(game.viewFor(ids[1]).log.at(-1)!.text).toBe("The vote was cancelled. There are not enough players.");
+  });
+
+  it("works during a game, and removing the Card Czar cancels the round", () => {
+    const { game, ids, host } = setup({ humans: 4 });
+    game.start(host);
+    const czar = game.viewFor(host).round!.czarId;
+    const [a, b] = ids.filter((id) => id !== czar);
+    game.startVote(a, czar);
+    game.castVote(b, true);
+    expect(game.hasPlayer(czar)).toBe(false);
+    expect(game.viewFor(a).round!.end).toBe("czarLeft");
+  });
+});
+
+describe("vote to remove a player: one vote for each network", () => {
+  /** Players whose names start with the same letter share a network (one IP address). */
+  function networkGame(names: string[]) {
+    const decks = new DeckRegistry([makeDeck()]);
+    let seq = 0;
+    const network = new Map<string, string>();
+    const game = new Game({ decks, idFactory: () => `id${++seq}`, rng: mulberry(7), voterKey: (id) => network.get(id) ?? id });
+    const ids = names.map((n) => {
+      const id = game.addPlayer(n);
+      network.set(id, n[0]);
+      return id;
+    });
+    return { game, ids };
+  }
+
+  it("needs 3 networks: a host and one person with two seats cannot vote", () => {
+    const { game, ids } = networkGame(["Host", "Troll", "Tr0ll"]);
+    expect(() => game.startVote(ids[1], ids[0])).toThrow("VOTE_TOO_FEW");
+  });
+
+  it("counts two seats on one network as one vote", () => {
+    const { game, ids } = networkGame(["Host", "Troll", "Tr0ll", "Friend"]);
+    const [host, troll, troll2, friend] = ids;
+    game.startVote(troll, host);
+    expect(game.viewFor(friend).vote).toMatchObject({ yes: 1, needed: 2, canVote: true });
+    game.castVote(troll2, true);
+    expect(game.viewFor(friend).vote).toMatchObject({ yes: 1, needed: 2 });
+    expect(game.viewFor(troll2).vote).toMatchObject({ yourVote: "yes" });
+    game.castVote(friend, false);
+    expect(game.hasPlayer(host)).toBe(true);
+    // The cooldown covers the whole network, so the second seat cannot start a new vote either.
+    expect(() => game.startVote(troll2, host)).toThrow("VOTE_COOLDOWN");
+  });
+
+  it("does not let a seat on the target's network vote", () => {
+    const { game, ids } = networkGame(["Ann", "Amy", "Bob", "Cat"]);
+    const [ann, amy, bob, cat] = ids;
+    expect(() => game.startVote(amy, ann)).toThrow("NOT_A_VOTER");
+    game.startVote(bob, ann);
+    expect(game.viewFor(amy).vote).toMatchObject({ canVote: false, needed: 2 });
+    expect(() => game.castVote(amy, false)).toThrow("NOT_A_VOTER");
+    game.castVote(cat, true);
+    expect(game.hasPlayer(ann)).toBe(false);
   });
 });

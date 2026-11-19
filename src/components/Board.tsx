@@ -6,7 +6,7 @@ import { BlackCardView, CARD_GRID, CardBack, CardSlot, CombinedAnswer, WhiteCard
 import type { Act } from "./Room";
 import { Badge, Button } from "./ui";
 
-function useSecondsLeft(deadline: number | null, offset: number): number | null {
+export function useSecondsLeft(deadline: number | null, offset: number): number | null {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     if (!deadline) return;

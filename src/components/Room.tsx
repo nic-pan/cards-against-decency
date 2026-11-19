@@ -8,6 +8,7 @@ import { Board, verdictFor } from "./Board";
 import { Lobby } from "./Lobby";
 import { PlayerList } from "./PlayerList";
 import { ProfileForm } from "./ProfileForm";
+import { VoteBanner } from "./VoteBanner";
 import { Button, Field, inputClass } from "./ui";
 import {
   installActivityTracker,
@@ -27,7 +28,7 @@ type Status =
   | { kind: "connecting" }
   | { kind: "join"; needsPassword: boolean }
   | { kind: "in" }
-  | { kind: "gone"; message: string; removed?: "idle" | "kicked" | "banned"; timesRemoved?: number; cooldownMs?: number };
+  | { kind: "gone"; message: string; removed?: "idle" | "kicked" | "banned" | "voted"; timesRemoved?: number; cooldownMs?: number };
 
 export function Room({ code }: { code: string }) {
   const [status, setStatus] = useState<Status>({ kind: "connecting" });
@@ -98,10 +99,10 @@ export function Room({ code }: { code: string }) {
       if (reason === "banned") playEventSound("banned");
       // The third removal from the same room gets the gunshot instead of the thud.
       else if (reason === "kicked" && (timesRemoved ?? 0) >= 3) playEventSound("gunshot");
-      else if (reason === "idle" || reason === "kicked") playEventSound("removed");
+      else if (reason === "idle" || reason === "kicked" || reason === "voted") playEventSound("removed");
       session.clear(code);
       setView(null);
-      if (reason === "idle" || reason === "kicked" || reason === "banned") {
+      if (reason === "idle" || reason === "kicked" || reason === "banned" || reason === "voted") {
         return setStatus({ kind: "gone", message: "", removed: reason, timesRemoved, cooldownMs });
       }
       setStatus({
@@ -159,6 +160,7 @@ export function Room({ code }: { code: string }) {
   if (status.kind === "connecting") return <Centered>Connecting…</Centered>;
   if (status.kind === "gone" && status.removed === "idle") return <IdleRemoved />;
   if (status.kind === "gone" && status.removed === "banned") return <Banned />;
+  if (status.kind === "gone" && status.removed === "voted") return <VotedOut cooldownMs={status.cooldownMs} />;
   if (status.kind === "gone" && status.removed) return <HostRemoved timesRemoved={status.timesRemoved ?? 1} cooldownMs={status.cooldownMs} />;
   if (status.kind === "gone")
     return (
@@ -197,6 +199,7 @@ export function Room({ code }: { code: string }) {
           </span>
         </Banner>
       )}
+      {view.vote && <VoteBanner vote={view.vote} youId={view.youId} act={act} clockOffset={clockOffset.current} />}
       {phone && !view.youAreSpectator && <PhoneNotice />}
       {view.youAreSpectator && (
         <Banner tone="accent">
@@ -249,7 +252,7 @@ function canJoin(view: View): boolean {
 }
 
 /** A removed player's row that stays visible while it fades out. */
-export type Ghost = { player: GameView["players"][number]; index: number; reason: "kicked" | "kickedAgain" | "banned" | "idle" };
+export type Ghost = { player: GameView["players"][number]; index: number; reason: "kicked" | "kickedAgain" | "banned" | "idle" | "voted" };
 /** A little longer than the fade, so the row is gone before React removes it. */
 const GHOST_MS = 1900;
 
@@ -621,6 +624,20 @@ function HostRemoved({ timesRemoved, cooldownMs }: { timesRemoved: number; coold
           ? "The host has had enough. Understandably."
           : "Take it up with management. There is no management."}
       </p>
+      {cooldownMs && (
+        <p className="mt-3 text-sm font-semibold leading-relaxed text-danger">
+          You can join this room again in {Math.round(cooldownMs / 60_000)} minutes.
+        </p>
+      )}
+    </RemovalCard>
+  );
+}
+
+/** Shown to a player whom the other players voted out. */
+function VotedOut({ cooldownMs }: { cooldownMs?: number }) {
+  return (
+    <RemovalCard icon="🗳️" title="The players voted you out of this room.">
+      <p className="mt-3 text-sm leading-relaxed text-ink">Democracy has spoken. It was not kind.</p>
       {cooldownMs && (
         <p className="mt-3 text-sm font-semibold leading-relaxed text-danger">
           You can join this room again in {Math.round(cooldownMs / 60_000)} minutes.

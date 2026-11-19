@@ -40,9 +40,24 @@ afterAll(async () => {
 
 type View = GameView & { code: string };
 
-/** auth is what the page sends as its identity (src/lib/socket.ts). */
-async function client(auth?: { name?: string; browser: string; blocks?: string[] }) {
-  const s = connect(url, { transports: ["websocket"], forceNew: true, auth });
+/** Runs a test in which clients can have their own addresses (the ip argument of client()). */
+async function withTestIps(fn: () => Promise<void>) {
+  const before = process.env.CLIENT_IP_HEADER;
+  process.env.CLIENT_IP_HEADER = "x-real-ip";
+  try {
+    await fn();
+  } finally {
+    if (before === undefined) delete process.env.CLIENT_IP_HEADER;
+    else process.env.CLIENT_IP_HEADER = before;
+  }
+}
+
+/**
+ * auth is what the page sends as its identity (src/lib/socket.ts).
+ * ip is a fake client address. It works only while CLIENT_IP_HEADER is "x-real-ip" (see withTestIps).
+ */
+async function client(auth?: { name?: string; browser: string; blocks?: string[] }, ip?: string) {
+  const s = connect(url, { transports: ["websocket"], forceNew: true, auth, extraHeaders: ip ? { "x-real-ip": ip } : undefined });
   clients.push(s);
   await new Promise<void>((r) => s.once("connect", () => r()));
   let latest: View | null = null;
@@ -322,6 +337,44 @@ describe("game server", () => {
     const again = await client();
     expect((await again.emit("room:join", { ...T, code: room.code, name: nm("Pest4") })).error).toBe("REMOVAL_COOLDOWN");
   });
+
+  it("counts one vote for each address: one network cannot start a vote alone", async () => {
+    const host = await client();
+    const room = await host.emit("room:create", { ...T, name: nm("Chair") });
+    const b = await client();
+    await b.emit("room:join", { ...T, code: room.code, name: nm("Seat") });
+    const c = await client();
+    const target = await c.emit("room:join", { ...T, code: room.code, name: nm("Seat") });
+    // All test clients share one address.
+    expect((await b.emit("vote:start", { playerId: target.playerId })).error).toBe("VOTE_TOO_FEW");
+  });
+
+  it("removes a player when the others vote them out, and makes them wait", () => withTestIps(async () => {
+    const host = await client(undefined, "10.0.0.1");
+    const room = await host.emit("room:create", { ...T, name: nm("Chair") });
+    const b = await client(undefined, "10.0.0.2");
+    await b.emit("room:join", { ...T, code: room.code, name: nm("Voter") });
+    const c = await client(undefined, "10.0.0.3");
+    const target = await c.emit("room:join", { ...T, code: room.code, name: nm("Target") });
+
+    expect((await c.emit("vote:cast", { yes: true })).error).toBe("NO_VOTE");
+    expect((await b.emit("vote:start", { playerId: target.playerId })).ok).toBe(true);
+    const open = await host.until((v) => v.vote !== null);
+    expect(open.vote).toMatchObject({ targetId: target.playerId, yes: 1, needed: 2, canVote: true });
+    expect((await c.emit("vote:cast", { yes: false })).error).toBe("NOT_A_VOTER");
+
+    const removed = new Promise((r) => c.s.once("removed", r));
+    const seenByB = new Promise((r) => b.s.once("player:removed", r));
+    expect((await host.emit("vote:cast", { yes: true })).ok).toBe(true);
+    expect(await removed).toEqual({ reason: "voted", cooldownMs: 5 * 60_000 });
+    expect(await seenByB).toMatchObject({ playerId: target.playerId, reason: "voted" });
+    expect((await c.emit("room:resume", { code: room.code, token: target.token })).ok).toBe(false);
+    const again = await client(undefined, "10.0.0.3");
+    expect((await again.emit("room:join", { ...T, code: room.code, name: nm("Back") })).error).toBe("VOTED_OUT_COOLDOWN");
+    // Other addresses can still join.
+    const other = await client(undefined, "10.0.0.4");
+    expect((await other.emit("room:join", { ...T, code: room.code, name: nm("Fresh") })).ok).toBe(true);
+  }));
 
   it("keeps blocked people apart, and hides the blocker from the online list", async () => {
     const browserA = "browser-of-blocker-0001";

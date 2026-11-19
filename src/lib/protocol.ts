@@ -2,7 +2,7 @@
 import type { GameSummary, GameView, Settings } from "../engine/game";
 
 export type { GameView, Settings, GameSummary };
-export type { SpectatorView } from "../engine/game";
+export type { SpectatorView, VoteView } from "../engine/game";
 export type { PublicPlayer, SubmissionView, RoundView, PlayerStatus } from "../engine/game";
 export type { WhiteCard, BlackCard, DeckSummary } from "../engine/deck";
 
@@ -95,6 +95,10 @@ export interface ClientToServer {
   /** A spectator starts to play. */
   "player:play": (ack: (r: Ack) => void) => void;
   "player:kick": (p: { playerId: string; ban: boolean }, ack: (r: Ack) => void) => void;
+  /** A player starts a vote to remove another player. Not for the host, who can remove players directly. */
+  "vote:start": (p: { playerId: string }, ack: (r: Ack) => void) => void;
+  /** A voter votes yes or no in the open vote. */
+  "vote:cast": (p: { yes: boolean }, ack: (r: Ack) => void) => void;
   /** The host removes a bot. In the lobby this lowers the bot count. */
   "bot:remove": (p: { playerId: string }, ack: (r: Ack) => void) => void;
   /** The host adds a bot. During a game, only up to the bot count set before the start. */
@@ -110,11 +114,11 @@ export interface ServerToClient {
   online: (p: { users: OnlineUser[] }) => void;
   /** bans is empty for everybody but the host. */
   state: (view: GameView & { code: string; bans: { id: string; name: string }[] }) => void;
-  /** Another player was removed, by the host or for being idle. Everybody else sees and hears it. */
-  "player:removed": (p: { playerId: string; name: string; reason: "kicked" | "kickedAgain" | "banned" | "idle" }) => void;
+  /** Another player was removed, by the host, by a vote or for being idle. Everybody else sees and hears it. */
+  "player:removed": (p: { playerId: string; name: string; reason: "kicked" | "kickedAgain" | "banned" | "idle" | "voted" }) => void;
   /** You were removed from the room. */
-  /** times and cooldownMs come with "kicked": the removal count from this connection, and the wait before rejoining. */
-  removed: (p: { reason: "kicked" | "banned" | "closed" | "left" | "idle"; times?: number; cooldownMs?: number }) => void;
+  /** times and cooldownMs come with "kicked": the removal count from this connection, and the wait before rejoining. "voted" has cooldownMs. */
+  removed: (p: { reason: "kicked" | "banned" | "closed" | "left" | "idle" | "voted"; times?: number; cooldownMs?: number }) => void;
 }
 
 /** Plain-language messages for error codes. */
@@ -167,4 +171,10 @@ export const ERROR_TEXT: Record<string, string> = {
   DECK_EMPTY: "That deck has no usable cards.",
   TOO_MANY_BOTS: "The game already has as many bots as were set before the start.",
   TERMS_REQUIRED: "Accept the Terms of Use and the Privacy Notice to play.",
+  VOTE_IN_PROGRESS: "A vote is already open. Wait until it ends.",
+  VOTE_TOO_FEW: "A vote needs at least 3 players.",
+  VOTE_COOLDOWN: "Your last vote failed. You can start another one in 2 minutes.",
+  NO_VOTE: "That vote has ended.",
+  NOT_A_VOTER: "You can't vote in this vote.",
+  VOTED_OUT_COOLDOWN: "The players voted you out of this room. You can join again in a few minutes.",
 };

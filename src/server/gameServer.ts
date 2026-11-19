@@ -43,8 +43,8 @@ export interface Room {
   bans: Map<string, Ban>;
   /** Hashed IP -> how often the host removed someone from this connection. */
   removals: Map<string, number>;
-  /** Hashed IP -> time (ms) until which this connection cannot join the room again. */
-  cooldowns: Map<string, number>;
+  /** Hashed IP -> until when (ms) this connection cannot join the room again, and why. */
+  cooldowns: Map<string, { until: number; why: "kicked" | "voted" }>;
   /** Member id -> who they are and whom they blocked. Used to keep blocked people apart. */
   who: Map<string, Identity>;
   removeTimers: Map<string, ReturnType<typeof setTimeout>>;
@@ -65,6 +65,8 @@ export interface Ban {
 /** After this many removals by the host, a connection must wait before it joins the room again. */
 export const REMOVALS_BEFORE_COOLDOWN = 3;
 export const REMOVAL_COOLDOWN_MS = 5 * 60_000;
+/** A player whom the others voted out waits this long before they can join the room again. */
+export const VOTED_OUT_COOLDOWN_MS = 5 * 60_000;
 
 /** Hashes an IP address with the room's salt. The hash stays the same for the life of the room. */
 function roomIpHash(room: Room, ip: string): string {
@@ -151,6 +153,8 @@ const schemas = {
     .strict(),
   submit: z.object({ cardIds: z.array(id).min(1).max(3) }),
   pick: z.object({ submissionId: id }),
+  voteStart: z.object({ playerId: id }),
+  voteCast: z.object({ yes: z.boolean() }),
   kick: z.object({ playerId: id, ban: z.boolean() }),
   deckAdd: z.object({ code: z.string().max(20) }),
   nameCheck: z.object({ name }),
@@ -363,14 +367,27 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       decks,
       onChange: () => queueBroadcast(room),
       onEmpty: () => closeRoom(room, null),
+      // Votes count once for each network, so one person with two seats has one vote.
+      voterKey: (playerId) => room.ipKeys.get(playerId) ?? playerId,
       // The game removes players who miss too many rounds. Tell them why and end their session.
       onRemoved: (playerId, why, name) => {
-        // Everybody else sees and hears a removal by the host or for being idle.
-        if (why === "idle" || why === "kicked" || why === "kickedAgain" || why === "banned") {
+        // Everybody else sees and hears a removal by the host, by a vote or for being idle.
+        if (why === "idle" || why === "kicked" || why === "kickedAgain" || why === "banned" || why === "voted") {
           for (const [otherId, ids] of room.sockets) {
             if (otherId === playerId) continue;
             for (const sid of ids) io.to(sid).emit("player:removed", { playerId, name, reason: why });
           }
+        }
+        if (why === "voted") {
+          // The player cannot come straight back with a new name.
+          const ipHash = room.ipKeys.get(playerId);
+          if (ipHash) room.cooldowns.set(ipHash, { until: Date.now() + VOTED_OUT_COOLDOWN_MS, why: "voted" });
+          securityLog("vote_kick", { room: room.code });
+          for (const sid of room.sockets.get(playerId) ?? []) {
+            io.to(sid).emit("removed", { reason: "voted", cooldownMs: VOTED_OUT_COOLDOWN_MS });
+          }
+          dropSeat(room, playerId);
+          return;
         }
         if (why !== "idle") return;
         for (const sid of room.sockets.get(playerId) ?? []) io.to(sid).emit("removed", { reason: "idle" });
@@ -711,8 +728,9 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       const conflict = blockConflict(room, s.data.who);
       if (conflict === "blockedYou") throw new RequestError("ROOM_NOT_FOUND");
       if (conflict === "youBlocked") throw new RequestError("BLOCKED_IN_ROOM");
-      if (s.data.ip && (room.cooldowns.get(roomIpHash(room, s.data.ip)) ?? 0) > Date.now()) {
-        throw new RequestError("REMOVAL_COOLDOWN");
+      const cooldown = s.data.ip ? room.cooldowns.get(roomIpHash(room, s.data.ip)) : undefined;
+      if (cooldown && cooldown.until > Date.now()) {
+        throw new RequestError(cooldown.why === "voted" ? "VOTED_OUT_COOLDOWN" : "REMOVAL_COOLDOWN");
       }
       if (room.password) {
         const failKey = `${ipKey(s.data.ip)}|${c}`;
@@ -838,7 +856,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
         room.removals.set(ipHash, times);
         if (times >= REMOVALS_BEFORE_COOLDOWN) {
           cooldownMs = REMOVAL_COOLDOWN_MS;
-          room.cooldowns.set(ipHash, Date.now() + REMOVAL_COOLDOWN_MS);
+          room.cooldowns.set(ipHash, { until: Date.now() + REMOVAL_COOLDOWN_MS, why: "kicked" });
         }
       }
       for (const sid of room.sockets.get(target) ?? []) {
@@ -854,6 +872,16 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       room.removeTimers.delete(target);
       revoke(room, target);
       room.game.removePlayer(target, ban ? "banned" : (times ?? 0) >= REMOVALS_BEFORE_COOLDOWN ? "kickedAgain" : "kicked");
+    });
+
+    on(socket, "vote:start", (s, p) => {
+      const { room, playerId } = current(s);
+      room.game.startVote(playerId, schemas.voteStart.parse(p).playerId);
+    });
+
+    on(socket, "vote:cast", (s, p) => {
+      const { room, playerId } = current(s);
+      room.game.castVote(playerId, schemas.voteCast.parse(p).yes);
     });
 
     on(socket, "bot:remove", (s, p) => {

@@ -71,7 +71,13 @@ export function PlayerList({
                   )}
                 </div>
                 <p className="pl-4 text-xs font-semibold text-danger">
-                  {ghost.reason === "idle" ? "Removed for being idle" : ghost.reason === "banned" ? "Banned by the host" : "Removed by the host"}
+                  {ghost.reason === "idle"
+                    ? "Removed for being idle"
+                    : ghost.reason === "banned"
+                      ? "Banned by the host"
+                      : ghost.reason === "voted"
+                        ? "Voted out by the players"
+                        : "Removed by the host"}
                 </p>
               </li>
             );
@@ -129,6 +135,12 @@ export function PlayerList({
                   isHost={isHost}
                   isBot={p.isBot}
                   name={p.name}
+                  // Players (not the host, who can remove directly) can ask the room to vote. Spectators cannot.
+                  onVote={
+                    !isHost && !p.isBot && !view.youAreSpectator && !view.vote
+                      ? () => act("vote:start", { playerId: p.id }).then((ok) => ok && setMenuFor(null))
+                      : null
+                  }
                   onBlock={async () => {
                     const err = await blocks.add({ playerId: p.id });
                     if (!err) setMenuFor(null);
@@ -236,10 +248,13 @@ function HostMenu({
   playersLeft,
   onRemove,
   onBlock,
+  onVote,
 }: {
   isHost: boolean;
   isBot: boolean;
   name: string;
+  /** Starts a vote to remove this player. Null when you cannot start one. */
+  onVote: (() => void) | null;
   /** Returns an error text, or null when the block worked. */
   onBlock: () => Promise<string | null>;
   /** Players after the removal, during a game. Null in the lobby. */
@@ -306,7 +321,21 @@ function HostMenu({
       Block
     </button>
   );
-  if (!isHost) return <div className="mt-2 flex gap-2 pl-4">{blockButton}</div>;
+  if (!isHost) {
+    return (
+      <div className="mt-2 flex flex-wrap gap-2 pl-4">
+        {onVote && (
+          <button
+            className="rounded border border-line px-2 py-1 text-xs font-semibold hover:bg-paper hover:text-danger"
+            onClick={onVote}
+          >
+            Vote to remove
+          </button>
+        )}
+        {blockButton}
+      </div>
+    );
+  }
 
   return (
     <div className="mt-2 flex flex-wrap gap-2 pl-4">

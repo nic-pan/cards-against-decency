@@ -15,6 +15,9 @@ services:
       NEXT_TELEMETRY_DISABLED: "1"
       # Development only. Seals blocks, so they survive a restart. Production uses its own secret.
       BLOCK_KEY: "VKOhXGyPiBXn306F3LeEq3W2g+znk+51oLsmtqtXkog="
+      # Development only. Test players (npm run dev:players) send a fake address in this header,
+      # so each one counts as its own network in votes. Browsers do not send it.
+      CLIENT_IP_HEADER: x-real-ip
     volumes:
       - .:/app
       - node_modules:/app/node_modules

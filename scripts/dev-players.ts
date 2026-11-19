@@ -2,11 +2,13 @@
 // They are not bots. The game treats them as real people.
 //
 // Usage (the dev server must run):
-//   docker compose exec app npm run dev:players -- <ROOM CODE> [count] [--idle] [--password=...]
+//   docker compose exec app npm run dev:players -- <ROOM CODE> [count] [--idle] [--password=...] [--vote=NAME]
 //
 //   count       Number of players. Default 2, maximum 8.
 //   --idle      The players only sit in the room. They do not play or judge.
 //   --password  The room password, if the room has one.
+//   --vote=NAME The first player starts a vote to remove the player called NAME.
+//               The other test players do not vote, so you can vote yourself.
 //
 // Without --idle, the players play random cards and choose random answers as
 // Card Czar, after a short delay. Press Ctrl+C to remove them from the room.
@@ -24,10 +26,11 @@ const code = args.find((a) => /^[A-Za-z0-9]{6}$/.test(a))?.toUpperCase();
 const count = Math.min(8, Number(args.find((a) => /^\d+$/.test(a)) ?? 2));
 const idle = args.includes("--idle");
 const password = args.find((a) => a.startsWith("--password="))?.slice("--password=".length);
+const voteAgainst = args.find((a) => a.startsWith("--vote="))?.slice("--vote=".length);
 const url = `http://localhost:${process.env.PORT ?? 3000}`;
 
 if (!code) {
-  console.error("Usage: npm run dev:players -- <ROOM CODE> [count] [--idle] [--password=...]");
+  console.error("Usage: npm run dev:players -- <ROOM CODE> [count] [--idle] [--password=...] [--vote=NAME]");
   process.exit(1);
 }
 
@@ -37,7 +40,10 @@ const pick = <T,>(items: T[]) => items[Math.floor(Math.random() * items.length)]
 const later = (fn: () => void) => setTimeout(fn, 1500 + Math.random() * 2500);
 
 async function addPlayer(name: string) {
-  const socket = io(url, { transports: ["websocket"], forceNew: true });
+  // Each test player gets its own fake address, so it counts as its own network in votes.
+  // The dev server reads it because docker-compose.yml sets CLIENT_IP_HEADER.
+  const fakeIp = `10.99.0.${sockets.length + 1}`;
+  const socket = io(url, { transports: ["websocket"], forceNew: true, extraHeaders: { "x-real-ip": fakeIp } });
   sockets.push(socket);
   await new Promise<void>((resolve) => socket.once("connect", () => resolve()));
 
@@ -78,6 +84,19 @@ async function addPlayer(name: string) {
 }
 
 for (const name of NAMES.slice(0, count)) await addPlayer(name);
+
+if (voteAgainst && sockets[0]) {
+  const view = await new Promise<GameView>((resolve) => {
+    sockets[0].once("state", resolve);
+    void sockets[0].emitWithAck("player:back").catch(() => {});
+  });
+  const target = view.players.find((p) => p.name.toLowerCase() === voteAgainst.toLowerCase());
+  if (!target) console.error(`No player called "${voteAgainst}" is in the room.`);
+  else {
+    const r = await sockets[0].emitWithAck("vote:start", { playerId: target.id });
+    console.log(r.ok ? `A vote to remove ${target.name} started.` : `The vote did not start (${r.error}).`);
+  }
+}
 console.log(idle ? "The players are idle. Press Ctrl+C to remove them." : "The players play automatically. Press Ctrl+C to remove them.");
 
 async function leave() {
