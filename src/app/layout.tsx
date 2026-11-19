@@ -3,15 +3,16 @@ import Link from "next/link";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
+const TITLE = "Cards Against Decency – A Free Online Party Card Game";
 const DESCRIPTION =
-  "A party card game for people with questionable standards. Fill in the blanks. Make your friends regret inviting you.";
+  "Play Cards Against Decency online with friends. A free fill-in-the-blank party card game you can play together in your browser. No accounts or downloads required.";
 
 export const metadata: Metadata = {
   // Shared links need full URLs for the preview image.
   metadataBase: new URL(SITE_URL),
-  title: "Cards Against Decency",
+  title: TITLE,
   description: DESCRIPTION,
-  openGraph: { title: "Cards Against Decency", description: DESCRIPTION, siteName: "Cards Against Decency", type: "website" },
+  openGraph: { title: TITLE, description: DESCRIPTION, siteName: "Cards Against Decency", type: "website" },
   twitter: { card: "summary_large_image" },
   // Google Search Console checks this tag to confirm that we own the site.
   verification: { google: "zcCweSmiYsnvY4uIUHrJPZAUfUBbHRApodEt2jiCWu8" },
