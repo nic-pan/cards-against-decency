@@ -14,7 +14,7 @@ const HINTS = {
   botCount: "Bots play random cards from the decks. They are never the Card Czar.",
   targetScore: "An Offence is a point. A player gets one Offence for each round they win. The first player to reach this number wins the game.",
   maxPlayers: "More than 10 players is hard to follow. Rounds get slow, and more people leave or stop playing.",
-  submitSeconds: "A player who does not play in time misses the round. After 2 missed rounds, the player sits out until they come back.",
+  submitSeconds: "A player who does not play in time misses the round. After 2 missed rounds in a row, the game removes the player.",
   judgeSeconds: "If the Card Czar does not choose in time, nobody gets an Offence and the cards go back to the players.",
   maxSpectators: "Spectators watch the game but do not play. They are never the Card Czar.",
   isPublic: "When this is off, only people with the invite link or the room code can find the game.",
