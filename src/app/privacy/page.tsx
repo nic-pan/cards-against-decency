@@ -15,7 +15,7 @@ export default function Privacy() {
         ← Back
       </Link>
       <h1 className="mt-4 text-3xl font-black">Privacy Notice</h1>
-      <p className="mt-2 text-sm text-muted">Last updated 18 November 2026.</p>
+      <p className="mt-2 text-sm text-muted">Last updated 19 November 2026.</p>
 
       <p className="mt-6">
         Cards Against Decency is a free, non-commercial party game. You do not need an account. We collect as little as
@@ -58,7 +58,7 @@ export default function Privacy() {
             ],
             [
               "What you do in the game",
-              "The cards you play, your Offences (points), and whether you are the host, a player or a spectator.",
+              "The cards you play, your Offences (points), whether you are the host, a player or a spectator, and your votes to remove a player.",
               "To run the game",
             ],
             [
@@ -81,10 +81,11 @@ export default function Privacy() {
             flood the game. These counts exist only in the server&apos;s memory.
           </li>
           <li>
-            <b>Bans, removals and hosted games.</b> For each person in a room, the server keeps a one-way hash of the
-            IP address. The hash uses a secret key that belongs to that room only. The server uses it to enforce a ban,
-            the 5-minute wait after 3 removals, and the limit on how many games one network can host at the same time.
-            Everything is deleted when the room closes.
+            <b>Bans, removals, votes and hosted games.</b> For each person in a room, the server keeps a one-way hash of
+            the IP address. The hash uses a secret key that belongs to that room only. The server uses it to enforce a
+            ban, the 5-minute wait after 3 removals or after a vote removes you, and the limit on how many games one
+            network can host at the same time. It also counts votes to remove a player: one vote for each network, so
+            one person cannot vote several times. Everything is deleted when the room closes.
           </li>
           <li>
             <b>Security logs.</b> Events such as wrong room passwords, bans and blocked requests go to the server log.
@@ -93,7 +94,7 @@ export default function Privacy() {
         </ul>
         <p className="mt-3 text-sm text-muted">
           People who share a network, for example the same Wi-Fi, usually share an IP address. A ban or a wait can
-          then affect all of them in that room, and they share the limit on hosted games.
+          then affect all of them in that room. They share the limit on hosted games, and they share one vote.
         </p>
       </Section>
 
@@ -101,7 +102,8 @@ export default function Privacy() {
         <ul className="list-disc space-y-2 pl-5">
           <li>
             <b>Players in your room</b> see your username, your Offences and the cards you play. The Card Czar does not
-            see who played an answer until they choose.
+            see who played an answer until they choose. When you start a vote to remove a player, the room sees your
+            username. The room sees only the number of yes and no votes, not who voted how.
           </li>
           <li>
             <b>Everyone who opens the game list</b> sees public games: the host&apos;s username, the usernames of the

@@ -14,7 +14,7 @@ export default function Terms() {
         ← Back
       </Link>
       <h1 className="mt-4 text-3xl font-black">Terms of Use</h1>
-      <p className="mt-2 text-sm text-muted">Last updated 18 November 2026.</p>
+      <p className="mt-2 text-sm text-muted">Last updated 19 November 2026.</p>
 
       <p className="mt-6">
         Cards Against Decency is a free, non-commercial party card game that you play in your browser. When you tick
@@ -71,6 +71,7 @@ export default function Terms() {
           <li>try to find out who other players are in real life,</li>
           <li>use scripts or automated programs to play, join or create games,</li>
           <li>flood the game with requests, attack it, or try to get around a ban or a wait,</li>
+          <li>join one game with several seats to get more votes,</li>
           <li>try to see other players&apos; cards, or who played an answer, before the game shows it.</li>
         </ul>
       </Section>
@@ -80,7 +81,7 @@ export default function Terms() {
           You can block another person from the online list or from the players list. You then do not see each
           other&apos;s games, and you cannot join the same game. The other person is not told. A block covers the
           username and the browser. It is not perfect: a new username in a new browser gets around it. If someone
-          harasses you, block them and report them (section 15).
+          harasses you, block them and report them (section 16).
         </p>
       </Section>
 
@@ -90,7 +91,7 @@ export default function Terms() {
           <li>change the settings and the decks, start and end the game,</li>
           <li>add and remove bots,</li>
           <li>remove a player or a spectator, and ban them from that game,</li>
-          <li>import card decks that other people made (see section 8).</li>
+          <li>import card decks that other people made (see section 9).</li>
         </ul>
         <p className="mt-2">
           When a host removes the same connection from a game 3 times, that connection must wait 5 minutes before it can
@@ -99,7 +100,20 @@ export default function Terms() {
         </p>
       </Section>
 
-      <Section title="8. Imported decks">
+      <Section title="8. Votes to remove a player">
+        <p>
+          Players can vote to remove another player from a game, the host included. The game counts one vote for each
+          network (internet address), not for each player, so friends on the same Wi-Fi share one vote. A vote needs
+          players from at least 3 networks. A vote passes when more than half of the networks that can vote say yes.
+        </p>
+        <p className="mt-2">
+          A player who is voted out must wait 5 minutes before they can join that game again. When a vote fails, the
+          network that started it must wait 2 minutes before it starts another one. We do not review votes. Do not use
+          several seats, browsers or devices to change the result of a vote: this breaks section 5.
+        </p>
+      </Section>
+
+      <Section title="9. Imported decks">
         <p>
           A host can import decks from Many Decks, a separate website. Other people write these decks, and nobody checks
           them. Public games that use them show a &quot;Custom decks&quot; label. The host who imports a deck is
@@ -108,7 +122,7 @@ export default function Terms() {
         </p>
       </Section>
 
-      <Section title="9. Card content and licences">
+      <Section title="10. Card content and licences">
         <p>
           The base cards come from Cards Against Humanity, under the Creative Commons BY-NC-SA 2.0 licence, through JSON
           Against Humanity. The same licence applies when you share them. Cards Against Decency is not affiliated with,
@@ -121,7 +135,7 @@ export default function Terms() {
         </p>
       </Section>
 
-      <Section title="10. No guarantees">
+      <Section title="11. No guarantees">
         <p>
           The game is free and comes &quot;as is&quot;. We do not promise that it is always available, that it has no
           errors, or that it keeps your game. Games exist only in the server&apos;s memory: an update or a restart ends
@@ -129,7 +143,7 @@ export default function Terms() {
         </p>
       </Section>
 
-      <Section title="11. Liability">
+      <Section title="12. Liability">
         <p>
           As far as the law permits, we are not liable for damage that comes from using the game, from other players or
           hosts, or from imported decks. Nothing in these terms limits liability that the law does not let us limit, for
@@ -137,7 +151,7 @@ export default function Terms() {
         </p>
       </Section>
 
-      <Section title="12. Privacy">
+      <Section title="13. Privacy">
         <p>
           The{" "}
           <Link href="/privacy" className="font-semibold underline">
@@ -147,21 +161,21 @@ export default function Terms() {
         </p>
       </Section>
 
-      <Section title="13. Changes to these terms">
+      <Section title="14. Changes to these terms">
         <p>
           We can change these terms. When we do, we change the date at the top, and the game asks you to accept the new
           version before you play again.
         </p>
       </Section>
 
-      <Section title="14. Law">
+      <Section title="15. Law">
         <p>
           These terms follow the law of the European Union country where the person who runs the game lives. If you are
           a consumer, you keep the protection of the law of the country where you live.
         </p>
       </Section>
 
-      <Section title="15. Questions and reports">
+      <Section title="16. Questions and reports">
         <p>
           To report a player, a username or a game, or to ask about these terms, write to{" "}
           <a className="font-semibold underline" href="mailto:iridescentburst@gmail.com">
