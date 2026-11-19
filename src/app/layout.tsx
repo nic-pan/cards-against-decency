@@ -13,6 +13,8 @@ export const metadata: Metadata = {
   description: DESCRIPTION,
   openGraph: { title: "Cards Against Decency", description: DESCRIPTION, siteName: "Cards Against Decency", type: "website" },
   twitter: { card: "summary_large_image" },
+  // Google Search Console checks this tag to confirm that we own the site.
+  verification: { google: "zcCweSmiYsnvY4uIUHrJPZAUfUBbHRApodEt2jiCWu8" },
 };
 
 export const viewport: Viewport = {
