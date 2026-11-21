@@ -112,6 +112,7 @@ export type ErrorCode =
   | "VOTE_COOLDOWN"
   | "NO_VOTE"
   | "NO_AUDIENCE_VOTE"
+  | "NETWORK_VOTED"
   | "OWN_ANSWER"
   | "NOT_A_VOTER";
 
@@ -156,8 +157,8 @@ type RoundEnd = "winner" | "czarTimeout" | "czarLeft" | "noSubmissions" | "audie
 /** The vote of the players and spectators for the best answer, when the Card Czar is gone. */
 interface AudienceVote {
   reason: "czarLeft" | "czarTimeout";
-  /** Voter key (one network) -> the submission it voted for. */
-  votes: Map<string, string>;
+  /** Voter key (one network) -> the submission it voted for, and who cast the vote. Only that person can change it. */
+  votes: Map<string, { subId: string } & CastBy>;
 }
 
 interface Round {
@@ -191,6 +192,14 @@ interface Vote {
   yes: Set<string>;
   no: Set<string>;
   deadline: number;
+  /** Voter key -> the person who cast that network's vote. Only that person can change it. */
+  castBy: Map<string, CastBy>;
+}
+
+/** The person who cast a network's vote. The name stays after they leave. */
+interface CastBy {
+  id: string;
+  name: string;
 }
 
 /** One entry in the room's activity log. */
@@ -258,6 +267,8 @@ export interface AudienceVoteView {
   canVote: boolean;
   /** The answer you voted for, or null. */
   yourVote: string | null;
+  /** Someone else on your network already voted: their name. Your network has one vote, so you cannot vote. */
+  networkVotedBy: string | null;
   /** Your own answer. You cannot vote for it. */
   yourSubmissionId: string | null;
 }
@@ -295,6 +306,8 @@ export interface VoteView {
   deadline: number;
   /** Your vote. Null when you did not vote or cannot vote. */
   yourVote: "yes" | "no" | null;
+  /** Someone else on your network already voted: their name. Your network has one vote, so you cannot vote. */
+  networkVotedBy: string | null;
   /** False for the target, spectators and bots. */
   canVote: boolean;
 }
@@ -591,7 +604,7 @@ export class Game {
         this.whitePile?.discard(own.cards);
         round.submissions = round.submissions.filter((s) => s !== own);
         if (round.audience) {
-          for (const [key, subId] of round.audience.votes) if (subId === own.id) round.audience.votes.delete(key);
+          for (const [key, v] of round.audience.votes) if (v.subId === own.id) round.audience.votes.delete(key);
         }
       }
       if (this.phase === "submitting") {
@@ -895,7 +908,10 @@ export class Game {
 
   // ----- Audience vote -------------------------------------------------
 
-  /** A player or spectator votes for the best answer while the Card Czar is gone. A new vote replaces the old one. */
+  /**
+   * A player or spectator votes for the best answer while the Card Czar is gone. The first person on a
+   * network casts its vote. That person can change it. Others on the same network cannot vote.
+   */
   castAudienceVote(byId: string, submissionId: string): void {
     const round = this.round;
     if (this.phase !== "judging" || !round?.audience) throw new GameError("NO_AUDIENCE_VOTE");
@@ -903,8 +919,10 @@ export class Game {
     const sub = round.submissions.find((s) => s.id === submissionId);
     if (!sub) throw new GameError("UNKNOWN_SUBMISSION");
     const key = this.voterKey(byId);
+    const cast = round.audience.votes.get(key);
+    if (cast && cast.id !== byId) throw new GameError("NETWORK_VOTED");
     if (this.voterKey(sub.playerId) === key) throw new GameError("OWN_ANSWER");
-    round.audience.votes.set(key, sub.id);
+    round.audience.votes.set(key, { subId: sub.id, id: byId, name: this.memberName(byId) });
     if (this.allAudienceVoted(round)) this.finishAudienceVote();
     else this.changed();
   }
@@ -937,7 +955,7 @@ export class Game {
     const round = this.round;
     if (!round?.audience || this.phase !== "judging") return;
     const counts = new Map<string, number>();
-    for (const subId of round.audience.votes.values()) {
+    for (const { subId } of round.audience.votes.values()) {
       if (round.submissions.some((s) => s.id === subId)) counts.set(subId, (counts.get(subId) ?? 0) + 1);
     }
     if (counts.size === 0) {
@@ -960,6 +978,10 @@ export class Game {
     );
     this.rememberRound(round, "audience");
     this.endRound("audienceVote");
+  }
+
+  private memberName(id: string): string {
+    return this.find(id)?.name ?? this.spectators.find((s) => s.id === id)?.name ?? "";
   }
 
   /** Human players other than the Card Czar, and all spectators. */
@@ -991,9 +1013,12 @@ export class Game {
     const round = this.round;
     if (this.phase !== "judging" || !round?.audience) return null;
     const key = this.voterKey(viewerId);
+    const canVote = this.audienceVoterIds(round).includes(viewerId) && this.audienceKeys(round).has(key);
+    const cast = round.audience.votes.get(key);
     return {
-      canVote: this.audienceVoterIds(round).includes(viewerId) && this.audienceKeys(round).has(key),
-      yourVote: round.audience.votes.get(key) ?? null,
+      canVote,
+      yourVote: cast?.id === viewerId ? cast.subId : null,
+      networkVotedBy: canVote && cast && cast.id !== viewerId ? cast.name : null,
       yourSubmissionId: round.submissions.find((s) => s.playerId === viewerId)?.id ?? null,
     };
   }
@@ -1055,7 +1080,14 @@ export class Game {
     if (key === this.voterKey(targetId)) throw new GameError("NOT_A_VOTER");
     if ((this.voteCooldowns.get(key) ?? 0) > Date.now()) throw new GameError("VOTE_COOLDOWN");
 
-    this.vote = { targetId, startedBy: byId, yes: new Set([key]), no: new Set(), deadline: Date.now() + VOTE_SECONDS * 1000 };
+    this.vote = {
+      targetId,
+      startedBy: byId,
+      yes: new Set([key]),
+      no: new Set(),
+      deadline: Date.now() + VOTE_SECONDS * 1000,
+      castBy: new Map([[key, { id: byId, name: this.find(byId)?.name ?? "" }]]),
+    };
     this.setNotice(`${starter.name} started a vote to remove ${target.name}.`);
     this.voteTimer = setTimeout(() => {
       this.voteTimer = null;
@@ -1064,12 +1096,15 @@ export class Game {
     if (!this.settleVote()) this.changed();
   }
 
-  /** A voter votes yes or no. A later vote from the same network replaces the earlier one. */
+  /** A voter votes yes or no. The first person on a network casts its vote. Only that person can change it. */
   castVote(byId: string, yes: boolean): void {
     const vote = this.vote;
     if (!vote) throw new GameError("NO_VOTE");
     if (!this.canVote(byId)) throw new GameError("NOT_A_VOTER");
     const key = this.voterKey(byId);
+    const cast = vote.castBy.get(key);
+    if (cast && cast.id !== byId) throw new GameError("NETWORK_VOTED");
+    vote.castBy.set(key, { id: byId, name: this.find(byId)?.name ?? "" });
     (yes ? vote.no : vote.yes).delete(key);
     (yes ? vote.yes : vote.no).add(key);
     if (!this.settleVote()) this.changed();
@@ -1160,7 +1195,9 @@ export class Game {
       no,
       needed,
       deadline: vote.deadline,
-      yourVote: !canVote ? null : vote.yes.has(key) ? "yes" : vote.no.has(key) ? "no" : null,
+      yourVote:
+        !canVote || vote.castBy.get(key)?.id !== viewerId ? null : vote.yes.has(key) ? "yes" : vote.no.has(key) ? "no" : null,
+      networkVotedBy: canVote && vote.castBy.has(key) && vote.castBy.get(key)!.id !== viewerId ? vote.castBy.get(key)!.name : null,
       canVote,
     };
   }
@@ -1182,7 +1219,7 @@ export class Game {
         isWinner: revealed && s.id === round.winnerSubmissionId,
         votes:
           revealed && round.end === "audienceVote" && round.audience
-            ? [...round.audience.votes.values()].filter((v) => v === s.id).length
+            ? [...round.audience.votes.values()].filter((v) => v.subId === s.id).length
             : null,
       }));
     }

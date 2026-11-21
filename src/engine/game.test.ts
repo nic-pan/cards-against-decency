@@ -481,9 +481,15 @@ describe("audience vote when the Card Czar is gone", () => {
     const amyAnswer = game.viewFor(amy).audienceVote!.yourSubmissionId!;
     expect(() => game.castAudienceVote(ann, amyAnswer)).toThrow("OWN_ANSWER");
     const other = otherAnswer(game, ann);
-    game.castAudienceVote(ann, other === amyAnswer ? otherAnswer(game, amy) : other);
-    // Amy is on the same network, so her vote replaces Ann's. The count stays at 1.
+    const choice = other === amyAnswer ? otherAnswer(game, amy) : other;
+    game.castAudienceVote(ann, choice);
     expect(game.viewFor(ann).round!.audience!.voted).toBe(1);
+
+    // Amy shares Ann's network. She sees that Ann voted, but not for which answer, and she cannot vote.
+    expect(game.viewFor(amy).audienceVote).toMatchObject({ canVote: true, yourVote: null, networkVotedBy: "Ann" });
+    expect(() => game.castAudienceVote(amy, choice)).toThrow("NETWORK_VOTED");
+    // Ann can still change her own vote.
+    expect(game.viewFor(ann).audienceVote).toMatchObject({ yourVote: choice, networkVotedBy: null });
   });
 });
 
@@ -1103,9 +1109,11 @@ describe("vote to remove a player: one vote for each network", () => {
     const [host, troll, troll2, friend] = ids;
     game.startVote(troll, host);
     expect(game.viewFor(friend).vote).toMatchObject({ yes: 1, needed: 2, canVote: true });
-    game.castVote(troll2, true);
+    // The second seat cannot vote: the network already voted. It sees who voted, not how.
+    expect(() => game.castVote(troll2, true)).toThrow("NETWORK_VOTED");
     expect(game.viewFor(friend).vote).toMatchObject({ yes: 1, needed: 2 });
-    expect(game.viewFor(troll2).vote).toMatchObject({ yourVote: "yes" });
+    expect(game.viewFor(troll2).vote).toMatchObject({ yourVote: null, networkVotedBy: "Troll" });
+    expect(game.viewFor(troll).vote).toMatchObject({ yourVote: "yes", networkVotedBy: null });
     game.castVote(friend, false);
     expect(game.hasPlayer(host)).toBe(true);
     // The cooldown covers the whole network, so the second seat cannot start a new vote either.

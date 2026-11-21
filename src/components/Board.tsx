@@ -72,7 +72,9 @@ function StatusBar({
     const you = view.audienceVote;
     text = !you?.canVote
       ? `${why} The players and spectators are voting.`
-      : you.yourVote
+      : you.networkVotedBy
+        ? `${you.networkVotedBy} already voted for your network. People on the same Wi-Fi share one vote.`
+        : you.yourVote
         ? "You voted. You can change your vote until the time ends."
         : `${why} Vote for the best answer.`;
   } else if (view.phase === "submitting" && judgingIn !== null) {
@@ -179,7 +181,8 @@ function Table({
   const voting = view.phase === "judging" && !!round.audience;
   const yourVote = view.audienceVote?.yourVote ?? null;
   const ownAnswer = view.audienceVote?.yourSubmissionId ?? null;
-  const canChoose = (subId: string) => (voting ? !!view.audienceVote?.canVote && subId !== ownAnswer : isCzar);
+  const canVoteNow = !!view.audienceVote?.canVote && !view.audienceVote.networkVotedBy;
+  const canChoose = (subId: string) => (voting ? canVoteNow && subId !== ownAnswer : isCzar);
 
   // Clear the choices when a new round starts.
   useEffect(() => {
@@ -226,7 +229,7 @@ function Table({
       note: "You can change your answer once in each round.",
       secondary: true,
     };
-  } else if (voting && view.audienceVote?.canVote) {
+  } else if (voting && canVoteNow) {
     action = {
       label: yourVote ? "Change my vote" : "Vote for this answer",
       disabled: !chosen || chosen === yourVote || sending,

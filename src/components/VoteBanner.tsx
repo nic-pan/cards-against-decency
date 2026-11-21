@@ -54,7 +54,12 @@ export function VoteBanner({
         </span>
         {left !== null && <span className="ml-1 tabular-nums text-muted">{left}s</span>}
       </p>
-      {vote.canVote && (
+      {vote.canVote && vote.networkVotedBy && (
+        <p className="w-full text-xs text-muted">
+          {vote.networkVotedBy} already voted for your network. People on the same Wi-Fi share one vote.
+        </p>
+      )}
+      {vote.canVote && !vote.networkVotedBy && (
         <div className="flex gap-2">
           {choice(true)}
           {choice(false)}

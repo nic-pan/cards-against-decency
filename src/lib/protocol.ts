@@ -191,6 +191,7 @@ export const ERROR_TEXT: Record<string, string> = {
   NO_VOTE: "That vote has ended.",
   NOT_A_VOTER: "You can't vote in this vote.",
   NO_AUDIENCE_VOTE: "The vote for the best answer has ended.",
+  NETWORK_VOTED: "Someone on your network already voted. People on the same Wi-Fi share one vote.",
   OWN_ANSWER: "You can't vote for your own answer, or for an answer from your network.",
   VOTED_OUT_COOLDOWN: "The players voted you out of this room. You can join again in a few minutes.",
 };

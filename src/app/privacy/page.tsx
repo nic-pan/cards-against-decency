@@ -95,7 +95,9 @@ export default function Privacy() {
         </ul>
         <p className="mt-3 text-sm text-muted">
           People who share a network, for example the same Wi-Fi, usually share an IP address. A ban or a wait can
-          then affect all of them in that room. They share the limit on hosted games, and they share one vote.
+          then affect all of them in that room. They share the limit on hosted games, and they share one vote. When
+          one of them votes, the others in the room on the same network see that person&apos;s username, but not the
+          vote.
         </p>
       </Section>
 

@@ -117,7 +117,7 @@ const GROUPS: Group[] = [
         q: "What happens if the Card Czar leaves or does not choose?",
         a: [
           "The other players and the spectators vote for the best answer. The vote takes up to 30 seconds and ends early when everybody has voted. You cannot vote for your own answer. The answer with the most votes wins the Offence. If two answers have the same number of votes, the game chooses one at random.",
-          "Each network gets one vote, so a second seat or a spectator tab does not give you more votes. The votes are anonymous: the room sees only the number of votes for each answer. If nobody votes, nobody gets an Offence, and the cards go back to the players' hands.",
+          "Each network gets one vote, so a second seat or a spectator tab does not give you more votes. Friends on the same Wi-Fi share one vote: the first person who votes casts it, and the others see who voted. The votes are anonymous: the room sees only the number of votes for each answer. If nobody votes, nobody gets an Offence, and the cards go back to the players' hands.",
           "The host can turn the vote off in the room settings. Then the round is cancelled.",
         ],
       },
@@ -188,7 +188,7 @@ const GROUPS: Group[] = [
         q: "Someone in my game is being awful. What can I do?",
         a: [
           "The host can remove a player, or remove and ban them from that game. Any player can block another person. You then do not see each other's games, and you cannot join the same game. The other person is not told.",
-          "Players can also vote to remove someone, the host included. Open the ⋯ menu next to the name and choose Vote to remove. The game counts one vote for each network, so friends on the same Wi-Fi share one vote, and a vote needs players from at least 3 networks. The vote passes when more than half of the networks say yes.",
+          "Players can also vote to remove someone, the host included. Open the ⋯ menu next to the name and choose Vote to remove. The game counts one vote for each network, so friends on the same Wi-Fi share one vote, and a vote needs players from at least 3 networks. The first person on a network who votes casts that vote, and the others on the network see their name. The vote passes when more than half of the networks say yes.",
           "To report a player, a username or a game, write to iridescentburst@gmail.com. Tell us the room code and the username if you can.",
         ],
       },
