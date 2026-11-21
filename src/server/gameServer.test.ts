@@ -287,8 +287,8 @@ describe("game server", () => {
   it("tells an idle player why the game removed them, and ends their seat", async () => {
     const host = await client();
     const room = await host.emit("room:create", { ...T, name: nm("Busy") });
-    // Two bots, so the game goes on even if the host also misses rounds.
-    await host.emit("settings:update", { botCount: 2, submitSeconds: 20, judgeSeconds: 20 });
+    // Two bots, so the game goes on even if the host also misses rounds. No audience vote, so the rounds keep a fixed length.
+    await host.emit("settings:update", { botCount: 2, submitSeconds: 20, judgeSeconds: 20, audienceVote: false });
     const b = await client();
     const joined = await b.emit("room:join", { ...T, code: room.code, name: nm("Sleepy") });
     const removed = new Promise((r) => b.s.once("removed", r));

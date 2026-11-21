@@ -65,16 +65,31 @@ function StatusBar({
   onShowLast: (() => void) | null;
 }) {
   const round = view.round!;
+  const audience = round.audience;
   let text: string;
-  if (view.phase === "submitting" && judgingIn !== null) {
-    text = `Everyone played. Judging starts in ${Math.max(1, judgingIn)}…`;
+  if (view.phase === "judging" && audience) {
+    const why = audience.reason === "czarLeft" ? "The Card Czar left." : "The Card Czar did not choose in time.";
+    const you = view.audienceVote;
+    text = !you?.canVote
+      ? `${why} The players and spectators are voting.`
+      : you.yourVote
+        ? "You voted. You can change your vote until the time ends."
+        : `${why} Vote for the best answer.`;
+  } else if (view.phase === "submitting" && judgingIn !== null) {
+    text = round.czarLeft
+      ? `Everyone played. The vote starts in ${Math.max(1, judgingIn)}…`
+      : `Everyone played. Judging starts in ${Math.max(1, judgingIn)}…`;
+  } else if (view.phase === "submitting" && round.czarLeft) {
+    text = view.mustSubmit
+      ? `The Card Czar left. Play ${round.black.pick === 1 ? "a card" : `${round.black.pick} cards`}. Everyone votes for the winner.`
+      : "The Card Czar left. When all answers are in, everyone votes for the winner.";
   } else if (view.youAreSpectator) {
     text =
       view.phase === "submitting"
         ? "You are watching. The players are choosing their cards."
         : view.phase === "judging"
           ? `You are watching. ${nameOf(round.czarId)} is choosing the best answer.`
-          : round.end === "winner"
+          : round.end === "winner" || round.end === "audienceVote"
             ? "Round over."
             : "Round skipped.";
   } else if (view.phase === "submitting") {
@@ -88,7 +103,7 @@ function StatusBar({
   } else if (view.phase === "judging") {
     text = isCzar ? "Choose the best answer." : `${nameOf(round.czarId)} is choosing the best answer.`;
   } else {
-    text = round.end === "winner" ? "Round over." : "Round skipped.";
+    text = round.end === "winner" || round.end === "audienceVote" ? "Round over." : "Round skipped.";
   }
   // The countdown turns red for the last 15 seconds.
   const urgent = left !== null && left <= 15 && view.phase !== "roundOver";
@@ -113,6 +128,11 @@ function StatusBar({
       {view.phase === "submitting" && (
         <span className="ml-auto text-sm text-muted sm:ml-0">
           {round.submittedCount}/{round.expectedCount} played
+        </span>
+      )}
+      {view.phase === "judging" && audience && (
+        <span className="ml-auto text-sm text-muted sm:ml-0">
+          {audience.voted}/{audience.voters} voted
         </span>
       )}
       {left !== null && (
@@ -155,6 +175,11 @@ function Table({
   // The Card Czar's hand is hidden until the Czar chooses. The Czar can peek.
   const [peekHand, setPeekHand] = useState(false);
   const judgingThisRound = isCzar && (view.phase === "submitting" || view.phase === "judging");
+  // The Card Czar is gone. The other players and the spectators vote for the best answer.
+  const voting = view.phase === "judging" && !!round.audience;
+  const yourVote = view.audienceVote?.yourVote ?? null;
+  const ownAnswer = view.audienceVote?.yourSubmissionId ?? null;
+  const canChoose = (subId: string) => (voting ? !!view.audienceVote?.canVote && subId !== ownAnswer : isCzar);
 
   // Clear the choices when a new round starts.
   useEffect(() => {
@@ -201,7 +226,14 @@ function Table({
       note: "You can change your answer once in each round.",
       secondary: true,
     };
-  } else if (view.phase === "judging" && isCzar) {
+  } else if (voting && view.audienceVote?.canVote) {
+    action = {
+      label: yourVote ? "Change my vote" : "Vote for this answer",
+      disabled: !chosen || chosen === yourVote || sending,
+      onClick: () => chosen && void run("audience:vote", { submissionId: chosen }, () => setChosen(null)),
+      note: yourVote ? "Your vote is marked. Tap another answer to change it." : "Tap an answer to choose it. You can't vote for your own answer.",
+    };
+  } else if (view.phase === "judging" && isCzar && !voting) {
     action = {
       label: "Confirm selection",
       disabled: !chosen || sending,
@@ -226,6 +258,7 @@ function Table({
         {winner.playerId === view.youId
           ? "You win this round and get an Offence!"
           : `${nameOf(winner.playerId)} wins this round and gets an Offence.`}
+        {round.end === "audienceVote" && " The players and spectators chose it."}
         {left !== null && <span className="ml-2 text-sm font-normal text-muted">Next round in {left} s</span>}
       </span>
     ) : (
@@ -274,8 +307,19 @@ function Table({
                 <Group
                   key={s.id}
                   size={s.cards.length}
-                  highlight={chosen === s.id ? "selected" : undefined}
-                  answer={{ cards: s.cards, onClick: isCzar ? () => setChosen(s.id) : undefined, selected: chosen === s.id }}
+                  highlight={chosen === s.id ? "selected" : yourVote === s.id ? "winner" : undefined}
+                  answer={{
+                    cards: s.cards,
+                    onClick: canChoose(s.id) ? () => setChosen(s.id) : undefined,
+                    selected: chosen === s.id,
+                  }}
+                  label={
+                    voting && (s.id === yourVote || s.id === ownAnswer) ? (
+                      <span className={s.id === yourVote ? "font-bold text-ink" : "text-muted"}>
+                        {s.id === yourVote ? "✓ Your vote" : "Your answer"}
+                      </span>
+                    ) : undefined
+                  }
                 >
                   {s.cards.map((c, i) => (
                     <WhiteCardView
@@ -284,7 +328,7 @@ function Table({
                       deckName={deckName(c.id)}
                       selected={chosen === s.id}
                       order={s.cards.length > 1 ? i + 1 : undefined}
-                      onClick={isCzar ? () => setChosen(s.id) : undefined}
+                      onClick={canChoose(s.id) ? () => setChosen(s.id) : undefined}
                     />
                   ))}
                 </Group>
@@ -303,6 +347,7 @@ function Table({
                       <span className={s.isWinner ? "font-bold text-ink" : "text-muted"}>
                         {s.isWinner && "★ "}
                         {s.playerId === view.youId ? "You" : nameOf(s.playerId)}
+                        {s.votes !== null && ` · ${s.votes} ${s.votes === 1 ? "vote" : "votes"}`}
                       </span>
                     }
                   >
@@ -312,8 +357,12 @@ function Table({
                   </Group>
                 ))}
           </div>
-          {view.phase === "judging" && !isCzar && (
-            <p className="mt-2 text-xs text-muted">The answers are shown without names until the Card Czar chooses.</p>
+          {view.phase === "judging" && (voting || !isCzar) && (
+            <p className="mt-2 text-xs text-muted">
+              {voting
+                ? "The answers are shown without names until the vote ends. Votes are anonymous."
+                : "The answers are shown without names until the Card Czar chooses."}
+            </p>
           )}
         </div>
       </div>
@@ -511,6 +560,7 @@ function LastRoundDialog({
                   ? "You won this round."
                   : `${winner.playerName}${winner.playerLeft ? " (left)" : ""} won this round.`
                 : "The Card Czar did not choose. Nobody got an Offence."}
+              {last.end === "audience" && " The players and spectators chose the winner."}
             </h3>
             <div className={CARD_GRID}>
               {last.answers.map((a, i) => (

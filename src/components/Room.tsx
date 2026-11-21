@@ -277,7 +277,8 @@ const ACTIVE_WITHIN_SECONDS = 10;
 function useTurnAlert(view: View | null, clockOffset: React.MutableRefObject<number>) {
   // mustSubmit is false once the player has played; the Czar's turn ends when the Czar chooses.
   const myTurn =
-    !!view && (view.mustSubmit || (view.phase === "judging" && view.round?.czarId === view.youId));
+    !!view &&
+    (view.mustSubmit || (view.phase === "judging" && !view.round?.audience && view.round?.czarId === view.youId));
   const deadline = view?.round?.deadline ?? null;
   const key = view?.round ? `${view.round.number}:${view.phase}` : "";
 
@@ -381,17 +382,20 @@ function PhoneNotice() {
   );
 }
 
-/** Plays once for everybody when the Card Czar leaves during a round and the round is cancelled. */
+/**
+ * Plays once for everybody when the Card Czar leaves during a round. The round is cancelled,
+ * or the players and spectators vote for the best answer.
+ */
 function useCzarLeftSound(view: View | null, recentlyRemoved: React.MutableRefObject<Set<string>>) {
-  const end = view?.round?.end;
+  const czarLeft = !!view?.round?.czarLeft;
   const czarId = view?.round?.czarId;
-  const key = view?.round ? `${view.round.number}:${end}` : "";
+  const key = view?.round ? String(view.round.number) : "";
   const announced = useRef("");
   useEffect(() => {
-    if (end !== "czarLeft" || !czarId || announced.current === key) return;
+    if (!czarLeft || !czarId || announced.current === key) return;
     announced.current = key;
     if (!recentlyRemoved.current.has(czarId)) playEventSound("czarLeft");
-  }, [end, czarId, key, recentlyRemoved]);
+  }, [czarLeft, czarId, key, recentlyRemoved]);
 }
 
 /**

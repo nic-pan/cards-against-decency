@@ -20,6 +20,8 @@ export interface Settings {
   /** Public rooms appear in the game list. Private rooms need the invite link or code. */
   isPublic: boolean;
   maxSpectators: number;
+  /** When the Card Czar leaves or does not choose in time, the other players and the spectators vote for the best answer. */
+  audienceVote: boolean;
 }
 
 export const LIMITS = {
@@ -56,6 +58,8 @@ export const VOTE_COOLDOWN_MS = 2 * 60_000;
 export const VOTE_MIN_NETWORKS = 3;
 /** After the last answer arrives, the game waits this long before judging, so the last player can take back a card. */
 export const JUDGING_DELAY_MS = 3_000;
+/** Seconds for the players and spectators to choose the best answer when the Card Czar is gone. */
+export const AUDIENCE_VOTE_SECONDS = 30;
 
 export function defaultSettings(decks: DeckRegistry): Settings {
   return {
@@ -68,6 +72,7 @@ export function defaultSettings(decks: DeckRegistry): Settings {
     allowLateJoin: true,
     isPublic: true,
     maxSpectators: 10,
+    audienceVote: true,
   };
 }
 
@@ -106,6 +111,8 @@ export type ErrorCode =
   | "VOTE_TOO_FEW"
   | "VOTE_COOLDOWN"
   | "NO_VOTE"
+  | "NO_AUDIENCE_VOTE"
+  | "OWN_ANSWER"
   | "NOT_A_VOTER";
 
 export class GameError extends Error {
@@ -140,7 +147,18 @@ interface Submission {
   slots: number[];
 }
 
-type RoundEnd = "winner" | "czarTimeout" | "czarLeft" | "noSubmissions";
+/**
+ * "audienceVote": the players and spectators chose the winner because the Card Czar was gone.
+ * "noVotes": the Card Czar was gone and nobody voted, so the round was cancelled.
+ */
+type RoundEnd = "winner" | "czarTimeout" | "czarLeft" | "noSubmissions" | "audienceVote" | "noVotes";
+
+/** The vote of the players and spectators for the best answer, when the Card Czar is gone. */
+interface AudienceVote {
+  reason: "czarLeft" | "czarTimeout";
+  /** Voter key (one network) -> the submission it voted for. */
+  votes: Map<string, string>;
+}
 
 interface Round {
   number: number;
@@ -158,6 +176,9 @@ interface Round {
   tookBack: Set<string>;
   /** When all answers are in: the time when judging starts. Null at other times. */
   judgingAt: number | null;
+  /** The Card Czar left while players were choosing. The audience votes when all answers are in. */
+  czarGone: boolean;
+  audience: AudienceVote | null;
 }
 
 /**
@@ -210,6 +231,8 @@ export interface SubmissionView {
   /** Revealed only after the Card Czar chooses. */
   playerId: string | null;
   isWinner: boolean;
+  /** Votes for this answer, shown after an audience vote ends. Null at other times. */
+  votes: number | null;
 }
 
 export interface RoundView {
@@ -224,6 +247,19 @@ export interface RoundView {
   /** Null while players submit. Anonymous while the Card Czar judges. */
   submissions: SubmissionView[] | null;
   end: RoundEnd | null;
+  /** The Card Czar left during this round. */
+  czarLeft: boolean;
+  /** The open vote of the players and spectators for the best answer, or null. */
+  audience: { reason: "czarLeft" | "czarTimeout"; voted: number; voters: number } | null;
+}
+
+/** Your part in the open audience vote. */
+export interface AudienceVoteView {
+  canVote: boolean;
+  /** The answer you voted for, or null. */
+  yourVote: string | null;
+  /** Your own answer. You cannot vote for it. */
+  yourSubmissionId: string | null;
 }
 
 /** One answer of the last round. */
@@ -242,8 +278,8 @@ export interface LastRoundView {
   number: number;
   black: BlackCard;
   czarName: string;
-  /** "czarTimeout": the Card Czar did not choose, and nobody got an Offence. */
-  end: "winner" | "czarTimeout";
+  /** "czarTimeout": the Card Czar did not choose, and nobody got an Offence. "audience": the players and spectators chose the winner. */
+  end: "winner" | "czarTimeout" | "audience";
   answers: LastRoundAnswer[];
 }
 
@@ -309,6 +345,8 @@ export interface GameView {
   vote: VoteView | null;
   /** The last round that had answers, or null. Rounds that the Card Czar left or that nobody played are not kept. */
   lastRound: LastRoundView | null;
+  /** Your part in the open audience vote, or null when there is no audience vote. */
+  audienceVote: AudienceVoteView | null;
   /** Server time when the room closes if nobody starts a game or keeps it open. Null during a game. */
   lobbyClosesAt: number | null;
   decks: DeckSummary[];
@@ -406,7 +444,7 @@ export class Game {
     number: number;
     black: BlackCard;
     czarName: string;
-    end: "winner" | "czarTimeout";
+    end: "winner" | "czarTimeout" | "audience";
     answers: { cards: WhiteCard[]; playerId: string; playerName: string; isWinner: boolean }[];
   } | null = null;
   private voteTimer: ReturnType<typeof setTimeout> | null = null;
@@ -476,6 +514,11 @@ export class Game {
     this.removeMember(id, why);
     // A removal can decide or cancel the open vote. This runs after the removal is complete.
     this.settleVote();
+    // The audience vote ends early when everybody who is left has voted.
+    const round = this.round;
+    if (!this.disposed && this.phase === "judging" && round?.audience && this.allAudienceVoted(round)) {
+      this.finishAudienceVote();
+    }
   }
 
   private removeMember(id: string, why: RemoveReason): void {
@@ -528,16 +571,28 @@ export class Game {
 
     const round = this.round;
     if (round && (this.phase === "submitting" || this.phase === "judging")) {
-      if (round.czarId === id) {
-        this.returnSubmissions(round);
-        this.endRound("czarLeft");
-        return;
+      if (round.czarId === id && !round.audience) {
+        if (!this.settings.audienceVote) {
+          this.returnSubmissions(round);
+          this.endRound("czarLeft");
+          return;
+        }
+        if (this.phase === "judging") {
+          this.startAudienceVote("czarLeft");
+          return;
+        }
+        // The round continues. The audience votes when all answers are in.
+        round.czarGone = true;
+        this.setNotice("The Card Czar left. When all answers are in, the players and spectators vote for the best answer.");
       }
       round.participants.delete(id);
       const own = round.submissions.find((s) => s.playerId === id);
       if (own) {
         this.whitePile?.discard(own.cards);
         round.submissions = round.submissions.filter((s) => s !== own);
+        if (round.audience) {
+          for (const [key, subId] of round.audience.votes) if (subId === own.id) round.audience.votes.delete(key);
+        }
       }
       if (this.phase === "submitting") {
         if (this.allSubmitted(round)) {
@@ -546,6 +601,9 @@ export class Game {
         }
       } else if (round.submissions.length === 0) {
         this.endRound("noSubmissions");
+        return;
+      } else if (round.audience && this.allAudienceVoted(round)) {
+        this.finishAudienceVote();
         return;
       }
     }
@@ -820,7 +878,7 @@ export class Game {
 
   pick(czarId: string, submissionId: string): void {
     const round = this.round;
-    if (this.phase !== "judging" || !round) throw new GameError("WRONG_PHASE");
+    if (this.phase !== "judging" || !round || round.audience) throw new GameError("WRONG_PHASE");
     if (round.czarId !== czarId) throw new GameError("NOT_CZAR");
     const winner = round.submissions.find((s) => s.id === submissionId);
     if (!winner) throw new GameError("UNKNOWN_SUBMISSION");
@@ -833,6 +891,111 @@ export class Game {
     this.setNotice(`${player?.name ?? "Someone who left"} won round ${round.number}.`);
     this.rememberRound(round, "winner");
     this.endRound("winner");
+  }
+
+  // ----- Audience vote -------------------------------------------------
+
+  /** A player or spectator votes for the best answer while the Card Czar is gone. A new vote replaces the old one. */
+  castAudienceVote(byId: string, submissionId: string): void {
+    const round = this.round;
+    if (this.phase !== "judging" || !round?.audience) throw new GameError("NO_AUDIENCE_VOTE");
+    if (!this.audienceVoterIds(round).includes(byId)) throw new GameError("NOT_A_VOTER");
+    const sub = round.submissions.find((s) => s.id === submissionId);
+    if (!sub) throw new GameError("UNKNOWN_SUBMISSION");
+    const key = this.voterKey(byId);
+    if (this.voterKey(sub.playerId) === key) throw new GameError("OWN_ANSWER");
+    round.audience.votes.set(key, sub.id);
+    if (this.allAudienceVoted(round)) this.finishAudienceVote();
+    else this.changed();
+  }
+
+  /** The Card Czar is gone. The other players and the spectators vote for the best answer. */
+  private startAudienceVote(reason: "czarLeft" | "czarTimeout"): void {
+    const round = this.round!;
+    this.clearTimer();
+    this.phase = "judging";
+    if (this.audienceKeys(round).size === 0) {
+      // Nobody can vote, for example only bots answered. Cancel the round as before.
+      if (reason === "czarTimeout") this.rememberRound(round, "czarTimeout");
+      this.returnSubmissions(round);
+      this.endRound(reason);
+      return;
+    }
+    round.audience = { reason, votes: new Map() };
+    round.deadline = Date.now() + AUDIENCE_VOTE_SECONDS * 1000;
+    if (reason === "czarTimeout") {
+      this.setNotice("The Card Czar did not choose in time. The players and spectators vote for the best answer.", "danger");
+    } else if (!round.czarGone) {
+      this.setNotice("The Card Czar left. The players and spectators vote for the best answer.");
+    }
+    this.schedule(AUDIENCE_VOTE_SECONDS * 1000, () => this.finishAudienceVote());
+    this.changed();
+  }
+
+  /** Ends the audience vote. The answer with the most votes wins. A tie is decided at random. */
+  private finishAudienceVote(): void {
+    const round = this.round;
+    if (!round?.audience || this.phase !== "judging") return;
+    const counts = new Map<string, number>();
+    for (const subId of round.audience.votes.values()) {
+      if (round.submissions.some((s) => s.id === subId)) counts.set(subId, (counts.get(subId) ?? 0) + 1);
+    }
+    if (counts.size === 0) {
+      this.returnSubmissions(round);
+      this.endRound("noVotes");
+      return;
+    }
+    const top = Math.max(...counts.values());
+    const tied = [...counts].filter(([, n]) => n === top).map(([id]) => id);
+    const winnerId = tied[Math.floor(this.rng() * tied.length)];
+    const winner = round.submissions.find((s) => s.id === winnerId)!;
+    round.winnerSubmissionId = winner.id;
+    const player = this.find(winner.playerId);
+    if (player) player.score += 1;
+    const name = player?.name ?? "Someone who left";
+    this.setNotice(
+      tied.length > 1
+        ? `The vote was a tie. Fate chose ${name}'s answer. ${name} won round ${round.number}.`
+        : `The players and spectators chose ${name}'s answer. ${name} won round ${round.number}.`,
+    );
+    this.rememberRound(round, "audience");
+    this.endRound("audienceVote");
+  }
+
+  /** Human players other than the Card Czar, and all spectators. */
+  private audienceVoterIds(round: Round): string[] {
+    return [
+      ...this.humans()
+        .filter((p) => p.id !== round.czarId)
+        .map((p) => p.id),
+      ...this.spectators.map((s) => s.id),
+    ];
+  }
+
+  /** The networks that can vote: each needs at least one answer that did not come from that network. */
+  private audienceKeys(round: Round): Set<string> {
+    const keys = new Set<string>();
+    for (const id of this.audienceVoterIds(round)) {
+      const key = this.voterKey(id);
+      if (round.submissions.some((s) => this.voterKey(s.playerId) !== key)) keys.add(key);
+    }
+    return keys;
+  }
+
+  private allAudienceVoted(round: Round): boolean {
+    const keys = this.audienceKeys(round);
+    return keys.size > 0 && [...keys].every((k) => round.audience!.votes.has(k));
+  }
+
+  private audienceViewFor(viewerId: string): AudienceVoteView | null {
+    const round = this.round;
+    if (this.phase !== "judging" || !round?.audience) return null;
+    const key = this.voterKey(viewerId);
+    return {
+      canVote: this.audienceVoterIds(round).includes(viewerId) && this.audienceKeys(round).has(key),
+      yourVote: round.audience.votes.get(key) ?? null,
+      yourSubmissionId: round.submissions.find((s) => s.playerId === viewerId)?.id ?? null,
+    };
   }
 
   // ----- Lobby clock ---------------------------------------------------
@@ -1017,6 +1180,10 @@ export class Game {
         cards: s.cards,
         playerId: revealed ? s.playerId : null,
         isWinner: revealed && s.id === round.winnerSubmissionId,
+        votes:
+          revealed && round.end === "audienceVote" && round.audience
+            ? [...round.audience.votes.values()].filter((v) => v === s.id).length
+            : null,
       }));
     }
 
@@ -1048,6 +1215,15 @@ export class Game {
         expectedCount: round.participants.size,
         submissions,
         end: round.end,
+        czarLeft: round.czarGone || round.audience?.reason === "czarLeft" || round.end === "czarLeft",
+        audience:
+          this.phase === "judging" && round.audience
+            ? {
+                reason: round.audience.reason,
+                voted: [...this.audienceKeys(round)].filter((k) => round.audience!.votes.has(k)).length,
+                voters: this.audienceKeys(round).size,
+              }
+            : null,
       },
       hand: me?.hand ?? [],
       yourSubmission: mySubmission?.cards ?? null,
@@ -1059,6 +1235,7 @@ export class Game {
       log: this.log,
       vote: this.voteViewFor(playerId),
       lastRound: this.lastRoundFor(playerId),
+      audienceVote: this.audienceViewFor(playerId),
       lobbyClosesAt: this.lobbyDeadline,
       decks: [...this.decks.list(), ...[...this.externalDecks.values()].map((d) => ({ ...summarize(d), external: true }))],
       serverNow: Date.now(),
@@ -1105,6 +1282,8 @@ export class Game {
       missed: new Set(),
       tookBack: new Set(),
       judgingAt: null,
+      czarGone: false,
+      audience: null,
       submissions: [],
       winnerSubmissionId: null,
       end: null,
@@ -1167,6 +1346,11 @@ export class Game {
     }
     round.judgingAt = null;
     round.submissions = shuffle(round.submissions, this.rng);
+    if (round.czarGone) {
+      this.startAudienceVote("czarLeft");
+      this.kickIdle();
+      return;
+    }
     round.deadline = Date.now() + this.settings.judgeSeconds * 1000;
     this.phase = "judging";
     this.schedule(this.settings.judgeSeconds * 1000, () => this.onJudgeTimeout());
@@ -1187,6 +1371,11 @@ export class Game {
     if (!round || this.phase !== "judging") return;
     const czar = this.find(round.czarId);
     if (czar) this.markIdle(czar);
+    if (this.settings.audienceVote) {
+      this.startAudienceVote("czarTimeout");
+      this.kickIdle();
+      return;
+    }
     this.rememberRound(round, "czarTimeout");
     this.returnSubmissions(round);
     this.endRound("czarTimeout");
@@ -1194,7 +1383,7 @@ export class Game {
   }
 
   /** Keeps a copy of a judged round for the "Last round" window. Names are copied, so they stay after a player leaves. */
-  private rememberRound(round: Round, end: "winner" | "czarTimeout"): void {
+  private rememberRound(round: Round, end: "winner" | "czarTimeout" | "audience"): void {
     const answers = round.submissions.map((s) => ({
       cards: [...s.cards],
       playerId: s.playerId,
@@ -1246,6 +1435,9 @@ export class Game {
       this.setNotice("The Card Czar left. The round was cancelled, and the played cards went back to the players' hands.");
     }
     if (end === "noSubmissions") this.setNotice("Nobody submitted an answer. The round was skipped.");
+    if (end === "noVotes") {
+      this.setNotice("Nobody voted. Nobody gets an Offence, and the played cards went back to the players' hands.");
+    }
 
     const champion = this.players.find((p) => p.score >= this.settings.targetScore);
     if (champion) {

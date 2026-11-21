@@ -148,6 +148,7 @@ const schemas = {
       allowLateJoin: z.boolean(),
       isPublic: z.boolean(),
       maxSpectators: int("maxSpectators"),
+      audienceVote: z.boolean(),
     })
     .partial()
     .strict(),
@@ -802,6 +803,11 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
     on(socket, "card:takeBack", (s) => {
       const { room, playerId } = current(s);
       room.game.takeBack(playerId);
+    });
+
+    on(socket, "audience:vote", (s, p) => {
+      const { room, playerId } = current(s);
+      room.game.castAudienceVote(playerId, schemas.pick.parse(p).submissionId);
     });
 
     on(socket, "czar:pick", (s, p) => {

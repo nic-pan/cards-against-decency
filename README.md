@@ -58,12 +58,13 @@ Limits of the free plan:
 Add fake human players to a local room, to test with more people:
 
 ```sh
-docker compose exec app npm run dev:players -- <ROOM CODE> [count] [--idle] [--password=...] [--vote=NAME]
+docker compose exec app npm run dev:players -- <ROOM CODE> [count] [--idle] [--lazy-czar] [--password=...] [--vote=NAME]
 ```
 
 - The players are called "Tester Ana", "Tester Bo", and so on. If a name is in use, the script adds a number. The game treats them as people, not bots.
 - Without `--idle`, they play random cards and choose random answers as Card Czar.
 - With `--vote=NAME`, the first test player starts a vote to remove the player called NAME. The other test players do not vote, so you can test the vote yourself.
+- With `--lazy-czar`, the test players never choose as Card Czar. The time runs out, and the players and spectators vote for the best answer. The test players vote for a random answer.
 - Press Ctrl+C to remove them from the room.
 - The script refuses to run when `NODE_ENV` is `production`.
 

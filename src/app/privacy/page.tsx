@@ -15,7 +15,7 @@ export default function Privacy() {
         ← Back
       </Link>
       <h1 className="mt-4 text-3xl font-black">Privacy Notice</h1>
-      <p className="mt-2 text-sm text-muted">Last updated 19 November 2026.</p>
+      <p className="mt-2 text-sm text-muted">Last updated 21 November 2026.</p>
 
       <p className="mt-6">
         Cards Against Decency is a free, non-commercial party game. You do not need an account. We collect as little as
@@ -58,7 +58,7 @@ export default function Privacy() {
             ],
             [
               "What you do in the game",
-              "The cards you play, your Offences (points), whether you are the host, a player or a spectator, and your votes to remove a player.",
+              "The cards you play, your Offences (points), whether you are the host, a player or a spectator, your votes to remove a player, and your votes for the best answer when the Card Czar is gone.",
               "To run the game",
             ],
             [
@@ -84,8 +84,9 @@ export default function Privacy() {
             <b>Bans, removals, votes and hosted games.</b> For each person in a room, the server keeps a one-way hash of
             the IP address. The hash uses a secret key that belongs to that room only. The server uses it to enforce a
             ban, the 5-minute wait after 3 removals or after a vote removes you, and the limit on how many games one
-            network can host at the same time. It also counts votes to remove a player: one vote for each network, so
-            one person cannot vote several times. Everything is deleted when the room closes.
+            network can host at the same time. It also counts votes: one vote for each network, so one person cannot
+            vote several times to remove a player or to choose the best answer. Everything is deleted when the room
+            closes.
           </li>
           <li>
             <b>Security logs.</b> Events such as wrong room passwords, bans and blocked requests go to the server log.
@@ -103,7 +104,8 @@ export default function Privacy() {
           <li>
             <b>Players in your room</b> see your username, your Offences and the cards you play. The Card Czar does not
             see who played an answer until they choose. When you start a vote to remove a player, the room sees your
-            username. The room sees only the number of yes and no votes, not who voted how.
+            username. The room sees only the number of yes and no votes, not who voted how. When the Card Czar is gone
+            and the room votes for the best answer, the room sees only the number of votes for each answer.
           </li>
           <li>
             <b>Everyone who opens the game list</b> sees public games: the host&apos;s username, the usernames of the

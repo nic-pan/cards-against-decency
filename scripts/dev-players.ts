@@ -2,16 +2,19 @@
 // They are not bots. The game treats them as real people.
 //
 // Usage (the dev server must run):
-//   docker compose exec app npm run dev:players -- <ROOM CODE> [count] [--idle] [--password=...] [--vote=NAME]
+//   docker compose exec app npm run dev:players -- <ROOM CODE> [count] [--idle] [--lazy-czar] [--password=...] [--vote=NAME]
 //
 //   count       Number of players. Default 2, maximum 8.
 //   --idle      The players only sit in the room. They do not play or judge.
+//   --lazy-czar The players play cards but never choose as Card Czar, so the time runs out
+//               and the audience votes. Use it to test the audience vote.
 //   --password  The room password, if the room has one.
 //   --vote=NAME The first player starts a vote to remove the player called NAME.
 //               The other test players do not vote, so you can vote yourself.
 //
 // Without --idle, the players play random cards and choose random answers as
-// Card Czar, after a short delay. Press Ctrl+C to remove them from the room.
+// Card Czar, after a short delay. In an audience vote, they vote for a random
+// answer that is not their own. Press Ctrl+C to remove them from the room.
 
 import { io, type Socket } from "socket.io-client";
 import { TERMS_VERSION, type GameView } from "../src/lib/protocol";
@@ -25,12 +28,13 @@ const args = process.argv.slice(2);
 const code = args.find((a) => /^[A-Za-z0-9]{6}$/.test(a))?.toUpperCase();
 const count = Math.min(8, Number(args.find((a) => /^\d+$/.test(a)) ?? 2));
 const idle = args.includes("--idle");
+const lazyCzar = args.includes("--lazy-czar");
 const password = args.find((a) => a.startsWith("--password="))?.slice("--password=".length);
 const voteAgainst = args.find((a) => a.startsWith("--vote="))?.slice("--vote=".length);
 const url = `http://localhost:${process.env.PORT ?? 3000}`;
 
 if (!code) {
-  console.error("Usage: npm run dev:players -- <ROOM CODE> [count] [--idle] [--password=...] [--vote=NAME]");
+  console.error("Usage: npm run dev:players -- <ROOM CODE> [count] [--idle] [--lazy-czar] [--password=...] [--vote=NAME]");
   process.exit(1);
 }
 
@@ -75,7 +79,15 @@ async function addPlayer(name: string) {
       acted = key;
       const cards = [...v.hand].sort(() => Math.random() - 0.5).slice(0, round.black.pick);
       later(() => void socket.emitWithAck("card:submit", { cardIds: cards.map((c) => c.id) }));
-    } else if (v.phase === "judging" && round.czarId === v.youId && round.submissions?.length) {
+    } else if (v.phase === "judging" && round.audience && v.audienceVote?.canVote && round.submissions?.length) {
+      // The key includes "vote", so the player votes once even when the vote started in the judging phase.
+      const voteKey = `${key}:vote`;
+      if (acted === voteKey) return;
+      acted = voteKey;
+      const choices = round.submissions.filter((s) => s.id !== v.audienceVote!.yourSubmissionId);
+      if (choices.length) later(() => void socket.emitWithAck("audience:vote", { submissionId: pick(choices).id }));
+    } else if (v.phase === "judging" && !round.audience && round.czarId === v.youId && round.submissions?.length) {
+      if (lazyCzar) return;
       acted = key;
       const choice = pick(round.submissions);
       later(() => void socket.emitWithAck("czar:pick", { submissionId: choice.id }));

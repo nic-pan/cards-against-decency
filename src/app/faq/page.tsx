@@ -114,6 +114,14 @@ const GROUPS: Group[] = [
         ],
       },
       {
+        q: "What happens if the Card Czar leaves or does not choose?",
+        a: [
+          "The other players and the spectators vote for the best answer. The vote takes up to 30 seconds and ends early when everybody has voted. You cannot vote for your own answer. The answer with the most votes wins the Offence. If two answers have the same number of votes, the game chooses one at random.",
+          "Each network gets one vote, so a second seat or a spectator tab does not give you more votes. The votes are anonymous: the room sees only the number of votes for each answer. If nobody votes, nobody gets an Offence, and the cards go back to the players' hands.",
+          "The host can turn the vote off in the room settings. Then the round is cancelled.",
+        ],
+      },
+      {
         q: "Can I see the last round again?",
         a: [
           "Yes. Select \"Last round\" at the top of the game. A window shows the last black card, every answer, the winner, and who played each answer. The current round continues behind the window.",

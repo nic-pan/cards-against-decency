@@ -19,7 +19,7 @@ export const RELEASES: Release[] = [
   {
     version: 2,
     date: null,
-    summary: "Take back a card, see the last round, vote to remove a player, and more.",
+    summary: "Take back a card, see the last round, vote for the winner when the Card Czar is gone, and more.",
     items: [
       {
         title: "Vote to remove a player",
@@ -32,6 +32,10 @@ export const RELEASES: Release[] = [
       {
         title: "See the last round",
         text: "Missed the result? Select \"Last round\" to see the last black card, every answer, and who played it.",
+      },
+      {
+        title: "The audience saves the round",
+        text: "When the Card Czar leaves or does not choose in time, the round is not lost. The other players and the spectators vote for the best answer.",
       },
       {
         title: "Empty rooms close",

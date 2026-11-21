@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Deck, DeckRegistry } from "./deck";
 import { BOT_PROFILES } from "./bots";
-import { Game, GameError, HAND_SIZE, JUDGING_DELAY_MS, LOBBY_MAX_MS, LOBBY_WARNING_MS, ROUND_OVER_MS, VOTE_COOLDOWN_MS, VOTE_SECONDS } from "./game";
+import { AUDIENCE_VOTE_SECONDS, Game, GameError, HAND_SIZE, JUDGING_DELAY_MS, LOBBY_MAX_MS, LOBBY_WARNING_MS, ROUND_OVER_MS, VOTE_COOLDOWN_MS, VOTE_SECONDS } from "./game";
 
 function makeDeck(id = "test", blackPick = 1): Deck {
   return {
@@ -288,7 +288,7 @@ describe("timeouts and inactive players", () => {
 
   it("counts a Card Czar who does not choose as a missed round", () => {
     const { game, ids, host, onRemoved } = setup({ humans: 4 });
-    game.updateSettings(host, { submitSeconds: 20, judgeSeconds: 20 });
+    game.updateSettings(host, { submitSeconds: 20, judgeSeconds: 20, audienceVote: false });
     game.start(host);
     // The second player misses round 1, then is the Card Czar in round 2.
     const nextCzar = ids[1];
@@ -313,9 +313,9 @@ describe("timeouts and inactive players", () => {
     expect(texts).toContain("missing 2 rounds in a row");
   });
 
-  it("skips the round and returns cards when the Card Czar does not choose", () => {
+  it("skips the round and returns cards when the Card Czar does not choose (no audience vote)", () => {
     const { game, ids, host } = setup();
-    game.updateSettings(host, { judgeSeconds: 20 });
+    game.updateSettings(host, { judgeSeconds: 20, audienceVote: false });
     game.start(host);
     submitAll(game, ids);
     vi.advanceTimersByTime(20_000);
@@ -323,6 +323,167 @@ describe("timeouts and inactive players", () => {
     expect(v.phase).toBe("roundOver");
     expect(v.round!.end).toBe("czarTimeout");
     for (const id of ids) expect(game.viewFor(id).hand).toHaveLength(HAND_SIZE);
+  });
+});
+
+describe("audience vote when the Card Czar is gone", () => {
+  /** Starts a game, plays all cards, and lets the Card Czar's time run out. */
+  function czarTimesOut(humans = 4) {
+    const t = setup({ humans });
+    t.game.start(t.host);
+    submitAll(t.game, t.ids);
+    const czar = t.game.viewFor(t.host).round!.czarId;
+    vi.advanceTimersByTime(t.game.viewFor(t.host).settings.judgeSeconds * 1000);
+    const voters = t.ids.filter((id) => id !== czar);
+    return { ...t, czar, voters };
+  }
+  /** The first answer that is not the voter's own. */
+  const otherAnswer = (game: Game, id: string) => {
+    const v = game.viewFor(id);
+    return v.round!.submissions!.find((s) => s.id !== v.audienceVote!.yourSubmissionId)!.id;
+  };
+
+  it("starts a vote when the Card Czar does not choose in time", () => {
+    const { game, czar, voters, host } = czarTimesOut();
+    const v = game.viewFor(voters[0]);
+    expect(v.phase).toBe("judging");
+    expect(v.round!.audience).toEqual({ reason: "czarTimeout", voted: 0, voters: 3 });
+    expect(v.round!.deadline).toBe(Date.now() + AUDIENCE_VOTE_SECONDS * 1000);
+    expect(v.audienceVote!.canVote).toBe(true);
+    expect(game.viewFor(czar).audienceVote!.canVote).toBe(false);
+    expect(() => game.pick(czar, v.round!.submissions![0].id)).toThrow("WRONG_PHASE");
+    expect(() => game.castAudienceVote(czar, v.round!.submissions![0].id)).toThrow("NOT_A_VOTER");
+    expect(game.viewFor(host).log.map((n) => n.text).join(" | ")).toContain("The players and spectators vote");
+  });
+
+  it("does not let a player vote for their own answer", () => {
+    const { game, voters } = czarTimesOut();
+    const own = game.viewFor(voters[0]).audienceVote!.yourSubmissionId!;
+    expect(() => game.castAudienceVote(voters[0], own)).toThrow("OWN_ANSWER");
+  });
+
+  it("gives the Offence to the answer with the most votes, and ends early when everybody voted", () => {
+    const { game, voters, host } = czarTimesOut(5);
+    // Three voters choose the answer of voters[3]. voters[3] votes for another answer.
+    const v3 = game.viewFor(voters[3]).audienceVote!.yourSubmissionId!;
+    for (const id of voters.slice(0, 3)) game.castAudienceVote(id, v3);
+    expect(game.viewFor(host).phase).toBe("judging");
+    game.castAudienceVote(voters[3], otherAnswer(game, voters[3]));
+
+    const v = game.viewFor(host);
+    expect(v.phase).toBe("roundOver");
+    expect(v.round!.end).toBe("audienceVote");
+    expect(v.players.find((p) => p.id === voters[3])!.score).toBe(1);
+    const winner = v.round!.submissions!.find((s) => s.isWinner)!;
+    expect(winner.playerId).toBe(voters[3]);
+    expect(winner.votes).toBe(3);
+    expect(v.log.at(-1)!.text).toContain("The players and spectators chose");
+    expect(v.lastRound!.end).toBe("audience");
+  });
+
+  it("lets a voter change the vote", () => {
+    const { game, voters, host } = czarTimesOut(5);
+    const [a] = voters;
+    const answers = game.viewFor(a).round!.submissions!.filter((s) => s.id !== game.viewFor(a).audienceVote!.yourSubmissionId);
+    game.castAudienceVote(a, answers[0].id);
+    game.castAudienceVote(a, answers[1].id);
+    expect(game.viewFor(a).audienceVote!.yourVote).toBe(answers[1].id);
+    expect(game.viewFor(host).round!.audience!.voted).toBe(1);
+  });
+
+  it("chooses at random between tied answers", () => {
+    const { game, voters, host } = czarTimesOut(4);
+    // Three voters, three answers. Each votes for the next player's answer: a 1-1-1 tie.
+    voters.forEach((id, i) => {
+      const next = voters[(i + 1) % voters.length];
+      game.castAudienceVote(id, game.viewFor(next).audienceVote!.yourSubmissionId!);
+    });
+    const v = game.viewFor(host);
+    expect(v.round!.end).toBe("audienceVote");
+    expect(v.round!.submissions!.filter((s) => s.isWinner)).toHaveLength(1);
+    expect(v.log.at(-1)!.text).toContain("The vote was a tie. Fate chose");
+  });
+
+  it("cancels the round when nobody votes", () => {
+    const { game, voters, host } = czarTimesOut();
+    const handSize = game.viewFor(voters[0]).hand.length;
+    vi.advanceTimersByTime(AUDIENCE_VOTE_SECONDS * 1000);
+    const v = game.viewFor(host);
+    expect(v.round!.end).toBe("noVotes");
+    expect(v.players.every((p) => p.score === 0)).toBe(true);
+    expect(game.viewFor(voters[0]).hand.length).toBe(handSize + 1);
+    expect(v.log.at(-1)!.text).toContain("Nobody voted");
+  });
+
+  it("lets spectators vote", () => {
+    const t = setup({ humans: 4 });
+    const spec = t.game.addSpectator("Watcher");
+    t.game.start(t.host);
+    submitAll(t.game, t.ids);
+    vi.advanceTimersByTime(t.game.viewFor(t.host).settings.judgeSeconds * 1000);
+    const v = t.game.viewFor(spec);
+    expect(v.audienceVote!.canVote).toBe(true);
+    expect(v.round!.audience!.voters).toBe(4);
+    t.game.castAudienceVote(spec, v.round!.submissions![0].id);
+    expect(t.game.viewFor(spec).audienceVote!.yourVote).toBe(v.round!.submissions![0].id);
+  });
+
+  it("starts the vote at once when the Card Czar leaves during judging", () => {
+    const { game, ids, host } = setup({ humans: 5 });
+    game.start(host);
+    submitAll(game, ids);
+    const czar = game.viewFor(host).round!.czarId;
+    const viewer = ids.find((id) => id !== czar)!;
+    game.removePlayer(czar, "left");
+    const v = game.viewFor(viewer);
+    expect(v.phase).toBe("judging");
+    expect(v.round!.audience!.reason).toBe("czarLeft");
+    expect(v.round!.czarLeft).toBe(true);
+  });
+
+  it("keeps the round when the Card Czar leaves while players choose, and votes when all answers are in", () => {
+    const { game, ids, host } = setup({ humans: 5 });
+    game.start(host);
+    const czar = game.viewFor(host).round!.czarId;
+    const viewer = ids.find((id) => id !== czar)!;
+    game.removePlayer(czar, "left");
+    expect(game.viewFor(viewer).phase).toBe("submitting");
+    expect(game.viewFor(viewer).round!.czarLeft).toBe(true);
+    submitAll(game, ids.filter((id) => id !== czar));
+    expect(game.viewFor(viewer).round!.audience!.reason).toBe("czarLeft");
+  });
+
+  it("cancels the round as before when nobody can vote", () => {
+    const { game, ids } = setup({ humans: 1, bots: 2 });
+    game.start(ids[0]);
+    vi.advanceTimersByTime(game.viewFor(ids[0]).settings.judgeSeconds * 1000);
+    expect(game.viewFor(ids[0]).round!.end).toBe("czarTimeout");
+  });
+
+  it("gives one vote to each network, and a network cannot vote for its own answers", () => {
+    // Ann and Amy share network "A". The others have their own networks. Bob is the first Card Czar and does not choose.
+    const decks = new DeckRegistry([makeDeck()]);
+    let seq = 0;
+    const network = new Map<string, string>();
+    const game = new Game({ decks, idFactory: () => `id${++seq}`, rng: mulberry(7), voterKey: (id) => network.get(id) ?? id });
+    const ids = ["Bob", "Ann", "Amy", "Cyd", "Dee"].map((n) => {
+      const id = game.addPlayer(n);
+      network.set(id, n[0]);
+      return id;
+    });
+    game.start(ids[0]);
+    submitAll(game, ids);
+    const czar = game.viewFor(ids[0]).round!.czarId;
+    vi.advanceTimersByTime(game.viewFor(ids[0]).settings.judgeSeconds * 1000);
+    const [bob, ann, amy] = ids;
+    expect(czar).toBe(bob);
+
+    const amyAnswer = game.viewFor(amy).audienceVote!.yourSubmissionId!;
+    expect(() => game.castAudienceVote(ann, amyAnswer)).toThrow("OWN_ANSWER");
+    const other = otherAnswer(game, ann);
+    game.castAudienceVote(ann, other === amyAnswer ? otherAnswer(game, amy) : other);
+    // Amy is on the same network, so her vote replaces Ann's. The count stays at 1.
+    expect(game.viewFor(ann).round!.audience!.voted).toBe(1);
   });
 });
 
@@ -358,6 +519,7 @@ describe("the last round", () => {
 
   it("keeps the answers when the Card Czar does not choose", () => {
     const { game, ids, host } = setup({ humans: 4 });
+    game.updateSettings(host, { audienceVote: false });
     game.start(host);
     submitAll(game, ids);
     vi.advanceTimersByTime(game.viewFor(host).settings.judgeSeconds * 1000);
@@ -530,8 +692,9 @@ describe("taking back a played card", () => {
 });
 
 describe("leaving", () => {
-  it("cancels the round when the Card Czar leaves", () => {
+  it("cancels the round when the Card Czar leaves (no audience vote)", () => {
     const { game, ids, host } = setup({ humans: 4 });
+    game.updateSettings(host, { audienceVote: false });
     game.start(host);
     const czar = game.viewFor(host).round!.czarId;
     game.removePlayer(czar, "left");
@@ -904,6 +1067,7 @@ describe("vote to remove a player", () => {
 
   it("works during a game, and removing the Card Czar cancels the round", () => {
     const { game, ids, host } = setup({ humans: 4 });
+    game.updateSettings(host, { audienceVote: false });
     game.start(host);
     const czar = game.viewFor(host).round!.czarId;
     const [a, b] = ids.filter((id) => id !== czar);

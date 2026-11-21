@@ -2,7 +2,7 @@
 import type { GameSummary, GameView, Settings } from "../engine/game";
 
 export type { GameView, Settings, GameSummary };
-export type { LastRoundView, SpectatorView, VoteView } from "../engine/game";
+export type { AudienceVoteView, LastRoundView, SpectatorView, VoteView } from "../engine/game";
 export type { PublicPlayer, SubmissionView, RoundView, PlayerStatus } from "../engine/game";
 export type { WhiteCard, BlackCard, DeckSummary } from "../engine/deck";
 
@@ -95,6 +95,8 @@ export interface ClientToServer {
   /** The player takes back their answer before judging starts. Once in each round. */
   "card:takeBack": (ack: (r: Ack) => void) => void;
   "czar:pick": (p: { submissionId: string }, ack: (r: Ack) => void) => void;
+  /** A player or spectator votes for the best answer while the Card Czar is gone. */
+  "audience:vote": (p: { submissionId: string }, ack: (r: Ack) => void) => void;
   "player:back": (ack: (r: Ack) => void) => void;
   /** The host imports a Many Decks deck into the room by its 5-character code. */
   "deck:add": (p: { code: string }, ack: (r: Ack<{ deckId: string; name: string }>) => void) => void;
@@ -188,5 +190,7 @@ export const ERROR_TEXT: Record<string, string> = {
   VOTE_COOLDOWN: "Your last vote failed. You can start another one in 2 minutes.",
   NO_VOTE: "That vote has ended.",
   NOT_A_VOTER: "You can't vote in this vote.",
+  NO_AUDIENCE_VOTE: "The vote for the best answer has ended.",
+  OWN_ANSWER: "You can't vote for your own answer, or for an answer from your network.",
   VOTED_OUT_COOLDOWN: "The players voted you out of this room. You can join again in a few minutes.",
 };

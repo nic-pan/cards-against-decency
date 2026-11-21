@@ -15,8 +15,11 @@ const HINTS = {
   targetScore: "An Offence is a point. A player gets one Offence for each round they win. The first player to reach this number wins the game.",
   maxPlayers: "More than 10 players is hard to follow. Rounds get slow, and more people leave or stop playing.",
   submitSeconds: "A player who does not play in time misses the round. After 2 missed rounds in a row, the game removes the player.",
-  judgeSeconds: "If the Card Czar does not choose in time, nobody gets an Offence and the cards go back to the players.",
-  maxSpectators: "Spectators watch the game but do not play. They are never the Card Czar.",
+  judgeSeconds:
+    "If the Card Czar does not choose in time, the players and spectators vote for the best answer. When that vote is off, nobody gets an Offence and the cards go back to the players.",
+  maxSpectators: "Spectators watch the game but do not play. They are never the Card Czar, but they can vote when the Card Czar is gone.",
+  audienceVote:
+    "When the Card Czar leaves or does not choose in time, the other players and the spectators vote for the best answer. When this is off, the round is cancelled.",
   isPublic: "When this is off, only people with the invite link or the room code can find the game.",
   allowLateJoin: "New players get cards at once and play from the next round. Spectators can also switch to playing.",
   deckIds: "The game mixes the cards from all selected decks. Click a deck name to see where its cards come from.",
@@ -151,6 +154,12 @@ export function Lobby({ view, isHost, act }: { view: GameView; isHost: boolean; 
               checked={s.allowLateJoin}
               onChange={(on) => set({ allowLateJoin: on })}
               hint={HINTS.allowLateJoin}
+            />
+            <Toggle
+              label="Vote when the Card Czar is gone"
+              checked={s.audienceVote}
+              onChange={(on) => set({ audienceVote: on })}
+              hint={HINTS.audienceVote}
             />
           </div>
 
@@ -333,6 +342,7 @@ function summaryRows(view: GameView): SummaryRow[] {
     },
     { key: "isPublic", label: "Game list", value: s.isPublic ? "Public" : "Private (link or code only)" },
     { key: "allowLateJoin", label: "Joining during the game", value: s.allowLateJoin ? "Allowed" : "Not allowed" },
+    { key: "audienceVote", label: "Vote when the Card Czar is gone", value: s.audienceVote ? "On" : "Off" },
     {
       key: "deckIds",
       label: "Decks",
