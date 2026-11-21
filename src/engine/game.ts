@@ -105,6 +105,7 @@ export type ErrorCode =
   | "UNKNOWN_PLAYER"
   | "BAD_SETTINGS"
   | "SPECTATORS_FULL"
+  | "SWITCH_TOO_FEW"
   | "TOO_MANY_DECKS"
   | "NAME_RESERVED"
   | "NAME_BLOCKED"
@@ -318,6 +319,16 @@ export interface SpectatorView {
   id: string;
   name: string;
   connected: boolean;
+  /** A host who switched to watching keeps the host role. */
+  isHost: boolean;
+}
+
+/** Your switch between player and spectator. */
+export interface RoleSwitchView {
+  /** You asked to switch. It applies when the current round ends. */
+  pending: boolean;
+  /** Why you cannot switch now (an error code), or null. */
+  blocked: ErrorCode | null;
 }
 
 /** What the game list shows about a room. */
@@ -362,6 +373,8 @@ export interface GameView {
   lastRound: LastRoundView | null;
   /** Your part in the open audience vote, or null when there is no audience vote. */
   audienceVote: AudienceVoteView | null;
+  /** Your switch between player and spectator. Null for bots. */
+  roleSwitch: RoleSwitchView | null;
   /** Server time when the room closes if nobody starts a game or keeps it open. Null during a game. */
   lobbyClosesAt: number | null;
   decks: DeckSummary[];
@@ -455,6 +468,8 @@ export class Game {
   private blackPile: Pile<BlackCard> | null = null;
   private disposed = false;
   private vote: Vote | null = null;
+  /** Members who asked to switch between player and spectator. The switch applies when the next round starts. */
+  private pendingSwitch = new Set<string>();
   private lastRound: {
     number: number;
     black: BlackCard;
@@ -510,19 +525,92 @@ export class Game {
     return spectator.id;
   }
 
-  /** A spectator becomes a player. The same rules apply as for a late joiner. */
+  /** A spectator asks to play (the old "player:play" event). It works like switchRole, but never cancels. */
   promoteSpectator(id: string): void {
-    const spectator = this.spectators.find((s) => s.id === id);
-    if (!spectator) throw new GameError("UNKNOWN_PLAYER");
-    this.checkCanJoin();
-    this.spectators = this.spectators.filter((s) => s !== spectator);
-    const player = this.makePlayer(spectator.name, false);
-    player.id = spectator.id;
-    player.connected = spectator.connected;
-    if (this.whitePile && this.phase !== "lobby") this.refill(player);
-    this.players.push(player);
-    this.setNotice(`${spectator.name} stopped watching and joined the game.`);
+    if (!this.spectators.some((s) => s.id === id)) throw new GameError("UNKNOWN_PLAYER");
+    if (this.pendingSwitch.has(id)) return;
+    this.switchRole(id);
+  }
+
+  // ----- Switching between player and spectator -----------------------
+
+  /**
+   * A player asks to watch, or a spectator asks to play. In the lobby and on the end screen, the
+   * switch applies at once. During a game it applies when the next round starts, so it never
+   * interrupts a round. A second call cancels a pending switch.
+   */
+  switchRole(id: string): void {
+    if (!this.hasMember(id) || this.find(id)?.isBot) throw new GameError("UNKNOWN_PLAYER");
+    if (this.pendingSwitch.delete(id)) {
+      this.changed();
+      return;
+    }
+    const blocked = this.switchBlocker(id);
+    if (blocked) throw new GameError(blocked);
+    if (this.phase === "lobby" || this.phase === "gameOver") {
+      this.applySwitch(id);
+    } else {
+      this.pendingSwitch.add(id);
+    }
     this.changed();
+  }
+
+  /** Why this member cannot switch now, or null. Pending switches of other members count. */
+  private switchBlocker(id: string): ErrorCode | null {
+    const inGame = this.phase !== "lobby" && this.phase !== "gameOver";
+    const others = [...this.pendingSwitch].filter((x) => x !== id);
+    const leaving = others.filter((x) => this.find(x)).length;
+    const arriving = others.length - leaving;
+    if (this.find(id)) {
+      if (this.spectators.length + leaving >= this.settings.maxSpectators) return "SPECTATORS_FULL";
+      if (inGame && this.players.length - leaving - 1 < MIN_PARTICIPANTS) return "SWITCH_TOO_FEW";
+      return null;
+    }
+    if (inGame && !this.settings.allowLateJoin) return "LATE_JOIN_DISABLED";
+    if (this.humans().length + arriving >= this.settings.maxPlayers) return "ROOM_FULL";
+    return null;
+  }
+
+  /** Applies the pending switches. A switch that the rules no longer allow is cancelled. */
+  private applyPendingSwitches(): void {
+    for (const id of [...this.pendingSwitch]) {
+      this.pendingSwitch.delete(id);
+      const name = this.memberName(id);
+      const toWatch = !!this.find(id);
+      const blocked = this.switchBlocker(id);
+      if (blocked) {
+        this.setNotice(
+          toWatch
+            ? `${name} stays a player: the game needs at least 3 players, or the spectator seats are full.`
+            : `${name} keeps watching: the game is full, or the host does not allow joining during the game.`,
+        );
+        continue;
+      }
+      this.applySwitch(id);
+    }
+  }
+
+  private applySwitch(id: string): void {
+    const player = this.find(id);
+    if (player) {
+      // A player who watches loses their Offences and their hand.
+      this.players = this.players.filter((p) => p !== player);
+      this.whitePile?.discard(player.hand);
+      this.spectators.push({ id, name: player.name, connected: player.connected });
+      this.setNotice(`${player.name} stopped playing and is now watching.`);
+      // An open vote to remove this player ends: they no longer play.
+      this.settleVote();
+      return;
+    }
+    const spectator = this.spectators.find((s) => s.id === id);
+    if (!spectator) return;
+    this.spectators = this.spectators.filter((s) => s !== spectator);
+    const fresh = this.makePlayer(spectator.name, false);
+    fresh.id = spectator.id;
+    fresh.connected = spectator.connected;
+    if (this.whitePile && this.phase !== "lobby") this.refill(fresh);
+    this.players.push(fresh);
+    this.setNotice(`${spectator.name} stopped watching and joined the game.`);
   }
 
   removePlayer(id: string, why: RemoveReason): void {
@@ -540,6 +628,17 @@ export class Game {
     const spectator = this.spectators.find((s) => s.id === id);
     if (spectator) {
       this.spectators = this.spectators.filter((s) => s.id !== id);
+      this.pendingSwitch.delete(id);
+      // A host who watches can leave too. The host role passes to a player, or else to a spectator.
+      if (this.hostId === id) {
+        const next = this.humans()[0] ?? this.spectators[0];
+        if (!next) {
+          this.dispose();
+          this.onEmpty();
+          return;
+        }
+        this.hostId = next.id;
+      }
       if (why === "banned") this.setNotice(`${spectator.name} was banned from this game room.`, "danger");
       else if (why === "kickedAgain") this.setNotice(`${spectator.name} was removed. The host has had enough. Understandably.`, "danger");
       else this.setNotice(why === "kicked" ? `${spectator.name} was removed.` : `${spectator.name} stopped watching.`);
@@ -549,16 +648,18 @@ export class Game {
     const player = this.find(id);
     if (!player) return;
     this.players = this.players.filter((p) => p.id !== id);
+    this.pendingSwitch.delete(id);
     this.whitePile?.discard(player.hand);
     player.hand = [];
     this.onRemoved(id, why, player.name);
 
-    if (this.humans().length === 0) {
+    // The room closes when the last player leaves, even with spectators. Only a host who watches keeps it open.
+    if (this.humans().length === 0 && !this.spectators.some((sp) => sp.id === this.hostId)) {
       this.dispose();
       this.onEmpty();
       return;
     }
-    if (this.hostId === id) this.hostId = this.humans()[0].id;
+    if (this.hostId === id) this.hostId = (this.humans()[0] ?? this.spectators[0]).id;
 
     const verb =
       why === "kicked"
@@ -698,7 +799,7 @@ export class Game {
   summary(): GameSummary {
     return {
       isPublic: this.settings.isPublic,
-      hostName: this.find(this.hostId)?.name ?? "",
+      hostName: this.memberName(this.hostId),
       phase: this.phase,
       players: this.players.map((p) => ({ name: p.name, isBot: p.isBot })),
       spectators: this.spectators.map((s) => s.name),
@@ -1230,7 +1331,7 @@ export class Game {
       youId: playerId,
       yourIdleRounds: me?.idleRounds ?? 0,
       youAreSpectator: this.spectators.some((s) => s.id === playerId),
-      spectators: this.spectators.map((s) => ({ id: s.id, name: s.name, connected: s.connected })),
+      spectators: this.spectators.map((s) => ({ id: s.id, name: s.name, connected: s.connected, isHost: s.id === this.hostId })),
       hostId: this.hostId,
       phase: this.phase,
       settings: this.settings,
@@ -1275,6 +1376,9 @@ export class Game {
       vote: this.voteViewFor(playerId),
       lastRound: this.lastRoundFor(playerId),
       audienceVote: this.audienceViewFor(playerId),
+      roleSwitch: this.hasMember(playerId)
+        ? { pending: this.pendingSwitch.has(playerId), blocked: this.pendingSwitch.has(playerId) ? null : this.switchBlocker(playerId) }
+        : null,
       lobbyClosesAt: this.lobbyDeadline,
       decks: [...this.decks.list(), ...[...this.externalDecks.values()].map((d) => ({ ...summarize(d), external: true }))],
       serverNow: Date.now(),
@@ -1296,6 +1400,7 @@ export class Game {
 
   private startRound(): void {
     this.clearTimer();
+    this.applyPendingSwitches();
     const active = this.players;
     const activeHumans = active.filter((p) => !p.isBot);
     if (active.length < MIN_PARTICIPANTS || activeHumans.length === 0) {
@@ -1494,6 +1599,7 @@ export class Game {
 
   private toLobby(message: string | null): void {
     this.clearTimer();
+    this.applyPendingSwitches();
     for (const p of this.players) {
       if (this.whitePile) this.whitePile.discard(p.hand);
       p.hand = [];

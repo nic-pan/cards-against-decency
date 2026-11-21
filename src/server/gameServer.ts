@@ -909,6 +909,11 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       room.game.promoteSpectator(playerId);
     });
 
+    on(socket, "member:switch", (s) => {
+      const { room, playerId } = current(s);
+      room.game.switchRole(playerId);
+    });
+
     on(socket, "player:kick", (s, p) => {
       const { room, playerId } = current(s);
       const { playerId: target, ban } = schemas.kick.parse(p);

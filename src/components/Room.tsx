@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { call, getSocket, session } from "@/lib/socket";
-import { LOBBY_MAX_MINUTES, TERMS_VERSION, type GameView, type JoinAs, type JoinResult } from "@/lib/protocol";
+import { ERROR_TEXT, LOBBY_MAX_MINUTES, TERMS_VERSION, type GameView, type JoinAs, type JoinResult } from "@/lib/protocol";
 import { Board, verdictFor } from "./Board";
 import { Lobby } from "./Lobby";
 import { PlayerList } from "./PlayerList";
@@ -208,20 +208,35 @@ export function Room({ code }: { code: string }) {
       )}
       {view.vote && <VoteBanner vote={view.vote} youId={view.youId} act={act} clockOffset={clockOffset.current} />}
       {phone && !view.youAreSpectator && <PhoneNotice />}
-      {view.youAreSpectator && (
+      {view.youAreSpectator && view.roleSwitch && (
         <Banner tone="accent">
-          <span>You are watching this game as a spectator.</span>
-          {canJoin(view) ? (
-            <Button className="ml-3 min-h-9" onClick={() => act("player:play")}>
-              Join the game
-            </Button>
+          {view.roleSwitch.pending ? (
+            <>
+              <span>You join the game when this round ends.</span>
+              <Button variant="ghost" className="ml-3 min-h-9" onClick={() => act("member:switch")}>
+                Cancel
+              </Button>
+            </>
           ) : (
-            <span className="ml-2 font-normal text-muted">
-              {view.players.filter((p) => !p.isBot).length >= view.settings.maxPlayers
-                ? "The game is full."
-                : "The host does not allow joining during the game."}
-            </span>
+            <>
+              <span>You are watching this game as a spectator.</span>
+              {view.roleSwitch.blocked ? (
+                <span className="ml-2 font-normal text-muted">{ERROR_TEXT[view.roleSwitch.blocked]}</span>
+              ) : (
+                <Button className="ml-3 min-h-9" onClick={() => act("member:switch")}>
+                  Join the game
+                </Button>
+              )}
+            </>
           )}
+        </Banner>
+      )}
+      {!view.youAreSpectator && view.roleSwitch?.pending && (
+        <Banner tone="accent">
+          <span>You become a spectator when this round ends. Your Offences and your cards go back.</span>
+          <Button variant="ghost" className="ml-3 min-h-9" onClick={() => act("member:switch")}>
+            Cancel
+          </Button>
         </Banner>
       )}
 
@@ -251,13 +266,6 @@ export function Room({ code }: { code: string }) {
       )}
     </div>
   );
-}
-
-/** True when a spectator can become a player now. The server checks the same rules. */
-function canJoin(view: View): boolean {
-  const humans = view.players.filter((p) => !p.isBot).length;
-  const between = view.phase === "lobby" || view.phase === "gameOver";
-  return humans < view.settings.maxPlayers && (between || view.settings.allowLateJoin);
 }
 
 /** A removed player's row that stays visible while it fades out. */

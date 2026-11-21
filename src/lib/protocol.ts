@@ -2,7 +2,7 @@
 import type { GameSummary, GameView, Settings } from "../engine/game";
 
 export type { GameView, Settings, GameSummary };
-export type { AudienceVoteView, LastRoundView, SpectatorView, VoteView } from "../engine/game";
+export type { AudienceVoteView, LastRoundView, RoleSwitchView, SpectatorView, VoteView } from "../engine/game";
 export type { PublicPlayer, SubmissionView, RoundView, PlayerStatus } from "../engine/game";
 export type { WhiteCard, BlackCard, DeckSummary } from "../engine/deck";
 
@@ -109,6 +109,8 @@ export interface ClientToServer {
   "deck:remove": (p: { deckId: string }, ack: (r: Ack) => void) => void;
   /** A spectator starts to play. */
   "player:play": (ack: (r: Ack) => void) => void;
+  /** A player asks to watch, or a spectator asks to play. During a game it applies when the round ends. A second call cancels. */
+  "member:switch": (ack: (r: Ack) => void) => void;
   "player:kick": (p: { playerId: string; ban: boolean }, ack: (r: Ack) => void) => void;
   /** A player or spectator keeps a waiting room open for another 30 minutes. */
   "room:keepOpen": (ack: (r: Ack) => void) => void;
@@ -191,6 +193,7 @@ export const ERROR_TEXT: Record<string, string> = {
   NOT_IN_ROOM: "You are not in a room.",
   SESSION_EXPIRED: "Your session has expired. Join again.",
   SPECTATORS_FULL: "This game has no free spectator seats.",
+  SWITCH_TOO_FEW: "The game needs at least 3 players. You can switch between games, or when more people play.",
   TOO_MANY_DECKS: "A game can have at most 10 imported decks.",
   BAD_DECK_CODE: "Deck codes have 5 letters or numbers, for example 1ZW29.",
   DECK_NOT_FOUND: "No deck has that code. Check the code and try again.",

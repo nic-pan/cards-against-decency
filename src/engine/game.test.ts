@@ -831,10 +831,17 @@ describe("spectators", () => {
     const spec = game.addSpectator("Watcher");
     game.start(host);
     game.promoteSpectator(spec);
+    // The switch waits for the round to end.
+    expect(game.viewFor(spec).youAreSpectator).toBe(true);
+    expect(game.viewFor(spec).roleSwitch).toEqual({ pending: true, blocked: null });
+    submitAll(game, ids);
+    const czar = game.viewFor(host).round!.czarId;
+    game.pick(czar, game.viewFor(czar).round!.submissions![0].id);
+    vi.advanceTimersByTime(ROUND_OVER_MS);
     const v = game.viewFor(spec);
     expect(v.youAreSpectator).toBe(false);
     expect(v.hand).toHaveLength(HAND_SIZE);
-    expect(v.players.find((p) => p.id === spec)!.status).toBe("waiting");
+    expect(v.mustSubmit || v.round!.czarId === spec).toBe(true);
     expect(game.memberIds()).toContain(spec);
     expect(ids).not.toContain(spec);
   });
@@ -844,6 +851,134 @@ describe("spectators", () => {
     game.addSpectator("Watcher");
     game.removePlayer(ids[0], "left");
     expect(onEmpty).toHaveBeenCalled();
+  });
+});
+
+describe("switching between player and spectator", () => {
+  /** Plays one round to the end: everyone plays, the Card Czar chooses, the next round starts. */
+  function finishRound(game: Game, ids: string[]) {
+    submitAll(game, ids);
+    const czar = game.viewFor(ids[0]).round!.czarId;
+    game.pick(czar, game.viewFor(czar).round!.submissions![0].id);
+    vi.advanceTimersByTime(ROUND_OVER_MS);
+  }
+  const lastLog = (game: Game, id: string) => game.viewFor(id).log.at(-1)!.text;
+
+  it("switches at once in the lobby, and the host keeps the host role", () => {
+    const { game, host } = setup();
+    game.switchRole(host);
+    let v = game.viewFor(host);
+    expect(v.youAreSpectator).toBe(true);
+    expect(v.hostId).toBe(host);
+    expect(v.spectators.find((s) => s.id === host)!.isHost).toBe(true);
+    expect(game.summary().hostName).toBe("Player0");
+    expect(lastLog(game, host)).toBe("Player0 stopped playing and is now watching.");
+    game.switchRole(host);
+    v = game.viewFor(host);
+    expect(v.youAreSpectator).toBe(false);
+    expect(lastLog(game, host)).toBe("Player0 stopped watching and joined the game.");
+  });
+
+  it("lets a host who watches run the game", () => {
+    const { game, ids, host } = setup({ humans: 4 });
+    game.switchRole(host);
+    game.start(host);
+    expect(game.viewFor(host).phase).toBe("submitting");
+    expect(game.viewFor(ids[1]).players.map((p) => p.id)).not.toContain(host);
+  });
+
+  it("keeps a player in the current round, and switches when the round ends", () => {
+    const { game, ids, host } = setup({ humans: 4 });
+    game.start(host);
+    const player = ids.find((id) => game.viewFor(id).mustSubmit)!;
+    const name = game.playerName(player)!;
+    game.switchRole(player);
+    expect(game.viewFor(player)).toMatchObject({ youAreSpectator: false, mustSubmit: true, roleSwitch: { pending: true } });
+
+    // The player still plays and can win this round.
+    finishRound(game, ids);
+    const v = game.viewFor(player);
+    expect(v.youAreSpectator).toBe(true);
+    expect(v.hand).toEqual([]);
+    expect(v.players.map((p) => p.id)).not.toContain(player);
+    expect(v.log.map((n) => n.text)).toContain(`${name} stopped playing and is now watching.`);
+  });
+
+  it("cancels a pending switch with a second click", () => {
+    const { game, ids, host } = setup({ humans: 4 });
+    game.start(host);
+    game.switchRole(ids[1]);
+    game.switchRole(ids[1]);
+    expect(game.viewFor(ids[1]).roleSwitch).toEqual({ pending: false, blocked: null });
+    finishRound(game, ids);
+    expect(game.viewFor(ids[1]).youAreSpectator).toBe(false);
+  });
+
+  it("lets a Card Czar who switches still choose in this round", () => {
+    const { game, ids, host } = setup({ humans: 4 });
+    game.start(host);
+    const czar = game.viewFor(host).round!.czarId;
+    game.switchRole(czar);
+    submitAll(game, ids);
+    expect(() => game.pick(czar, game.viewFor(czar).round!.submissions![0].id)).not.toThrow();
+    vi.advanceTimersByTime(ROUND_OVER_MS);
+    expect(game.viewFor(czar).youAreSpectator).toBe(true);
+  });
+
+  it("does not allow a switch that leaves fewer than 3 players during a game", () => {
+    const { game, ids, host } = setup({ humans: 4 });
+    game.start(host);
+    game.switchRole(ids[1]);
+    // A second switch would leave 2 players. The pending switch counts.
+    expect(game.viewFor(ids[2]).roleSwitch).toEqual({ pending: false, blocked: "SWITCH_TOO_FEW" });
+    expect(() => game.switchRole(ids[2])).toThrow("SWITCH_TOO_FEW");
+  });
+
+  it("cancels a pending switch that the rules no longer allow when the round ends", () => {
+    const { game, ids, host } = setup({ humans: 5 });
+    game.start(host);
+    const [a, b] = ids.filter((id) => id !== host && game.viewFor(id).mustSubmit);
+    game.switchRole(a);
+    // Two others leave. 3 players are left, so a's switch would leave only 2: a stays a player.
+    game.removePlayer(b, "left");
+    const c = ids.find((id) => id !== host && id !== a && id !== b)!;
+    game.removePlayer(c, "left");
+    finishRound(game, ids.filter((id) => game.viewFor(host).players.some((p) => p.id === id)));
+    expect(game.viewFor(a).youAreSpectator).toBe(false);
+    expect(game.viewFor(a).log.map((n) => n.text).join(" | ")).toContain("stays a player");
+  });
+
+  it("refuses when the spectator seats are full", () => {
+    const { game, ids, host } = setup();
+    game.updateSettings(host, { maxSpectators: 0 });
+    expect(() => game.switchRole(ids[1])).toThrow("SPECTATORS_FULL");
+  });
+
+  it("refuses a spectator during a game when late joining is off, and allows it on the end screen", () => {
+    const { game, ids, host } = setup();
+    const spec = game.addSpectator("Watcher");
+    game.updateSettings(host, { allowLateJoin: false });
+    game.start(host);
+    expect(game.viewFor(spec).roleSwitch!.blocked).toBe("LATE_JOIN_DISABLED");
+    expect(() => game.switchRole(spec)).toThrow("LATE_JOIN_DISABLED");
+    game.endGame(host);
+    game.switchRole(spec);
+    expect(game.viewFor(spec).youAreSpectator).toBe(false);
+    expect(ids).toHaveLength(3);
+  });
+
+  it("refuses a spectator when the player seats are full", () => {
+    const { game, host } = setup();
+    game.updateSettings(host, { maxPlayers: 3 });
+    const spec = game.addSpectator("Watcher");
+    expect(() => game.switchRole(spec)).toThrow("ROOM_FULL");
+  });
+
+  it("passes the host role on when a host who watches leaves", () => {
+    const { game, ids, host } = setup();
+    game.switchRole(host);
+    game.removePlayer(host, "left");
+    expect(game.viewFor(ids[1]).hostId).toBe(ids[1]);
   });
 });
 

@@ -141,6 +141,14 @@ const GROUPS: Group[] = [
         ],
       },
       {
+        q: "Can I switch between playing and watching?",
+        a: [
+          "Yes. A player selects \"Watch instead\" in the Spectators list, and a spectator selects \"Join the game\". During a game, the switch happens when the current round ends, so you finish the round first. You can cancel it until then. In the lobby and on the end screen, the switch happens at once.",
+          "When you start to watch, you lose your Offences and your cards. When you play again, you start from 0 with a new hand. A host who watches stays the host.",
+          "You cannot switch when the game would have fewer than 3 players, when all seats are taken, or when the host does not allow joining during the game. The button tells you why.",
+        ],
+      },
+      {
         q: "What happens if I stop playing?",
         a: [
           "When you miss a round, you get a warning. When you miss 2 rounds in a row, the game removes you, so the others do not have to wait. If you need a break, use Leave.",

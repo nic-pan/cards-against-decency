@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { offences, type GameView, type PlayerStatus } from "@/lib/protocol";
+import { ERROR_TEXT, offences, type GameView, type PlayerStatus } from "@/lib/protocol";
+import type { ErrorCode } from "@/engine/game";
 import type { Act, Ghost, View } from "./Room";
 import { BOT_DIVISION, botProfile } from "@/engine/bots";
 import { blocks } from "@/lib/socket";
@@ -201,11 +202,14 @@ export function PlayerList({
 
       {(view.spectators.length > 0 || view.settings.maxSpectators > 0) && (
         <div className="mt-4 border-t border-line pt-3">
-          <h3 className="mb-1 flex items-baseline justify-between text-sm font-bold">
+          <h3 className="mb-1 flex items-baseline gap-2 text-sm font-bold">
             Spectators
             <span className="text-xs font-normal text-muted">
               {view.spectators.length}/{view.settings.maxSpectators}
             </span>
+            {!view.youAreSpectator && view.roleSwitch && !view.roleSwitch.pending && (
+              <WatchButton blocked={view.roleSwitch.blocked} onSwitch={() => void act("member:switch")} />
+            )}
           </h3>
           {view.spectators.length === 0 ? (
             <p className="text-xs text-muted">Nobody is watching.</p>
@@ -216,6 +220,7 @@ export function PlayerList({
                   <span className={`h-2 w-2 shrink-0 rounded-full ${s.connected ? "bg-ok" : "bg-line"}`} />
                   <span className="min-w-0 truncate">
                     {s.name}
+                    {s.isHost && <span className="text-muted"> (host)</span>}
                     {s.id === view.youId && <span className="text-muted"> (you)</span>}
                   </span>
                   {isHost && s.id !== view.youId && (
@@ -384,5 +389,32 @@ function BotTitle({ name }: { name: string }) {
         }
       />
     </p>
+  );
+}
+
+/**
+ * "Watch instead" for a player. When the switch is not possible, the button stays visible but
+ * explains why: on hover (title) and on tap (a short note under it).
+ */
+function WatchButton({ blocked, onSwitch }: { blocked: ErrorCode | null; onSwitch: () => void }) {
+  const [why, setWhy] = useState(false);
+  const reason = blocked ? ERROR_TEXT[blocked] : null;
+  return (
+    <span className="relative ml-auto">
+      <button
+        type="button"
+        aria-disabled={!!reason}
+        title={reason ?? "Watch the game instead of playing. During a game, this happens when the round ends."}
+        onClick={() => (reason ? setWhy((w) => !w) : onSwitch())}
+        className={`rounded px-1.5 text-xs font-semibold underline ${reason ? "cursor-help text-muted/60" : "text-muted hover:text-ink"}`}
+      >
+        Watch instead
+      </button>
+      {why && reason && (
+        <span role="note" className="absolute right-0 top-full z-10 mt-1 w-56 rounded-lg border border-line bg-surface p-2 text-xs font-normal text-ink shadow-lg">
+          {reason}
+        </span>
+      )}
+    </span>
   );
 }

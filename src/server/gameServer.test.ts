@@ -398,6 +398,19 @@ describe("game server", () => {
     expect((await other.emit("room:join", { ...T, code: room.code, name: nm("Fresh") })).ok).toBe(true);
   }));
 
+  it("lets a player watch instead, and a spectator play, with member:switch", async () => {
+    const host = await client();
+    const room = await host.emit("room:create", { ...T, name: nm("Switcher") });
+    const spec = await client();
+    await spec.emit("room:join", { ...T, code: room.code, name: nm("Viewer"), as: "spectator" });
+    // In the lobby, both switches apply at once. The host keeps the host role.
+    expect((await host.emit("member:switch")).ok).toBe(true);
+    const watching = await host.until((v) => v.youAreSpectator);
+    expect(watching.hostId).toBe(watching.youId);
+    expect((await spec.emit("member:switch")).ok).toBe(true);
+    expect((await spec.until((v) => !v.youAreSpectator)).roleSwitch).toEqual({ pending: false, blocked: null });
+  });
+
   it("refuses names that the name filter blocks", async () => {
     const a = await client();
     expect(await a.emit("name:check", { name: "Hitler Fan" })).toMatchObject({ available: false, reason: "NAME_BLOCKED" });

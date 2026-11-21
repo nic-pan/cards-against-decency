@@ -38,6 +38,10 @@ export const RELEASES: Release[] = [
         text: "When the Card Czar leaves or does not choose in time, the round is not lost. The other players and the spectators vote for the best answer.",
       },
       {
+        title: "Switch between playing and watching",
+        text: "Players can watch instead, and spectators can join, with one button. During a game, the switch happens when the round ends. A host who watches stays the host.",
+      },
+      {
         title: "Easier Pick 2 and Pick 3",
         text: "Each answer shows as one card with the full sentence: the black card with the answers filled in. While players choose, each answer is one stack of cards, not 2 or 3 separate cards.",
       },
