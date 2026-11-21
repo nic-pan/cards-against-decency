@@ -144,6 +144,7 @@ The game sounds come from [Pixabay](https://pixabay.com/sound-effects/) under th
 | `turn-funny.mp3` | "Horn" by digitalstore07 (ID 430368), first blast only | "Your turn", Funny style |
 | `idle-warning.mp3` | "Suspenseful Boom" by Dragon Studio (ID 451863), from 1.4 s | The red idle warning |
 | `removed.mp3` | "Thud Sound Effect" by Dragon Studio (ID 405470), 0.3–2.0 s | Removed for being idle, or by the host |
+| `voted-out.mp3` | "punch gaming sound effect HD" from myinstants.com, uploaded by DeadlyChasers, 0.34–0.95 s with a fade-out. **Licence unclear: replace with a licensed sound before a public launch.** | A vote removes a player (the removed player and everybody else hear it, instead of the thud) |
 | `banned.mp3` | "fahhhhhhhhh" from myinstants.com, uploaded by v6314700, full length with a fade-out. **Licence unclear: replace with a licensed sound before a public launch.** | Banned by the host (only the banned player hears it) |
 | `faaah.mp3` | "faaah" from myinstants.com, uploaded by SpicyIceCream, from 0.08 s. **Licence unclear: replace with a licensed sound before a public launch.** | The host bans a player (everybody except the banned player hears it). A running game stops because fewer than 3 players are left. |
 | `czar-left.mp3` | "bruh" from myinstants.com, uploaded by doldrumszz, first 0.6 s with a fade-out. **Licence unclear: replace with a licensed sound before a public launch.** | The Card Czar leaves during a round (everybody hears it, unless the host removed the Czar) |

@@ -102,6 +102,7 @@ const FILES = {
   turnFunny: "/sounds/turn-funny.mp3",
   idleWarning: "/sounds/idle-warning.mp3",
   removed: "/sounds/removed.mp3",
+  votedOut: "/sounds/voted-out.mp3",
   banned: "/sounds/banned.mp3",
   czarLeft: "/sounds/czar-left.mp3",
   faaah: "/sounds/faaah.mp3",
@@ -150,7 +151,7 @@ async function playFile(name: SoundFile, volume: number): Promise<boolean> {
 
 /** Sounds for game events. Nothing plays when the player has turned sounds off. */
 export function playEventSound(
-  event: "idleWarning" | "removed" | "banned" | "czarLeft" | "faaah" | "gunshot" | "botAdded" | "lastPlace" | "middlePlace",
+  event: "idleWarning" | "removed" | "votedOut" | "banned" | "czarLeft" | "faaah" | "gunshot" | "botAdded" | "lastPlace" | "middlePlace",
 ): void {
   if (isMuted()) return;
   // The end-of-game sounds are long and loud, so they play more quietly.

@@ -80,8 +80,12 @@ export function Room({ code }: { code: string }) {
       const inGame = last.phase === "submitting" || last.phase === "judging" || last.phase === "roundOver";
       const stopsGame = inGame && last.players.length - 1 < 3;
       // The banned player hears the long "fahhh"; everybody else hears the short "faaah".
-      // A 3rd removal of the same connection gets the gunshot for everybody.
-      if (!stopsGame) playEventSound(reason === "banned" ? "faaah" : reason === "kickedAgain" ? "gunshot" : "removed");
+      // A 3rd removal of the same connection gets the gunshot for everybody. A vote gets the punch.
+      if (!stopsGame) {
+        playEventSound(
+          reason === "banned" ? "faaah" : reason === "kickedAgain" ? "gunshot" : reason === "voted" ? "votedOut" : "removed",
+        );
+      }
       recentlyRemoved.current.add(playerId);
       setTimeout(() => recentlyRemoved.current.delete(playerId), 5000);
       const ghost: Ghost = { player: last.players[index], index, reason };
@@ -100,7 +104,8 @@ export function Room({ code }: { code: string }) {
       if (reason === "banned") playEventSound("banned");
       // The third removal from the same room gets the gunshot instead of the thud.
       else if (reason === "kicked" && (timesRemoved ?? 0) >= 3) playEventSound("gunshot");
-      else if (reason === "idle" || reason === "kicked" || reason === "voted") playEventSound("removed");
+      else if (reason === "voted") playEventSound("votedOut");
+      else if (reason === "idle" || reason === "kicked") playEventSound("removed");
       session.clear(code);
       setView(null);
       if (reason === "idle" || reason === "kicked" || reason === "banned" || reason === "voted" || reason === "lobbyExpired") {
