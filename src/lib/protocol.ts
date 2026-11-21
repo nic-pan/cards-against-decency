@@ -92,6 +92,8 @@ export interface ClientToServer {
   "game:end": (ack: (r: Ack) => void) => void;
   "game:lobby": (ack: (r: Ack) => void) => void;
   "card:submit": (p: { cardIds: string[] }, ack: (r: Ack) => void) => void;
+  /** The player takes back their answer before judging starts. Once in each round. */
+  "card:takeBack": (ack: (r: Ack) => void) => void;
   "czar:pick": (p: { submissionId: string }, ack: (r: Ack) => void) => void;
   "player:back": (ack: (r: Ack) => void) => void;
   /** The host imports a Many Decks deck into the room by its 5-character code. */
@@ -157,6 +159,8 @@ export const ERROR_TEXT: Record<string, string> = {
   UNKNOWN_DECK: "That deck does not exist.",
   NOT_A_PARTICIPANT: "You are not playing in this round.",
   ALREADY_SUBMITTED: "You already submitted.",
+  NOT_SUBMITTED: "You have not played a card in this round.",
+  TAKE_BACK_USED: "You already changed your answer in this round.",
   BAD_CARDS: "Choose the right number of cards from your hand.",
   NOT_CZAR: "Only the Card Czar can choose.",
   UNKNOWN_SUBMISSION: "That answer no longer exists.",

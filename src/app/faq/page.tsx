@@ -114,6 +114,13 @@ const GROUPS: Group[] = [
         ],
       },
       {
+        q: "Can I change the card I played?",
+        a: [
+          "Yes, once in each round. Select \"Take back my card\" before the Card Czar starts to judge. The card goes back to your hand, and you can play a different card.",
+          "When everyone has played, judging starts after 3 seconds. You can still take back your card in those seconds. The round timer does not restart. If you do not play again in time, you miss the round.",
+        ],
+      },
+      {
         q: "Can I join a game that has already started?",
         a: [
           "Yes, if the host allows late joining. You get a hand of cards and play from the next round. You can also watch as a spectator and start to play later.",

@@ -54,6 +54,8 @@ export const VOTE_COOLDOWN_MS = 2 * 60_000;
  * One person with two seats on one network cannot outvote a host alone.
  */
 export const VOTE_MIN_NETWORKS = 3;
+/** After the last answer arrives, the game waits this long before judging, so the last player can take back a card. */
+export const JUDGING_DELAY_MS = 3_000;
 
 export function defaultSettings(decks: DeckRegistry): Settings {
   return {
@@ -89,6 +91,8 @@ export type ErrorCode =
   | "UNKNOWN_DECK"
   | "NOT_A_PARTICIPANT"
   | "ALREADY_SUBMITTED"
+  | "NOT_SUBMITTED"
+  | "TAKE_BACK_USED"
   | "BAD_CARDS"
   | "NOT_CZAR"
   | "UNKNOWN_SUBMISSION"
@@ -132,6 +136,8 @@ interface Submission {
   id: string;
   playerId: string;
   cards: WhiteCard[];
+  /** The places in the hand that the cards came from. A take-back puts them there again. */
+  slots: number[];
 }
 
 type RoundEnd = "winner" | "czarTimeout" | "czarLeft" | "noSubmissions";
@@ -148,6 +154,10 @@ interface Round {
   winnerSubmissionId: string | null;
   end: RoundEnd | null;
   deadline: number | null;
+  /** Players who took back their answer in this round. Each player can do this once. */
+  tookBack: Set<string>;
+  /** When all answers are in: the time when judging starts. Null at other times. */
+  judgingAt: number | null;
 }
 
 /**
@@ -207,6 +217,8 @@ export interface RoundView {
   czarId: string;
   black: BlackCard;
   deadline: number | null;
+  /** All answers are in. Judging starts at this time. Null at other times. */
+  judgingStartsAt: number | null;
   submittedCount: number;
   expectedCount: number;
   /** Null while players submit. Anonymous while the Card Czar judges. */
@@ -267,6 +279,8 @@ export interface GameView {
   hand: WhiteCard[];
   yourSubmission: WhiteCard[] | null;
   mustSubmit: boolean;
+  /** You can take back your answer now. Once in each round, before judging starts. */
+  canTakeBack: boolean;
   winnerId: string | null;
   /** The room's activity log, oldest first. */
   log: Notice[];
@@ -496,7 +510,10 @@ export class Game {
         round.submissions = round.submissions.filter((s) => s !== own);
       }
       if (this.phase === "submitting") {
-        if (this.allSubmitted(round)) this.toJudging();
+        if (this.allSubmitted(round)) {
+          this.allAnswersIn(round);
+          return;
+        }
       } else if (round.submissions.length === 0) {
         this.endRound("noSubmissions");
         return;
@@ -732,13 +749,42 @@ export class Game {
     }
     const cards = cardIds.map((cid) => player.hand.find((c) => c.id === cid));
     if (cards.some((c) => c === undefined)) throw new GameError("BAD_CARDS");
+    const slots = cardIds.map((cid) => player.hand.findIndex((c) => c.id === cid));
 
     player.hand = player.hand.filter((c) => !cardIds.includes(c.id));
-    round.submissions.push({ id: this.newId(), playerId, cards: cards as WhiteCard[] });
+    round.submissions.push({ id: this.newId(), playerId, cards: cards as WhiteCard[], slots });
     player.idleRounds = 0;
 
-    if (this.allSubmitted(round)) this.toJudging();
+    if (this.allSubmitted(round)) this.allAnswersIn(round);
     else this.changed();
+  }
+
+  /**
+   * The player takes back their answer before judging starts. The cards go back to their
+   * places in the hand. Each player can do this once in each round. Other players see only
+   * that the answer count went down: there is no log line.
+   */
+  takeBack(playerId: string): void {
+    const round = this.round;
+    if (this.phase !== "submitting" || !round) throw new GameError("WRONG_PHASE");
+    const player = this.find(playerId);
+    const own = round.submissions.find((s) => s.playerId === playerId);
+    if (!player || player.isBot || !own) throw new GameError("NOT_SUBMITTED");
+    if (round.tookBack.has(playerId)) throw new GameError("TAKE_BACK_USED");
+
+    round.tookBack.add(playerId);
+    round.submissions = round.submissions.filter((s) => s !== own);
+    const back = own.cards.map((card, i) => ({ card, slot: own.slots[i] ?? player.hand.length }));
+    for (const { card, slot } of back.sort((a, b) => a.slot - b.slot)) {
+      player.hand.splice(Math.min(slot, player.hand.length), 0, card);
+    }
+
+    // Judging was about to start. Go back to the normal timer for this round.
+    if (round.judgingAt !== null) {
+      round.judgingAt = null;
+      this.schedule(Math.max(0, (round.deadline ?? Date.now()) - Date.now()), () => this.toJudging());
+    }
+    this.changed();
   }
 
   pick(czarId: string, submissionId: string): void {
@@ -965,6 +1011,7 @@ export class Game {
         czarId: round.czarId,
         black: round.black,
         deadline: round.deadline,
+        judgingStartsAt: this.phase === "submitting" ? round.judgingAt : null,
         submittedCount: round.submissions.length,
         expectedCount: round.participants.size,
         submissions,
@@ -974,6 +1021,8 @@ export class Game {
       yourSubmission: mySubmission?.cards ?? null,
       mustSubmit:
         this.phase === "submitting" && !!round && round.participants.has(playerId) && !mySubmission,
+      canTakeBack:
+        this.phase === "submitting" && !!round && !!mySubmission && !!me && !me.isBot && !round.tookBack.has(playerId),
       winnerId: this.winnerId,
       log: this.log,
       vote: this.voteViewFor(playerId),
@@ -1021,6 +1070,8 @@ export class Game {
       black,
       participants: new Set(active.filter((p) => p.id !== czar.id).map((p) => p.id)),
       missed: new Set(),
+      tookBack: new Set(),
+      judgingAt: null,
       submissions: [],
       winnerSubmissionId: null,
       end: null,
@@ -1034,11 +1085,34 @@ export class Game {
     for (const bot of this.players.filter((p) => p.isBot && round.participants.has(p.id))) {
       const cards = shuffle(bot.hand, this.rng).slice(0, black.pick);
       bot.hand = bot.hand.filter((c) => !cards.includes(c));
-      round.submissions.push({ id: this.newId(), playerId: bot.id, cards });
+      round.submissions.push({ id: this.newId(), playerId: bot.id, cards, slots: [] });
     }
 
-    if (this.allSubmitted(round)) this.toJudging();
+    if (this.allSubmitted(round)) this.allAnswersIn(round);
     else this.changed();
+  }
+
+  /**
+   * All answers are in. Judging starts after JUDGING_DELAY_MS, so the last player can still
+   * take back a card. It starts at once when nobody can take back an answer.
+   */
+  private allAnswersIn(round: Round): void {
+    if (round.judgingAt !== null) {
+      this.changed();
+      return;
+    }
+    const left = (round.deadline ?? Date.now()) - Date.now();
+    const someoneCanChange = round.submissions.some(
+      (s) => !round.tookBack.has(s.playerId) && this.find(s.playerId)?.isBot === false,
+    );
+    if (!someoneCanChange || left <= 0) {
+      this.toJudging();
+      return;
+    }
+    const wait = Math.min(JUDGING_DELAY_MS, left);
+    round.judgingAt = Date.now() + wait;
+    this.schedule(wait, () => this.toJudging());
+    this.changed();
   }
 
   private toJudging(): void {
@@ -1058,6 +1132,7 @@ export class Game {
       this.kickIdle();
       return;
     }
+    round.judgingAt = null;
     round.submissions = shuffle(round.submissions, this.rng);
     round.deadline = Date.now() + this.settings.judgeSeconds * 1000;
     this.phase = "judging";

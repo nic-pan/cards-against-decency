@@ -799,6 +799,11 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       room.game.submit(playerId, schemas.submit.parse(p).cardIds);
     });
 
+    on(socket, "card:takeBack", (s) => {
+      const { room, playerId } = current(s);
+      room.game.takeBack(playerId);
+    });
+
     on(socket, "czar:pick", (s, p) => {
       const { room, playerId } = current(s);
       room.game.pick(playerId, schemas.pick.parse(p).submissionId);

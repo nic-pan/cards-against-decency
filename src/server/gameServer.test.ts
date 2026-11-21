@@ -78,7 +78,7 @@ async function client(auth?: { name?: string; browser: string; blocks?: string[]
       new Promise<View>((resolve, reject) => {
         if (latest && pred(latest)) return resolve(latest);
         waiters.push({ pred, resolve });
-        setTimeout(() => reject(new Error("timed out waiting for state")), 3000);
+        setTimeout(() => reject(new Error("timed out waiting for state")), 5000);
       }),
   };
 }
@@ -102,12 +102,21 @@ describe("game server", () => {
     const all = [a, b, c];
     const views = await Promise.all(all.map((p) => p.until((v) => v.phase === "submitting")));
     const czarId = views[0].round!.czarId;
+    let first = true;
     for (const p of all) {
       const v = p.view();
       if (v.mustSubmit) {
         // A card that is not in the hand is rejected.
         expect((await p.emit("card:submit", { cardIds: ["cah-base:w:999999"] })).error).toBe("BAD_CARDS");
-        expect((await p.emit("card:submit", { cardIds: v.hand.slice(0, v.round!.black.pick).map((x) => x.id) })).ok).toBe(true);
+        const cardIds = v.hand.slice(0, v.round!.black.pick).map((x) => x.id);
+        expect((await p.emit("card:submit", { cardIds })).ok).toBe(true);
+        if (first) {
+          // The first player takes back the answer. This works once in each round.
+          expect((await p.emit("card:takeBack")).ok).toBe(true);
+          expect((await p.emit("card:submit", { cardIds })).ok).toBe(true);
+          expect((await p.emit("card:takeBack")).error).toBe("TAKE_BACK_USED");
+          first = false;
+        }
       }
     }
     const czar = all.find((p) => p.view().youId === czarId)!;
@@ -117,7 +126,7 @@ describe("game server", () => {
     expect((await czar.emit("czar:pick", { submissionId: judging.round!.submissions![0].id })).ok).toBe(true);
     const over = await a.until((v) => v.phase === "roundOver");
     expect(over.players.reduce((n, p) => n + p.score, 0)).toBe(1);
-  });
+  }, 15_000);
 
   it("keeps the seat when a player reconnects with the token", async () => {
     const a = await client();

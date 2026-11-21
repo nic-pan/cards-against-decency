@@ -20,6 +20,8 @@ export function useSecondsLeft(deadline: number | null, offset: number): number 
 export function Board({ view, isHost, act, clockOffset }: { view: GameView; isHost: boolean; act: Act; clockOffset: number }) {
   const round = view.round;
   const left = useSecondsLeft(round?.deadline ?? null, clockOffset);
+  // All answers are in. Judging starts in a few seconds, so the last player can still take back a card.
+  const judgingIn = useSecondsLeft(round?.judgingStartsAt ?? null, clockOffset);
   const nameOf = (id: string | null) => view.players.find((p) => p.id === id)?.name ?? "Someone who left";
 
   if (view.phase === "gameOver") return <GameOver view={view} isHost={isHost} act={act} nameOf={nameOf} />;
@@ -29,7 +31,7 @@ export function Board({ view, isHost, act, clockOffset }: { view: GameView; isHo
 
   return (
     <div className="space-y-5">
-      <StatusBar view={view} isCzar={isCzar} left={left} nameOf={nameOf} />
+      <StatusBar view={view} isCzar={isCzar} left={left} judgingIn={judgingIn} nameOf={nameOf} />
 
       <Table view={view} isCzar={isCzar} act={act} left={left} nameOf={nameOf} />
 
@@ -42,16 +44,20 @@ function StatusBar({
   view,
   isCzar,
   left,
+  judgingIn,
   nameOf,
 }: {
   view: GameView;
   isCzar: boolean;
   left: number | null;
+  judgingIn: number | null;
   nameOf: (id: string | null) => string;
 }) {
   const round = view.round!;
   let text: string;
-  if (view.youAreSpectator) {
+  if (view.phase === "submitting" && judgingIn !== null) {
+    text = `Everyone played. Judging starts in ${Math.max(1, judgingIn)}…`;
+  } else if (view.youAreSpectator) {
     text =
       view.phase === "submitting"
         ? "You are watching. The players are choosing their cards."
@@ -104,7 +110,7 @@ function StatusBar({
 // ---------------------------------------------------------------------------
 // The table: black card and action on the left, played cards on the right, your hand below.
 
-type Action = { label: string; disabled: boolean; onClick: () => void; note?: string };
+type Action = { label: string; disabled: boolean; onClick: () => void; note?: string; secondary?: boolean };
 
 function Table({
   view,
@@ -166,6 +172,14 @@ function Table({
       disabled: selected.length !== pick || sending,
       onClick: () => void run("card:submit", { cardIds: selected }, () => setSelected([])),
       note: `${selected.length}/${pick} selected`,
+    };
+  } else if (view.phase === "submitting" && view.canTakeBack) {
+    action = {
+      label: pick === 1 ? "Take back my card" : "Take back my cards",
+      disabled: sending,
+      onClick: () => void run("card:takeBack", undefined, () => setSelected([])),
+      note: "You can change your answer once in each round.",
+      secondary: true,
     };
   } else if (view.phase === "judging" && isCzar) {
     action = {
@@ -394,7 +408,12 @@ function ActionBar({ action }: { action: Action }) {
     <div className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-surface/95 p-3 backdrop-blur md:static md:mt-3 md:border-0 md:bg-transparent md:p-0 md:backdrop-blur-none">
       <div className="mx-auto flex max-w-6xl items-center gap-3 md:block">
         {action.note && <span className="text-sm text-muted md:mb-1.5 md:block md:text-center md:text-xs">{action.note}</span>}
-        <Button className="ml-auto px-8 md:w-full" disabled={action.disabled} onClick={action.onClick}>
+        <Button
+          variant={action.secondary ? "ghost" : "primary"}
+          className="ml-auto px-8 md:w-full"
+          disabled={action.disabled}
+          onClick={action.onClick}
+        >
           {action.label}
         </Button>
       </div>

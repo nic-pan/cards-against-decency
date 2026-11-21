@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { Deck, DeckRegistry } from "./deck";
 import { BOT_PROFILES } from "./bots";
-import { Game, GameError, HAND_SIZE, LOBBY_MAX_MS, LOBBY_WARNING_MS, ROUND_OVER_MS, VOTE_COOLDOWN_MS, VOTE_SECONDS } from "./game";
+import { Game, GameError, HAND_SIZE, JUDGING_DELAY_MS, LOBBY_MAX_MS, LOBBY_WARNING_MS, ROUND_OVER_MS, VOTE_COOLDOWN_MS, VOTE_SECONDS } from "./game";
 
 function makeDeck(id = "test", blackPick = 1): Deck {
   return {
@@ -40,12 +40,13 @@ function mulberry(seed: number) {
   };
 }
 
-/** Every participant who must submit plays the first cards in their hand. */
+/** Every participant who must submit plays the first cards in their hand. Then judging starts. */
 function submitAll(game: Game, ids: string[]) {
   for (const id of ids) {
     const v = game.viewFor(id);
     if (v.mustSubmit) game.submit(id, v.hand.slice(0, v.round!.black.pick).map((c) => c.id));
   }
+  vi.advanceTimersByTime(JUDGING_DELAY_MS);
 }
 
 beforeEach(() => vi.useFakeTimers());
@@ -325,6 +326,139 @@ describe("timeouts and inactive players", () => {
   });
 });
 
+describe("taking back a played card", () => {
+  /** Starts a game. Returns the players who must answer, in order. */
+  function started(humans = 3) {
+    const t = setup({ humans });
+    t.game.start(t.host);
+    const players = t.ids.filter((id) => t.game.viewFor(id).mustSubmit);
+    return { ...t, players };
+  }
+  const playFirst = (game: Game, id: string) => game.submit(id, [game.viewFor(id).hand[0].id]);
+
+  it("puts the cards back in the same places and clears the answer, without a log line", () => {
+    const { game, players } = started(4);
+    const [a] = players;
+    const before = game.viewFor(a).hand.map((c) => c.id);
+    game.submit(a, [before[4]]);
+    const logLength = game.viewFor(a).log.length;
+    expect(game.viewFor(a).canTakeBack).toBe(true);
+
+    game.takeBack(a);
+    const v = game.viewFor(a);
+    expect(v.hand.map((c) => c.id)).toEqual(before);
+    expect(v.yourSubmission).toBeNull();
+    expect(v.mustSubmit).toBe(true);
+    expect(v.round!.submittedCount).toBe(0);
+    expect(v.players.find((p) => p.id === a)!.status).toBe("playing");
+    expect(v.log.length).toBe(logLength);
+  });
+
+  it("puts back both cards of a pick-2 answer in their places", () => {
+    const t = setup({ humans: 3, pick: 2 });
+    t.game.start(t.host);
+    const a = t.ids.find((id) => t.game.viewFor(id).mustSubmit)!;
+    const before = t.game.viewFor(a).hand.map((c) => c.id);
+    t.game.submit(a, [before[7], before[2]]);
+    t.game.takeBack(a);
+    expect(t.game.viewFor(a).hand.map((c) => c.id)).toEqual(before);
+  });
+
+  it("allows one take-back for each player in each round", () => {
+    const { game, players } = started(4);
+    const [a, b, c] = players;
+    playFirst(game, a);
+    game.takeBack(a);
+    playFirst(game, a);
+    expect(game.viewFor(a).canTakeBack).toBe(false);
+    expect(() => game.takeBack(a)).toThrow("TAKE_BACK_USED");
+
+    playFirst(game, b);
+    playFirst(game, c);
+    vi.advanceTimersByTime(JUDGING_DELAY_MS);
+    const czar = game.viewFor(a).round!.czarId;
+    game.pick(czar, game.viewFor(czar).round!.submissions![0].id);
+    vi.advanceTimersByTime(ROUND_OVER_MS);
+
+    // A new round gives a new take-back.
+    const next = game.viewFor(a);
+    if (next.mustSubmit) {
+      playFirst(game, a);
+      expect(game.viewFor(a).canTakeBack).toBe(true);
+    }
+  });
+
+  it("waits 3 seconds after the last answer, so the last player can still take back a card", () => {
+    const { game, players, host } = started(3);
+    const [a, b] = players;
+    playFirst(game, a);
+    playFirst(game, b);
+    const round = game.viewFor(host).round!;
+    expect(game.viewFor(host).phase).toBe("submitting");
+    expect(round.judgingStartsAt).toBe(Date.now() + JUDGING_DELAY_MS);
+
+    vi.advanceTimersByTime(JUDGING_DELAY_MS - 1);
+    game.takeBack(b);
+    expect(game.viewFor(host).round!.judgingStartsAt).toBeNull();
+    vi.advanceTimersByTime(JUDGING_DELAY_MS);
+    expect(game.viewFor(host).phase).toBe("submitting");
+
+    // b plays again. a can still take back, so the game waits again.
+    playFirst(game, b);
+    expect(game.viewFor(host).round!.judgingStartsAt).not.toBeNull();
+    vi.advanceTimersByTime(JUDGING_DELAY_MS);
+    expect(game.viewFor(host).phase).toBe("judging");
+    expect(() => game.takeBack(a)).toThrow("WRONG_PHASE");
+  });
+
+  it("starts judging at once when nobody can take back an answer", () => {
+    const { game, players, host } = started(3);
+    const [a, b] = players;
+    playFirst(game, a);
+    game.takeBack(a);
+    playFirst(game, a);
+    playFirst(game, b);
+    game.takeBack(b);
+    playFirst(game, b);
+    expect(game.viewFor(host).phase).toBe("judging");
+  });
+
+  it("starts judging at once when only bots answered", () => {
+    const { game, ids } = setup({ humans: 1, bots: 2 });
+    game.start(ids[0]);
+    expect(game.viewFor(ids[0]).phase).toBe("judging");
+  });
+
+  it("never waits past the round timer", () => {
+    const { game, players, host } = started(3);
+    const [a, b] = players;
+    playFirst(game, a);
+    vi.advanceTimersByTime(game.viewFor(host).round!.deadline! - Date.now() - 1000);
+    playFirst(game, b);
+    expect(game.viewFor(host).round!.judgingStartsAt).toBe(Date.now() + 1000);
+    vi.advanceTimersByTime(1000);
+    expect(game.viewFor(host).phase).toBe("judging");
+  });
+
+  it("counts a missed round when the player takes back and does not play again", () => {
+    const { game, players, host } = started(4);
+    const [a, b, c] = players;
+    playFirst(game, a);
+    playFirst(game, b);
+    playFirst(game, c);
+    game.takeBack(c);
+    vi.advanceTimersByTime(game.viewFor(host).round!.deadline! - Date.now());
+    expect(game.viewFor(host).phase).toBe("judging");
+    expect(game.viewFor(c).yourIdleRounds).toBe(1);
+  });
+
+  it("refuses a take-back without an answer", () => {
+    const { game, players, host } = started(3);
+    expect(() => game.takeBack(players[0])).toThrow("NOT_SUBMITTED");
+    expect(() => game.takeBack(game.viewFor(host).round!.czarId)).toThrow("NOT_SUBMITTED");
+  });
+});
+
 describe("leaving", () => {
   it("cancels the round when the Card Czar leaves", () => {
     const { game, ids, host } = setup({ humans: 4 });
@@ -341,6 +475,8 @@ describe("leaving", () => {
     const waiting = ids.filter((id) => game.viewFor(id).mustSubmit);
     for (const id of waiting.slice(0, -1)) game.submit(id, [game.viewFor(id).hand[0].id]);
     game.removePlayer(waiting.at(-1)!, "left");
+    expect(game.viewFor(host).round!.judgingStartsAt).not.toBeNull();
+    vi.advanceTimersByTime(JUDGING_DELAY_MS);
     expect(game.viewFor(host).phase).toBe("judging");
   });
 
