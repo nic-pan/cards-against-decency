@@ -38,6 +38,10 @@ export const RELEASES: Release[] = [
         text: "When the Card Czar leaves or does not choose in time, the round is not lost. The other players and the spectators vote for the best answer.",
       },
       {
+        title: "Easier Pick 2 and Pick 3",
+        text: "Each answer shows as one card with the full sentence: the black card with the answers filled in. While players choose, each answer is one stack of cards, not 2 or 3 separate cards.",
+      },
+      {
         title: "Empty rooms close",
         text: "A room closes after 30 minutes without a game. Before it closes, everyone gets a warning and can keep the room open.",
       },

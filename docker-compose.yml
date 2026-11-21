@@ -12,6 +12,9 @@ services:
       HOST: 0.0.0.0
       PORT: "3000"
       WATCHPACK_POLLING: "true"
+      # Development only. "2" or "3" keeps only black cards with that pick number:
+      # DEV_BLACK_PICK=3 docker compose up -d app
+      DEV_BLACK_PICK: ${DEV_BLACK_PICK:-}
       NEXT_TELEMETRY_DISABLED: "1"
       # Development only. Seals blocks, so they survive a restart. Production uses its own secret.
       BLOCK_KEY: "VKOhXGyPiBXn306F3LeEq3W2g+znk+51oLsmtqtXkog="

@@ -146,39 +146,83 @@ export function CardSlot() {
 }
 
 /**
- * A pick-2 or pick-3 answer as one card with numbered parts. Used on phones,
- * where 2 or 3 square cards side by side are too narrow to read.
+ * A Pick 2 or Pick 3 answer as one card: the full sentence, with the answers filled in and
+ * highlighted. The Card Czar reads complete sentences, not 2 or 3 separate cards.
  */
-export function CombinedAnswer({
+export function SentenceAnswer({
+  black,
   cards,
   selected,
   onClick,
 }: {
+  black: Black;
   cards: White[];
   selected?: boolean;
   onClick?: () => void;
 }) {
-  const body = (
-    <ol className="space-y-1.5">
-      {cards.map((c, i) => (
-        <li key={c.id} className="flex gap-2">
-          <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-[11px] text-white">
-            {i + 1}
-          </span>
-          <span className="hyphens-auto break-words">{c.text}</span>
-        </li>
-      ))}
-    </ol>
+  const mark = "rounded bg-[#fde2d3] px-0.5 text-[#a8380d] [box-decoration-break:clone]";
+  // A prompt without a blank, such as "Make a haiku.": the answers follow it, one on each line.
+  const body = !black.text.includes("_") ? (
+    <div className="hyphens-auto break-words">
+      <p>{black.text}</p>
+      <ol className="mt-1.5 space-y-1">
+        {cards.map((c) => (
+          <li key={c.id}>
+            <mark className={mark}>{c.text}</mark>
+          </li>
+        ))}
+      </ol>
+    </div>
+  ) : (
+    <p className="hyphens-auto break-words">
+      {fillPrompt(black.text, cards.map((c) => c.text)).map((seg, i) =>
+        seg.answer ? (
+          <mark key={i} className={mark}>
+            {seg.text}
+          </mark>
+        ) : (
+          <span key={i}>{seg.text}</span>
+        ),
+      )}
+    </p>
   );
-  const className = `block w-full rounded-lg border bg-card-white p-3 text-left text-sm font-bold leading-snug text-[#171717] shadow-sm transition ${
+  // flex-col + justify-start: a button centres its content, but the text belongs at the top.
+  const className = `flex h-full w-full flex-col justify-start rounded-lg border bg-card-white p-3 text-left text-sm font-bold leading-snug text-[#171717] shadow-sm transition sm:p-4 sm:text-[15px] ${
     // The surrounding group draws the selection frame, so the card only colours its border.
     selected ? "border-accent" : "border-[#d9d3c6]"
   }`;
   return onClick ? (
-    <button type="button" onClick={onClick} aria-pressed={selected} className={`${className} cursor-pointer`}>
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={selected}
+      className={`${className} cursor-pointer hover:-translate-y-0.5 hover:shadow-md`}
+    >
       {body}
     </button>
   ) : (
     <div className={className}>{body}</div>
+  );
+}
+
+/** Grid for sentence answers: one in a row on phones, two on wider screens. */
+export const SENTENCE_GRID = "grid gap-3 sm:grid-cols-2";
+
+/** A face-down Pick 2 or Pick 3 answer: one stack of cards with the number of cards on it. */
+export function CardStack({ count }: { count: number }) {
+  return (
+    <div className="relative" aria-label={`${count} played cards, face down`}>
+      {/* The cards behind the top card. */}
+      <div aria-hidden className="absolute inset-0 translate-x-1.5 -translate-y-1.5 rounded-lg border border-[#d9d3c6] bg-card-white" />
+      {count > 2 && (
+        <div aria-hidden className="absolute inset-0 translate-x-0.75 -translate-y-0.75 rounded-lg border border-[#d9d3c6] bg-card-white" />
+      )}
+      <div className="relative">
+        <CardBack />
+        <span className="absolute bottom-1.5 right-1.5 rounded-full bg-card-black px-1.5 py-0.5 text-[10px] font-bold text-white">
+          ×{count}
+        </span>
+      </div>
+    </div>
   );
 }

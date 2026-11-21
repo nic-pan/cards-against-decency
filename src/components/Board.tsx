@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { offences, type GameView, type LastRoundView, type WhiteCard } from "@/lib/protocol";
-import { BlackCardView, CARD_GRID, CardBack, CardSlot, CombinedAnswer, WhiteCardView, deckIdOf } from "./Cards";
+import { offences, type BlackCard, type GameView, type LastRoundView, type WhiteCard } from "@/lib/protocol";
+import { BlackCardView, CARD_GRID, CardBack, CardSlot, CardStack, SENTENCE_GRID, SentenceAnswer, WhiteCardView, deckIdOf } from "./Cards";
 import type { Act } from "./Room";
 import { Badge, Button } from "./ui";
 
@@ -285,22 +285,15 @@ function Table({
 
         <div className="min-w-0">
           <h3 className="mb-2 text-sm font-bold text-muted">{playedHeading}</h3>
-          <div className={CARD_GRID}>
+          {/* Pick 2 and Pick 3 answers show as full sentences, so they need wider cells. */}
+          <div className={view.phase !== "submitting" && pick > 1 ? SENTENCE_GRID : CARD_GRID}>
             {view.phase === "submitting" && (
               <>
-                {Array.from({ length: round.submittedCount }, (_, i) => (
-                  <Group key={`b${i}`} size={pick} faceDown>
-                    {Array.from({ length: pick }, (_, j) => (
-                      <CardBack key={j} />
-                    ))}
-                  </Group>
-                ))}
+                {Array.from({ length: round.submittedCount }, (_, i) =>
+                  pick === 1 ? <CardBack key={`b${i}`} /> : <CardStack key={`b${i}`} count={pick} />,
+                )}
                 {Array.from({ length: Math.max(0, round.expectedCount - round.submittedCount) }, (_, i) => (
-                  <Group key={`s${i}`} size={pick} faceDown>
-                    {Array.from({ length: pick }, (_, j) => (
-                      <CardSlot key={j} />
-                    ))}
-                  </Group>
+                  <CardSlot key={`s${i}`} />
                 ))}
               </>
             )}
@@ -310,6 +303,7 @@ function Table({
                 <Group
                   key={s.id}
                   size={s.cards.length}
+                  black={round.black}
                   highlight={chosen === s.id ? "selected" : yourVote === s.id ? "winner" : undefined}
                   answer={{
                     cards: s.cards,
@@ -344,6 +338,7 @@ function Table({
                   <Group
                     key={s.id}
                     size={s.cards.length}
+                    black={round.black}
                     highlight={s.isWinner ? "winner" : undefined}
                     answer={{ cards: s.cards }}
                     label={
@@ -423,29 +418,25 @@ function Table({
 }
 
 /**
- * One player's cards. On wide screens a pick-2 or pick-3 answer spans 2 or 3 columns.
- * On phones it becomes one full-width card with numbered parts, and a face-down answer
- * shows as a single card back.
+ * One player's answer. A Pick 1 answer is one square card. A Pick 2 or Pick 3 answer is one
+ * card with the full sentence (SentenceAnswer), on every screen size.
  */
 function Group({
   size,
+  black,
   highlight,
   label,
   children,
   answer,
-  faceDown = false,
 }: {
   size: number;
+  black: BlackCard;
   highlight?: "selected" | "winner";
   label?: React.ReactNode;
+  /** The square cards, for a Pick 1 answer. */
   children: React.ReactNode;
-  /** The revealed cards, for the combined phone card. */
-  answer?: { cards: WhiteCard[]; onClick?: () => void; selected?: boolean };
-  faceDown?: boolean;
+  answer: { cards: WhiteCard[]; onClick?: () => void; selected?: boolean };
 }) {
-  const multi = size > 1;
-  const span = { gridColumn: `span ${size} / span ${size}` };
-  const phoneSpan = !multi ? "" : faceDown ? "max-sm:[grid-column:span_1]!" : "max-sm:col-span-full!";
   const ring =
     highlight === "winner"
       ? "ring-2 ring-accent ring-offset-4 ring-offset-paper"
@@ -453,21 +444,13 @@ function Group({
         ? "ring-2 ring-accent/60 ring-offset-4 ring-offset-paper"
         : "";
   return (
-    <div style={span} className={`min-w-0 ${phoneSpan}`}>
-      <div className={`rounded-lg ${ring}`}>
-        {multi && answer && (
-          <div className="sm:hidden">
-            <CombinedAnswer cards={answer.cards} onClick={answer.onClick} selected={answer.selected} />
-          </div>
+    <div className="flex min-w-0 flex-col">
+      <div className={`flex-1 rounded-lg ${ring}`}>
+        {size > 1 ? (
+          <SentenceAnswer black={black} cards={answer.cards} onClick={answer.onClick} selected={answer.selected} />
+        ) : (
+          children
         )}
-        <div
-          className={`grid gap-2 sm:gap-3 ${multi && answer ? "max-sm:hidden" : ""} ${
-            multi && faceDown ? "max-sm:grid-cols-1! [&>*:not(:first-child)]:max-sm:hidden" : ""
-          }`}
-          style={{ gridTemplateColumns: `repeat(${size}, minmax(0, 1fr))` }}
-        >
-          {children}
-        </div>
       </div>
       {label && <div className="mt-1.5 truncate text-xs">{label}</div>}
     </div>
@@ -565,11 +548,12 @@ function LastRoundDialog({
                 : "The Card Czar did not choose. Nobody got an Offence."}
               {last.end === "audience" && " The players and spectators chose the winner."}
             </h3>
-            <div className={CARD_GRID}>
+            <div className={pick > 1 ? SENTENCE_GRID : CARD_GRID}>
               {last.answers.map((a, i) => (
                 <Group
                   key={i}
                   size={pick}
+                  black={last.black}
                   highlight={a.isWinner ? "winner" : undefined}
                   answer={{ cards: a.cards }}
                   label={

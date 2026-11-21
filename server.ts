@@ -10,7 +10,9 @@ const dev = process.env.NODE_ENV !== "production";
 const hostname = process.env.HOST ?? (dev ? "localhost" : "0.0.0.0");
 const port = Number(process.env.PORT ?? 3000);
 
-const decks = loadDecks(join(process.cwd(), "data/decks"));
+// Development only: DEV_BLACK_PICK=3 keeps only Pick 3 black cards, to test that layout.
+const onlyPick = dev ? Number(process.env.DEV_BLACK_PICK) || undefined : undefined;
+const decks = loadDecks(join(process.cwd(), "data/decks"), onlyPick);
 const app = next({ dev, hostname, port });
 await app.prepare();
 const handle = app.getRequestHandler();

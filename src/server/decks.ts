@@ -18,9 +18,15 @@ const deckSchema = z.object({
   white: z.array(z.object({ id: z.string(), text })),
 });
 
-/** Loads and validates every deck file in a folder. */
-export function loadDecks(dir: string): DeckRegistry {
+/**
+ * Loads and validates every deck file in a folder.
+ * onlyPick keeps only the black cards with that pick number. It is for development: to test the Pick 2 and Pick 3 layout.
+ */
+export function loadDecks(dir: string, onlyPick?: number): DeckRegistry {
   const files = readdirSync(dir).filter((f) => f.endsWith(".json")).sort();
-  const decks: Deck[] = files.map((f) => deckSchema.parse(JSON.parse(readFileSync(join(dir, f), "utf8"))));
+  let decks: Deck[] = files.map((f) => deckSchema.parse(JSON.parse(readFileSync(join(dir, f), "utf8"))));
+  if (onlyPick) {
+    decks = decks.map((d) => ({ ...d, black: d.black.filter((b) => b.pick === onlyPick) })).filter((d) => d.black.length > 0);
+  }
   return new DeckRegistry(decks);
 }
