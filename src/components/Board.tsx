@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { offences, type GameView, type WhiteCard } from "@/lib/protocol";
+import { useEffect, useRef, useState } from "react";
+import { offences, type GameView, type LastRoundView, type WhiteCard } from "@/lib/protocol";
 import { BlackCardView, CARD_GRID, CardBack, CardSlot, CombinedAnswer, WhiteCardView, deckIdOf } from "./Cards";
 import type { Act } from "./Room";
 import { Badge, Button } from "./ui";
@@ -23,15 +23,23 @@ export function Board({ view, isHost, act, clockOffset }: { view: GameView; isHo
   // All answers are in. Judging starts in a few seconds, so the last player can still take back a card.
   const judgingIn = useSecondsLeft(round?.judgingStartsAt ?? null, clockOffset);
   const nameOf = (id: string | null) => view.players.find((p) => p.id === id)?.name ?? "Someone who left";
+  const [showLast, setShowLast] = useState(false);
 
   if (view.phase === "gameOver") return <GameOver view={view} isHost={isHost} act={act} nameOf={nameOf} />;
   if (!round) return null;
 
   const isCzar = round.czarId === view.youId;
+  // During the end of a round, that round is already on the table. The button shows the round before it.
+  const last = view.lastRound;
+  const lastIsOnTable = !!last && view.phase === "roundOver" && last.number === round.number;
+  const onShowLast = last && !lastIsOnTable ? () => setShowLast(true) : null;
 
   return (
     <div className="space-y-5">
-      <StatusBar view={view} isCzar={isCzar} left={left} judgingIn={judgingIn} nameOf={nameOf} />
+      <StatusBar view={view} isCzar={isCzar} left={left} judgingIn={judgingIn} nameOf={nameOf} onShowLast={onShowLast} />
+      {showLast && last && !lastIsOnTable && (
+        <LastRoundDialog last={last} current={round.number} decks={view.decks} onClose={() => setShowLast(false)} />
+      )}
 
       <Table view={view} isCzar={isCzar} act={act} left={left} nameOf={nameOf} />
 
@@ -46,12 +54,15 @@ function StatusBar({
   left,
   judgingIn,
   nameOf,
+  onShowLast,
 }: {
   view: GameView;
   isCzar: boolean;
   left: number | null;
   judgingIn: number | null;
   nameOf: (id: string | null) => string;
+  /** Opens the "Last round" window. Null when there is no earlier round to show. */
+  onShowLast: (() => void) | null;
 }) {
   const round = view.round!;
   let text: string;
@@ -90,6 +101,15 @@ function StatusBar({
       </span>
       {/* On phones: round, Czar, count and timer on the first line, the status text on the second. */}
       <span className="order-last w-full text-base font-semibold sm:order-none sm:w-auto sm:flex-1">{text}</span>
+      {onShowLast && (
+        <button
+          type="button"
+          onClick={onShowLast}
+          className="rounded-lg border border-line px-3 py-1 text-xs font-semibold hover:bg-paper"
+        >
+          Last round
+        </button>
+      )}
       {view.phase === "submitting" && (
         <span className="ml-auto text-sm text-muted sm:ml-0">
           {round.submittedCount}/{round.expectedCount} played
@@ -417,6 +437,109 @@ function ActionBar({ action }: { action: Action }) {
           {action.label}
         </Button>
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// The last round opens in a window above the game. It never replaces the current round.
+
+function LastRoundDialog({
+  last,
+  current,
+  decks,
+  onClose,
+}: {
+  last: LastRoundView;
+  current: number;
+  decks: GameView["decks"];
+  onClose: () => void;
+}) {
+  const close = useRef<HTMLButtonElement>(null);
+  // The game view updates often. Keep the latest onClose without running the effect again.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  useEffect(() => {
+    close.current?.focus();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onCloseRef.current();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  const deckName = (cardId: string) => decks.find((d) => d.id === deckIdOf(cardId))?.name;
+  const winner = last.answers.find((a) => a.isWinner);
+  const pick = last.black.pick;
+
+  return (
+    <div className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-black/60 px-4 py-8" onClick={onClose}>
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="last-round-title"
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-4xl rounded-2xl border border-line bg-surface p-5 shadow-xl sm:p-6"
+      >
+        <div className="flex items-start gap-3">
+          <div className="flex-1">
+            <p className="text-xs font-bold uppercase tracking-wide text-muted">Last round</p>
+            <h2 id="last-round-title" className="text-xl font-black">
+              Round {last.number}
+            </h2>
+            <p className="mt-1 text-sm text-muted">
+              Card Czar: <b className="text-ink">{last.czarName}</b>. Round {current} continues behind this window.
+            </p>
+          </div>
+          <button
+            ref={close}
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="min-h-11 min-w-11 rounded-lg border border-line text-lg hover:bg-paper"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="mt-5 grid gap-5 md:grid-cols-[13rem_minmax(0,1fr)]">
+          <div className="mx-auto w-full max-w-[15rem] md:max-w-none">
+            <BlackCardView card={last.black} answers={winner?.cards.map((c) => c.text)} deckName={deckName(last.black.id)} />
+          </div>
+          <div className="min-w-0">
+            <h3 className="mb-2 text-sm font-bold text-ink">
+              {winner
+                ? winner.isYou
+                  ? "You won this round."
+                  : `${winner.playerName}${winner.playerLeft ? " (left)" : ""} won this round.`
+                : "The Card Czar did not choose. Nobody got an Offence."}
+            </h3>
+            <div className={CARD_GRID}>
+              {last.answers.map((a, i) => (
+                <Group
+                  key={i}
+                  size={pick}
+                  highlight={a.isWinner ? "winner" : undefined}
+                  answer={{ cards: a.cards }}
+                  label={
+                    <span className={a.isWinner ? "font-bold text-ink" : "text-muted"}>
+                      {a.isWinner && "★ "}
+                      {a.isYou ? "You" : a.playerName}
+                      {a.playerLeft && " (left)"}
+                    </span>
+                  }
+                >
+                  {a.cards.map((c, j) => (
+                    <WhiteCardView key={c.id} card={c} deckName={deckName(c.id)} order={a.cards.length > 1 ? j + 1 : undefined} />
+                  ))}
+                </Group>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 flex justify-end">
+          <Button onClick={onClose}>Back to the game</Button>
+        </div>
+      </section>
     </div>
   );
 }

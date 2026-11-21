@@ -326,6 +326,76 @@ describe("timeouts and inactive players", () => {
   });
 });
 
+describe("the last round", () => {
+  /** Plays one round. The Card Czar chooses the first answer. Returns the winner's id. */
+  function playRound(game: Game, ids: string[]) {
+    submitAll(game, ids);
+    const czar = game.viewFor(ids[0]).round!.czarId;
+    const sub = game.viewFor(czar).round!.submissions![0];
+    game.pick(czar, sub.id);
+    const winner = game.viewFor(ids[0]).round!.submissions!.find((s) => s.isWinner)!.playerId!;
+    vi.advanceTimersByTime(ROUND_OVER_MS);
+    return { czar, winner };
+  }
+
+  it("keeps the last judged round, with the winner first and the names of all players", () => {
+    const { game, ids, host } = setup({ humans: 4 });
+    game.start(host);
+    const black = game.viewFor(host).round!.black;
+    expect(game.viewFor(host).lastRound).toBeNull();
+    const { czar, winner } = playRound(game, ids);
+
+    const last = game.viewFor(winner).lastRound!;
+    expect(game.viewFor(host).round!.number).toBe(2);
+    expect(last.number).toBe(1);
+    expect(last.black).toEqual(black);
+    expect(last.end).toBe("winner");
+    expect(last.czarName).toBe(game.playerName(czar));
+    expect(last.answers).toHaveLength(3);
+    expect(last.answers[0]).toMatchObject({ isWinner: true, isYou: true, playerName: game.playerName(winner) });
+    expect(last.answers.slice(1).every((a) => !a.isWinner && !a.isYou)).toBe(true);
+  });
+
+  it("keeps the answers when the Card Czar does not choose", () => {
+    const { game, ids, host } = setup({ humans: 4 });
+    game.start(host);
+    submitAll(game, ids);
+    vi.advanceTimersByTime(game.viewFor(host).settings.judgeSeconds * 1000);
+    const last = game.viewFor(host).lastRound!;
+    expect(last.end).toBe("czarTimeout");
+    expect(last.answers).toHaveLength(3);
+    expect(last.answers.some((a) => a.isWinner)).toBe(false);
+  });
+
+  it("keeps the round before when the Card Czar leaves", () => {
+    const { game, ids, host } = setup({ humans: 5 });
+    game.start(host);
+    playRound(game, ids);
+    const czar = game.viewFor(host).round!.czarId;
+    game.removePlayer(czar, "left");
+    expect(game.viewFor(host).lastRound!.number).toBe(1);
+  });
+
+  it("keeps the name of a player who left", () => {
+    const { game, ids, host } = setup({ humans: 5 });
+    game.start(host);
+    const { winner } = playRound(game, ids);
+    const name = game.playerName(winner);
+    const viewer = ids.find((id) => id !== winner)!;
+    game.removePlayer(winner, "left");
+    expect(game.viewFor(viewer).lastRound!.answers[0]).toMatchObject({ playerName: name, playerLeft: true, isWinner: true });
+  });
+
+  it("forgets the last round when a new game starts", () => {
+    const { game, ids, host } = setup({ humans: 4 });
+    game.start(host);
+    playRound(game, ids);
+    game.endGame(host);
+    game.start(host);
+    expect(game.viewFor(host).lastRound).toBeNull();
+  });
+});
+
 describe("taking back a played card", () => {
   /** Starts a game. Returns the players who must answer, in order. */
   function started(humans = 3) {

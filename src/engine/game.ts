@@ -226,6 +226,27 @@ export interface RoundView {
   end: RoundEnd | null;
 }
 
+/** One answer of the last round. */
+export interface LastRoundAnswer {
+  cards: WhiteCard[];
+  /** The name at the end of that round. */
+  playerName: string;
+  /** The player is no longer in the game. */
+  playerLeft: boolean;
+  isYou: boolean;
+  isWinner: boolean;
+}
+
+/** The last round that had answers. The winning answer comes first. */
+export interface LastRoundView {
+  number: number;
+  black: BlackCard;
+  czarName: string;
+  /** "czarTimeout": the Card Czar did not choose, and nobody got an Offence. */
+  end: "winner" | "czarTimeout";
+  answers: LastRoundAnswer[];
+}
+
 /** The open vote, as one person sees it. */
 export interface VoteView {
   targetId: string;
@@ -286,6 +307,8 @@ export interface GameView {
   log: Notice[];
   /** The open vote to remove a player, or null. */
   vote: VoteView | null;
+  /** The last round that had answers, or null. Rounds that the Card Czar left or that nobody played are not kept. */
+  lastRound: LastRoundView | null;
   /** Server time when the room closes if nobody starts a game or keeps it open. Null during a game. */
   lobbyClosesAt: number | null;
   decks: DeckSummary[];
@@ -379,6 +402,13 @@ export class Game {
   private blackPile: Pile<BlackCard> | null = null;
   private disposed = false;
   private vote: Vote | null = null;
+  private lastRound: {
+    number: number;
+    black: BlackCard;
+    czarName: string;
+    end: "winner" | "czarTimeout";
+    answers: { cards: WhiteCard[]; playerId: string; playerName: string; isWinner: boolean }[];
+  } | null = null;
   private voteTimer: ReturnType<typeof setTimeout> | null = null;
   private lobbyTimer: ReturnType<typeof setTimeout> | null = null;
   private lobbyDeadline: number | null = null;
@@ -675,6 +705,7 @@ export class Game {
       p.idleRounds = 0;
     }
     this.winnerId = null;
+    this.lastRound = null;
     this.roundNumber = 0;
     this.lastCzarId = null;
     this.setNotice("The game started.");
@@ -800,6 +831,7 @@ export class Game {
     const player = this.find(winner.playerId);
     if (player) player.score += 1;
     this.setNotice(`${player?.name ?? "Someone who left"} won round ${round.number}.`);
+    this.rememberRound(round, "winner");
     this.endRound("winner");
   }
 
@@ -1026,6 +1058,7 @@ export class Game {
       winnerId: this.winnerId,
       log: this.log,
       vote: this.voteViewFor(playerId),
+      lastRound: this.lastRoundFor(playerId),
       lobbyClosesAt: this.lobbyDeadline,
       decks: [...this.decks.list(), ...[...this.externalDecks.values()].map((d) => ({ ...summarize(d), external: true }))],
       serverNow: Date.now(),
@@ -1154,9 +1187,45 @@ export class Game {
     if (!round || this.phase !== "judging") return;
     const czar = this.find(round.czarId);
     if (czar) this.markIdle(czar);
+    this.rememberRound(round, "czarTimeout");
     this.returnSubmissions(round);
     this.endRound("czarTimeout");
     this.kickIdle();
+  }
+
+  /** Keeps a copy of a judged round for the "Last round" window. Names are copied, so they stay after a player leaves. */
+  private rememberRound(round: Round, end: "winner" | "czarTimeout"): void {
+    const answers = round.submissions.map((s) => ({
+      cards: [...s.cards],
+      playerId: s.playerId,
+      playerName: this.find(s.playerId)?.name ?? "Someone who left",
+      isWinner: s.id === round.winnerSubmissionId,
+    }));
+    this.lastRound = {
+      number: round.number,
+      black: round.black,
+      czarName: this.find(round.czarId)?.name ?? "Someone who left",
+      end,
+      answers: [...answers.filter((a) => a.isWinner), ...answers.filter((a) => !a.isWinner)],
+    };
+  }
+
+  private lastRoundFor(viewerId: string): LastRoundView | null {
+    const last = this.lastRound;
+    if (!last) return null;
+    return {
+      number: last.number,
+      black: last.black,
+      czarName: last.czarName,
+      end: last.end,
+      answers: last.answers.map((a) => ({
+        cards: a.cards,
+        playerName: a.playerName,
+        playerLeft: !this.find(a.playerId),
+        isYou: a.playerId === viewerId,
+        isWinner: a.isWinner,
+      })),
+    };
   }
 
   private endRound(end: RoundEnd): void {

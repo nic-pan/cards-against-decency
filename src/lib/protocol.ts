@@ -2,7 +2,7 @@
 import type { GameSummary, GameView, Settings } from "../engine/game";
 
 export type { GameView, Settings, GameSummary };
-export type { SpectatorView, VoteView } from "../engine/game";
+export type { LastRoundView, SpectatorView, VoteView } from "../engine/game";
 export type { PublicPlayer, SubmissionView, RoundView, PlayerStatus } from "../engine/game";
 export type { WhiteCard, BlackCard, DeckSummary } from "../engine/deck";
 

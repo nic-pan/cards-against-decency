@@ -114,6 +114,12 @@ const GROUPS: Group[] = [
         ],
       },
       {
+        q: "Can I see the last round again?",
+        a: [
+          "Yes. Select \"Last round\" at the top of the game. A window shows the last black card, every answer, the winner, and who played each answer. The current round continues behind the window.",
+        ],
+      },
+      {
         q: "Can I change the card I played?",
         a: [
           "Yes, once in each round. Select \"Take back my card\" before the Card Czar starts to judge. The card goes back to your hand, and you can play a different card.",
