@@ -189,7 +189,8 @@ const GROUPS: Group[] = [
         a: [
           "The host can remove a player, or remove and ban them from that game. Any player can block another person. You then do not see each other's games, and you cannot join the same game. The other person is not told.",
           "Players can also vote to remove someone, the host included. Open the ⋯ menu next to the name and choose Vote to remove. The game counts one vote for each network, so friends on the same Wi-Fi share one vote, and a vote needs players from at least 3 networks. The first person on a network who votes casts that vote, and the others on the network see their name. The vote passes when more than half of the networks say yes.",
-          "To report a player, a username or a game, write to iridescentburst@gmail.com. Tell us the room code and the username if you can.",
+          "To report an offensive username, select \"Report name\" next to it in the online list. When people on 3 different networks report the same name, the public lists show \"Hidden name\" instead. The game also refuses names with slurs, hate symbols, links, contact details or fake staff names. Crude names are fine.",
+          "To report a player, a username or a game to us, write to iridescentburst@gmail.com. Tell us the room code and the username if you can.",
         ],
       },
       {

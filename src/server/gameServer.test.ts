@@ -398,6 +398,44 @@ describe("game server", () => {
     expect((await other.emit("room:join", { ...T, code: room.code, name: nm("Fresh") })).ok).toBe(true);
   }));
 
+  it("refuses names that the name filter blocks", async () => {
+    const a = await client();
+    expect(await a.emit("name:check", { name: "Hitler Fan" })).toMatchObject({ available: false, reason: "NAME_BLOCKED" });
+    expect((await a.emit("room:create", { ...T, name: "www.spam.com" })).error).toBe("NAME_BLOCKED");
+    expect(await a.emit("name:check", { name: nm("Poop Lord") })).toMatchObject({ available: true });
+  });
+
+  it("hides a name in the public lists after people on 3 networks report it", async () =>
+    withTestIps(async () => {
+      const rude = nm("Rude");
+      const target = await client({ name: rude, browser: "browser-of-rude-00001" }, "10.0.1.1");
+      const room = await target.emit("room:create", { ...T, name: rude });
+      const reporters = await Promise.all(
+        [2, 3, 4].map((n) => client({ name: nm("Reporter"), browser: `browser-of-reporter-${n}` }, `10.0.1.${n}`)),
+      );
+      const handleOf = async (c: Awaited<ReturnType<typeof client>>) =>
+        (await c.emit("lobby:subscribe")).online.find((u: { name: string }) => u.name === rude).handle;
+      const handle = await handleOf(reporters[0]);
+
+      // Two reports from one network count once.
+      expect((await reporters[0].emit("name:report", { handle })).ok).toBe(true);
+      expect((await reporters[0].emit("name:report", { handle })).ok).toBe(true);
+      expect((await reporters[1].emit("name:report", { handle })).ok).toBe(true);
+      let list = await reporters[0].emit("lobby:subscribe");
+      expect(list.games.find((g: { code: string }) => g.code === room.code).hostName).toBe(rude);
+
+      expect((await reporters[2].emit("name:report", { handle })).ok).toBe(true);
+      list = await reporters[0].emit("lobby:subscribe");
+      expect(list.games.find((g: { code: string }) => g.code === room.code)).toMatchObject({ hostName: "Hidden name" });
+      expect(list.online.map((u: { name: string }) => u.name)).not.toContain(rude);
+      expect(list.online.map((u: { name: string }) => u.name)).toContain("Hidden name");
+      // The person still sees their own name.
+      const own = await target.emit("lobby:subscribe");
+      expect(own.online.find((u: { you: boolean }) => u.you).name).toBe(rude);
+      // Nobody can report themselves.
+      expect((await target.emit("name:report", { handle })).error).toBe("UNKNOWN_PLAYER");
+    }));
+
   it("keeps blocked people apart, and hides the blocker from the online list", async () => {
     const browserA = "browser-of-blocker-0001";
     const browserB = "browser-of-pest-000001";

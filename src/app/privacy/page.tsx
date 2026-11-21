@@ -92,6 +92,11 @@ export default function Privacy() {
             <b>Security logs.</b> Events such as wrong room passwords, bans and blocked requests go to the server log.
             The log contains a one-way hash of the IP address with a key that changes every day, never the address itself.
           </li>
+          <li>
+            <b>Name reports.</b> When you report a username, the server keeps a one-way hash of your IP address for 24
+            hours, so that one network counts only once. The server log records the reported username and the hash. The
+            person you report is not told who reported them.
+          </li>
         </ul>
         <p className="mt-3 text-sm text-muted">
           People who share a network, for example the same Wi-Fi, usually share an IP address. A ban or a wait can

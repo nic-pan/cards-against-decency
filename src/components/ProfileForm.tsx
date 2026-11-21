@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import { isBotName } from "@/engine/bots";
 import { call, session } from "@/lib/socket";
-import { ERROR_TEXT, NAME_RESERVED_TEXT, NAME_TOO_SHORT_TEXT } from "@/lib/protocol";
+import { ERROR_TEXT, NAME_BLOCKED_TEXT, NAME_RESERVED_TEXT, NAME_TOO_SHORT_TEXT } from "@/lib/protocol";
 import { Button, inputClass } from "./ui";
 
 /** How long the player stops typing before the server checks the name. */
@@ -186,6 +186,7 @@ export function ProfileForm({
 /** Messages with a bold title and a body. */
 const TWO_PART: Record<string, { title: string; body: string }> = {
   NAME_RESERVED: NAME_RESERVED_TEXT,
+  NAME_BLOCKED: NAME_BLOCKED_TEXT,
   NAME_TOO_SHORT: NAME_TOO_SHORT_TEXT,
 };
 

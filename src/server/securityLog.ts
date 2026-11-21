@@ -27,7 +27,9 @@ export type SecurityEvent =
   | "vote_kick"
   | "unban"
   | "hosted_games_limit"
-  | "invalid_payload";
+  | "invalid_payload"
+  | "name_report"
+  | "name_hidden";
 
 export function securityLog(event: SecurityEvent, data: { ip?: string; room?: string; detail?: string }): void {
   console.warn(

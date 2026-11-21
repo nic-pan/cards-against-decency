@@ -3,6 +3,7 @@ import type { Server, Socket } from "socket.io";
 import { z, ZodError } from "zod";
 import { DeckRegistry } from "../engine/deck";
 import { Game, GameError, LIMITS, NAME_MAX, NAME_MIN, isReservedName, nameKey } from "../engine/game";
+import { isBlockedName } from "../engine/nameFilter";
 import { TERMS_VERSION, type ClientToServer, type OnlineStatus, type OnlineUser, type RoomListing, type ServerToClient } from "../lib/protocol";
 import { TokenBucket, WindowCounter } from "./rateLimit";
 import { ipKey, securityLog } from "./securityLog";
@@ -160,6 +161,7 @@ const schemas = {
   deckAdd: z.object({ code: z.string().max(20) }),
   nameCheck: z.object({ name }),
   block: z.object({ handle: z.string().max(32).optional(), playerId: id.optional() }),
+  report: z.object({ handle: z.string().min(1).max(32) }),
   deckRemove: z.object({ deckId: id }),
   unban: z.object({ banId: id }),
   botRemove: z.object({ playerId: id }),
@@ -271,7 +273,14 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       if (blockConflict(room, viewer)) continue;
       const { isPublic, ...summary } = room.game.summary();
       if (!isPublic || !summary.hostName) continue;
-      games.push({ code: room.code, hasPassword: !!room.password, ...summary });
+      games.push({
+        code: room.code,
+        hasPassword: !!room.password,
+        ...summary,
+        hostName: publicName(summary.hostName),
+        players: summary.players.map((p) => (p.isBot ? p : { ...p, name: publicName(p.name) })),
+        spectators: summary.spectators.map(publicName),
+      });
     }
     // Games that have not started come first, then the busiest games.
     const order = (g: RoomListing) => (g.phase === "lobby" ? 0 : g.phase === "gameOver" ? 1 : 2);
@@ -297,6 +306,11 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
   // ----- Online list ---------------------------------------------------
 
   const ONLINE_MAX = 200;
+  /** Reports from this many networks hide a name in the public lists. */
+  const REPORTS_TO_HIDE = 3;
+  /** How long a reported name stays hidden, and how long a report counts. */
+  const HIDE_MS = 24 * 60 * 60_000;
+  const HIDDEN_NAME = "Hidden name";
   type OnlineEntry = { who: Identity; status: OnlineStatus };
   const STATUS_ORDER: Record<OnlineStatus, number> = { playing: 0, watching: 1, browsing: 2 };
 
@@ -305,7 +319,8 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
     const byBrowser = new Map<string, OnlineEntry>();
     for (const s of io.sockets.sockets.values()) {
       const who = s.data.who;
-      if (!who || !who.nameKey) continue;
+      // A browser can send any name. Names that the filter blocks never show in the list.
+      if (!who || !who.nameKey || isBlockedName(who.name)) continue;
       let status: OnlineStatus | null = null;
       const room = s.data.code ? store.get(s.data.code) : undefined;
       if (room && s.data.playerId && room.game.hasMember(s.data.playerId)) {
@@ -320,6 +335,45 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
     return [...byBrowser.values()];
   }
 
+  // ----- Reported names ------------------------------------------------
+  // People can report a name from the online list. When people on REPORTS_TO_HIDE different
+  // networks report the same name, the public game list and the online list show HIDDEN_NAME
+  // instead, for HIDE_MS. Inside a room, the name stays: the host can remove or ban the player.
+  // Everything is in memory only. The security log records each report for review.
+
+  /** Name key -> the networks (hashed IP addresses) that reported it, and when the first report came. */
+  const nameReports = new Map<string, { networks: Set<string>; since: number }>();
+  /** Name key -> the time when the name shows again. */
+  const hiddenNames = new Map<string, number>();
+
+  function isHiddenName(name: string): boolean {
+    const until = hiddenNames.get(nameKey(name));
+    if (until === undefined) return false;
+    if (until > Date.now()) return true;
+    hiddenNames.delete(nameKey(name));
+    return false;
+  }
+
+  /** The name as the public lists show it. */
+  function publicName(name: string): string {
+    return isHiddenName(name) ? HIDDEN_NAME : name;
+  }
+
+  function reportName(target: Identity, reporterIp: string): void {
+    const now = Date.now();
+    for (const [key, r] of nameReports) if (now - r.since > HIDE_MS) nameReports.delete(key);
+    const entry = nameReports.get(target.nameKey) ?? { networks: new Set<string>(), since: now };
+    entry.networks.add(ipKey(reporterIp));
+    nameReports.set(target.nameKey, entry);
+    const count = entry.networks.size;
+    securityLog("name_report", { ip: reporterIp, detail: `${target.name} (${count}/${REPORTS_TO_HIDE})` });
+    if (count >= REPORTS_TO_HIDE && !isHiddenName(target.name)) {
+      hiddenNames.set(target.nameKey, now + HIDE_MS);
+      securityLog("name_hidden", { detail: target.name });
+      lobbyChanged();
+    }
+  }
+
   /** The online list for one viewer. People who blocked the viewer do not show. */
   function onlineFor(entries: OnlineEntry[], viewer: Identity | undefined): OnlineUser[] {
     return entries
@@ -327,7 +381,8 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       .slice(0, ONLINE_MAX)
       .map((e) => ({
         handle: seal.handle(e.who.browser),
-        name: e.who.name,
+        // You always see your own name. Others see "Hidden name" when people reported it.
+        name: e.who.browser === viewer?.browser ? e.who.name : publicName(e.who.name),
         status: e.status,
         you: e.who.browser === viewer?.browser,
         blocked: hasBlocked(viewer, e.who),
@@ -532,6 +587,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
   /** Checks that a name is free on the whole server. */
   function requireFreeName(rawName: string): void {
     if (isReservedName(rawName)) throw new GameError("NAME_RESERVED");
+    if (isBlockedName(rawName)) throw new GameError("NAME_BLOCKED");
     if (nameInUse(rawName)) throw new GameError("NAME_TAKEN");
   }
 
@@ -629,6 +685,15 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       return { token: seal.seal(target.browser, target.name), name: target.name };
     });
 
+    /** Reports a name from the online list. */
+    on(socket, "name:report", (s, p) => {
+      checkLookupRate(s);
+      const { handle } = schemas.report.parse(p);
+      const target = [...io.sockets.sockets.values()].map((x) => x.data.who).find((w) => w && seal.handle(w.browser) === handle);
+      if (!target || target.browser === s.data.who?.browser) throw new RequestError("UNKNOWN_PLAYER");
+      reportName(target, s.data.ip);
+    });
+
     on(socket, "lobby:subscribe", (s) => {
       // A player who opens the game list is no longer looking at their room.
       // Their seat waits for the reconnect window, like a lost connection.
@@ -653,6 +718,7 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       if (key.length === 0) return { available: false, reason: "NAME_INVALID" };
       if ([...key].length < NAME_MIN) return { available: false, reason: "NAME_TOO_SHORT" };
       if (isReservedName(n)) return { available: false, reason: "NAME_RESERVED" };
+      if (isBlockedName(n)) return { available: false, reason: "NAME_BLOCKED" };
       for (const room of store.all()) {
         if (room.closed) continue;
         for (const m of room.game.memberNames()) {

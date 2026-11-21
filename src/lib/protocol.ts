@@ -10,7 +10,7 @@ export type { WhiteCard, BlackCard, DeckSummary } from "../engine/deck";
  * Version of the Terms of Use and Privacy Notice that players accept: the date of the last change that matters.
  * Change it, and the "Last updated" date on both pages, when the documents change. Players must then accept again.
  */
-export const TERMS_VERSION = "2026-11-19";
+export const TERMS_VERSION = "2026-11-21";
 
 /** A room that waits this long between games closes. Keep in sync with LOBBY_MAX_MS in src/engine/game.ts. */
 export const LOBBY_MAX_MINUTES = 30;
@@ -74,6 +74,8 @@ export interface ClientToServer {
   "identity:update": (p: IdentityPayload, ack: (r: Ack) => void) => void;
   /** Block someone from the online list (handle) or from your room (playerId). Store the token and send it back with your identity. */
   "block:create": (p: { handle?: string; playerId?: string }, ack: (r: Ack<{ token: string; name: string }>) => void) => void;
+  /** Reports a name from the online list. Reports from 3 networks hide the name in the public lists. */
+  "name:report": (p: { handle: string }, ack: (r: Ack) => void) => void;
   /** Is this name free on the whole server? The player's own previous seat does not count. */
   "name:check": (p: { name: string; previous?: PreviousSeat }, ack: (r: Ack<{ available: boolean; reason?: string }>) => void) => void;
   /** Does this seat still exist? Used for the "You are still in a game" banner. */
@@ -140,6 +142,12 @@ export const NAME_RESERVED_TEXT = {
   body: "One of our agencies has already claimed it. Changing the capitalisation or adding punctuation won't fool anyone. Try another name.",
 };
 
+/** The message for a name that the filter blocks. It does not say which word matched. */
+export const NAME_BLOCKED_TEXT = {
+  title: "Choose a different name.",
+  body: "Crude is fine. Slurs, hate symbols, links, contact details and fake staff names are not. Everyone in the game list sees your name.",
+};
+
 /** The short-name message, in the same two parts. */
 export const NAME_TOO_SHORT_TEXT = {
   title: "That's hardly a name.",
@@ -155,6 +163,7 @@ export const ERROR_TEXT: Record<string, string> = {
   NAME_TOO_SHORT: `${NAME_TOO_SHORT_TEXT.title} ${NAME_TOO_SHORT_TEXT.body}`,
   NAME_TAKEN: "Somebody is already playing with that name. Choose another name.",
   NAME_RESERVED: `${NAME_RESERVED_TEXT.title} ${NAME_RESERVED_TEXT.body}`,
+  NAME_BLOCKED: `${NAME_BLOCKED_TEXT.title} ${NAME_BLOCKED_TEXT.body}`,
   NOT_ENOUGH_PLAYERS: "You need at least 3 players. Add bots or invite more friends.",
   NOT_ENOUGH_CARDS: "The selected decks do not have enough cards.",
   NO_DECKS: "Select at least one deck.",
