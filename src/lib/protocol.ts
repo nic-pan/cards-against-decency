@@ -10,7 +10,11 @@ export type { WhiteCard, BlackCard, DeckSummary } from "../engine/deck";
  * Version of the Terms of Use and Privacy Notice that players accept: the date of the last change that matters.
  * Change it, and the "Last updated" date on both pages, when the documents change. Players must then accept again.
  */
-export const TERMS_VERSION = "2026-11-21";
+// v2 has its own label, so it never matches a label that v1 players accepted. v2's Terms and Privacy
+// Notice add rules (votes, the audience vote), so every v1 player must accept again when v2 goes live.
+// On v2's launch day, set it to "v2-<launch date>" and update the "Last updated" dates.
+// When a merge from main conflicts here, keep a label that starts with "v2-".
+export const TERMS_VERSION = "v2-2026-11-21";
 
 /** A room that waits this long between games closes. Keep in sync with LOBBY_MAX_MS in src/engine/game.ts. */
 export const LOBBY_MAX_MINUTES = 30;
