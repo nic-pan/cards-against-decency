@@ -106,6 +106,7 @@ export type ErrorCode =
   | "BAD_SETTINGS"
   | "SPECTATORS_FULL"
   | "SWITCH_TOO_FEW"
+  | "SWITCH_DURING_VOTE"
   | "TOO_MANY_DECKS"
   | "NAME_RESERVED"
   | "NAME_BLOCKED"
@@ -562,6 +563,8 @@ export class Game {
     const leaving = others.filter((x) => this.find(x)).length;
     const arriving = others.length - leaving;
     if (this.find(id)) {
+      // A player cannot escape an open vote to remove them by switching to watching.
+      if (this.vote?.targetId === id) return "SWITCH_DURING_VOTE";
       if (this.spectators.length + leaving >= this.settings.maxSpectators) return "SPECTATORS_FULL";
       if (inGame && this.players.length - leaving - 1 < MIN_PARTICIPANTS) return "SWITCH_TOO_FEW";
       return null;
@@ -581,7 +584,7 @@ export class Game {
       if (blocked) {
         this.setNotice(
           toWatch
-            ? `${name} stays a player: the game needs at least 3 players, or the spectator seats are full.`
+            ? `${name} stays a player: a vote about them is open, the game needs at least 3 players, or the spectator seats are full.`
             : `${name} keeps watching: the game is full, or the host does not allow joining during the game.`,
         );
         continue;
@@ -639,7 +642,10 @@ export class Game {
         }
         this.hostId = next.id;
       }
-      if (why === "banned") this.setNotice(`${spectator.name} was banned from this game room.`, "danger");
+      // A vote can remove a host who watches. The server needs to know, like for a player.
+      if (why === "voted") this.onRemoved(id, why, spectator.name);
+      if (why === "voted") this.setNotice(`${spectator.name} was voted out by the players.`, "danger");
+      else if (why === "banned") this.setNotice(`${spectator.name} was banned from this game room.`, "danger");
       else if (why === "kickedAgain") this.setNotice(`${spectator.name} was removed. The host has had enough. Understandably.`, "danger");
       else this.setNotice(why === "kicked" ? `${spectator.name} was removed.` : `${spectator.name} stopped watching.`);
       this.changed();
@@ -1172,10 +1178,9 @@ export class Game {
   startVote(byId: string, targetId: string): void {
     const starter = this.find(byId);
     if (!starter || starter.isBot) throw new GameError("NOT_A_VOTER");
-    const target = this.find(targetId);
-    if (!target || target.isBot || target.id === byId) throw new GameError("UNKNOWN_PLAYER");
+    if (!this.isVoteTarget(targetId) || targetId === byId) throw new GameError("UNKNOWN_PLAYER");
     if (this.vote) throw new GameError("VOTE_IN_PROGRESS");
-    if (new Set(this.humans().map((p) => this.voterKey(p.id))).size < VOTE_MIN_NETWORKS) {
+    if (this.voteNetworks(targetId) < VOTE_MIN_NETWORKS) {
       throw new GameError("VOTE_TOO_FEW");
     }
     const key = this.voterKey(byId);
@@ -1191,7 +1196,7 @@ export class Game {
       deadline: Date.now() + VOTE_SECONDS * 1000,
       castBy: new Map([[key, { id: byId, name: this.find(byId)?.name ?? "" }]]),
     };
-    this.setNotice(`${starter.name} started a vote to remove ${target.name}.`);
+    this.setNotice(`${starter.name} started a vote to remove ${this.memberName(targetId)}.`);
     this.voteTimer = setTimeout(() => {
       this.voteTimer = null;
       if (!this.disposed) this.failVote("The vote ended without enough yes votes.");
@@ -1211,6 +1216,21 @@ export class Game {
     (yes ? vote.no : vote.yes).delete(key);
     (yes ? vote.yes : vote.no).add(key);
     if (!this.settleVote()) this.changed();
+  }
+
+  /**
+   * Who a vote can remove: a human player, or a host who watches. Without the second rule, a host
+   * could switch to watching and use the host controls without any risk of a vote.
+   */
+  private isVoteTarget(id: string): boolean {
+    const player = this.find(id);
+    if (player) return !player.isBot;
+    return id === this.hostId && this.spectators.some((s) => s.id === id);
+  }
+
+  /** The networks in a vote: the human players' networks and the target's network. */
+  private voteNetworks(targetId: string): number {
+    return new Set([...this.humans().map((p) => this.voterKey(p.id)), this.voterKey(targetId)]).size;
   }
 
   /** The networks that can vote: those of the human players, except the target's network. */
@@ -1243,14 +1263,14 @@ export class Game {
   private settleVote(): boolean {
     const vote = this.vote;
     if (!vote || this.disposed) return false;
-    const target = this.find(vote.targetId);
-    if (!target) {
-      // The target left. Nothing to decide.
+    if (!this.isVoteTarget(vote.targetId)) {
+      // The target left, or stopped playing. Nothing to decide.
       this.clearVote();
       this.changed();
       return true;
     }
-    if (new Set(this.humans().map((p) => this.voterKey(p.id))).size < VOTE_MIN_NETWORKS) {
+    const target = { id: vote.targetId, name: this.memberName(vote.targetId) };
+    if (this.voteNetworks(vote.targetId) < VOTE_MIN_NETWORKS) {
       this.clearVote();
       this.setNotice("The vote was cancelled. There are not enough players.");
       this.changed();
@@ -1292,7 +1312,7 @@ export class Game {
     const key = this.voterKey(viewerId);
     return {
       targetId: vote.targetId,
-      targetName: this.find(vote.targetId)?.name ?? "",
+      targetName: this.memberName(vote.targetId),
       startedByName: this.find(vote.startedBy)?.name ?? "Someone who left",
       yes,
       no,

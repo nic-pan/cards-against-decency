@@ -223,6 +223,15 @@ export function PlayerList({
                     {s.isHost && <span className="text-muted"> (host)</span>}
                     {s.id === view.youId && <span className="text-muted"> (you)</span>}
                   </span>
+                  {/* A host who watches can still be voted out by the players. */}
+                  {s.isHost && !isHost && !view.youAreSpectator && !view.vote && (
+                    <button
+                      className="ml-auto rounded px-1.5 text-xs text-muted underline hover:text-danger"
+                      onClick={() => act("vote:start", { playerId: s.id })}
+                    >
+                      Vote to remove
+                    </button>
+                  )}
                   {isHost && s.id !== view.youId && (
                     <button
                       className="ml-auto rounded px-1.5 text-xs text-muted hover:bg-paper"

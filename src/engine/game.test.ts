@@ -974,6 +974,49 @@ describe("switching between player and spectator", () => {
     expect(() => game.switchRole(spec)).toThrow("ROOM_FULL");
   });
 
+  it("does not let a player escape an open vote to remove them", () => {
+    const decks = new DeckRegistry([makeDeck()]);
+    let seq = 0;
+    const game = new Game({ decks, idFactory: () => `id${++seq}`, rng: mulberry(7) });
+    const [a, b, c, d] = ["Ann", "Bob", "Cyd", "Dee"].map((n) => game.addPlayer(n));
+    game.start(a);
+    game.startVote(b, c);
+    expect(game.viewFor(c).roleSwitch!.blocked).toBe("SWITCH_DURING_VOTE");
+    expect(() => game.switchRole(c)).toThrow("SWITCH_DURING_VOTE");
+    expect(d).toBeTruthy();
+  });
+
+  it("cancels a pending switch when a vote to remove the player starts before the round ends", () => {
+    const decks = new DeckRegistry([makeDeck()]);
+    let seq = 0;
+    const game = new Game({ decks, idFactory: () => `id${++seq}`, rng: mulberry(7) });
+    const ids = ["Ann", "Bob", "Cyd", "Dee", "Eve"].map((n) => game.addPlayer(n));
+    const [a, b, c] = ids;
+    game.start(a);
+    game.switchRole(c);
+    game.startVote(b, c);
+    finishRound(game, ids);
+    expect(game.viewFor(c).youAreSpectator).toBe(false);
+    expect(game.viewFor(c).log.map((n) => n.text).join(" | ")).toContain("stays a player");
+  });
+
+  it("lets the players vote out a host who watches", () => {
+    const decks = new DeckRegistry([makeDeck()]);
+    let seq = 0;
+    const onRemoved = vi.fn();
+    const game = new Game({ decks, onRemoved, idFactory: () => `id${++seq}`, rng: mulberry(7) });
+    const [host, b, c] = ["Ann", "Bob", "Cyd", "Dee"].map((n) => game.addPlayer(n));
+    game.switchRole(host);
+    game.startVote(b, host);
+    expect(game.viewFor(c).vote).toMatchObject({ targetName: "Ann", canVote: true, needed: 2 });
+    // Bob's vote and Cyd's vote are 2 of 3: more than half.
+    game.castVote(c, true);
+    expect(game.hasMember(host)).toBe(false);
+    expect(onRemoved).toHaveBeenCalledWith(host, "voted", "Ann");
+    expect(game.viewFor(b).hostId).toBe(b);
+    expect(game.viewFor(b).log.map((n) => n.text)).toContain("Ann was voted out by the players.");
+  });
+
   it("passes the host role on when a host who watches leaves", () => {
     const { game, ids, host } = setup();
     game.switchRole(host);

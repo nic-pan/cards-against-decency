@@ -112,7 +112,8 @@ export default function Terms() {
 
       <Section title="8. Votes to remove a player">
         <p>
-          Players can vote to remove another player from a game, the host included. The game counts one vote for each
+          Players can vote to remove another player from a game, the host included, also when the host only watches. A
+          player cannot switch to watching while a vote to remove them is open. The game counts one vote for each
           network (internet address), not for each player, so friends on the same Wi-Fi share one vote. A vote needs
           players from at least 3 networks. A vote passes when more than half of the networks that can vote say yes.
         </p>

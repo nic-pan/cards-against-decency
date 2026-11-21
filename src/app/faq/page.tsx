@@ -145,7 +145,7 @@ const GROUPS: Group[] = [
         a: [
           "Yes. A player selects \"Watch instead\" in the Spectators list, and a spectator selects \"Join the game\". During a game, the switch happens when the current round ends, so you finish the round first. You can cancel it until then. In the lobby and on the end screen, the switch happens at once.",
           "When you start to watch, you lose your Offences and your cards. When you play again, you start from 0 with a new hand. A host who watches stays the host.",
-          "You cannot switch when the game would have fewer than 3 players, when all seats are taken, or when the host does not allow joining during the game. The button tells you why.",
+          "You cannot switch when the game would have fewer than 3 players, when all seats are taken, when the host does not allow joining during the game, or while the players vote on whether to remove you. The button tells you why. A host who watches can still be voted out: select \"Vote to remove\" next to their name in the Spectators list.",
         ],
       },
       {

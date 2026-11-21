@@ -193,6 +193,7 @@ export const ERROR_TEXT: Record<string, string> = {
   NOT_IN_ROOM: "You are not in a room.",
   SESSION_EXPIRED: "Your session has expired. Join again.",
   SPECTATORS_FULL: "This game has no free spectator seats.",
+  SWITCH_DURING_VOTE: "The players are voting on whether to remove you. You can switch when the vote ends.",
   SWITCH_TOO_FEW: "The game needs at least 3 players. You can switch between games, or when more people play.",
   TOO_MANY_DECKS: "A game can have at most 10 imported decks.",
   BAD_DECK_CODE: "Deck codes have 5 letters or numbers, for example 1ZW29.",
