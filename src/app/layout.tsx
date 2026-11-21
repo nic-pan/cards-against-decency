@@ -47,9 +47,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </a>
               . Adult humour, 18+.
             </p>
-            <p className="flex gap-4">
+            <p className="flex flex-wrap gap-x-4 gap-y-1">
               <Link className="underline" href="/faq">
                 FAQ
+              </Link>
+              <Link className="underline" href="/whats-new">
+                What&apos;s new
               </Link>
               <Link className="underline" href="/terms">
                 Terms of Use

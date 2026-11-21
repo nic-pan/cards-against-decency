@@ -6,6 +6,7 @@ import { BOT_DIVISION, BOT_PROFILES } from "@/engine/bots";
 import { session } from "@/lib/socket";
 import { GameBrowser } from "@/components/GameBrowser";
 import { ProfileForm } from "@/components/ProfileForm";
+import { WhatsNewNote } from "@/components/WhatsNewNote";
 
 type Step = { kind: "loading" } | { kind: "profile" } | { kind: "browse"; name: string };
 
@@ -21,6 +22,7 @@ export default function Home() {
   if (step.kind === "browse") {
     return (
       <main className="mx-auto max-w-6xl px-4 py-6">
+        <WhatsNewNote returning />
         <GameBrowser
           name={step.name}
           onLogout={() => setStep({ kind: "profile" })}
@@ -79,7 +81,11 @@ export default function Home() {
         <Link href="/faq" className="font-semibold underline">
           FAQ
         </Link>
-        .
+        . New features are on the{" "}
+        <Link href="/whats-new" className="font-semibold underline">
+          What&apos;s new
+        </Link>{" "}
+        page.
       </p>
     </main>
   );
