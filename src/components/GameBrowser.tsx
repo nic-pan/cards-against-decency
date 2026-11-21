@@ -190,6 +190,14 @@ function OnlinePanel({ users }: { users: OnlineUser[] }) {
   const [blocked, setBlocked] = useState<BlockedPerson[]>([]);
   const [confirm, setConfirm] = useState<OnlineUser | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Names you reported in this visit. The server ignores repeated reports from the same network.
+  const [reported, setReported] = useState<Set<string>>(new Set());
+
+  async function report(u: OnlineUser) {
+    const r = await call("name:report", { handle: u.handle });
+    if (!r.ok) return setError(r.text);
+    setReported((cur) => new Set(cur).add(u.handle));
+  }
   useEffect(() => setBlocked(blocks.list()), []);
 
   async function block(u: OnlineUser) {
@@ -216,6 +224,19 @@ function OnlinePanel({ users }: { users: OnlineUser[] }) {
                 </span>
                 {u.you && <Badge tone="accent">You</Badge>}
                 <span className="ml-auto shrink-0 text-xs text-muted">{STATUS_LABEL[u.status]}</span>
+                {!u.you &&
+                  (reported.has(u.handle) ? (
+                    <span className="shrink-0 px-1.5 text-xs text-muted">Reported</span>
+                  ) : (
+                    <button
+                      type="button"
+                      className="shrink-0 rounded px-1.5 text-xs text-muted underline hover:text-danger"
+                      title="Report an offensive name. When several people report it, the public lists hide it."
+                      onClick={() => void report(u)}
+                    >
+                      Report name
+                    </button>
+                  ))}
                 {u.blocked ? (
                   <span className="shrink-0 px-1.5 text-xs font-semibold text-danger">Blocked</span>
                 ) : !u.you && (

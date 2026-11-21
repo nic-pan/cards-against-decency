@@ -1,6 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { BlackCard, Deck, DeckRegistry, DeckSummary, Pile, Rng, WhiteCard, shuffle, summarize } from "./deck";
 import { BOT_PROFILES, botProfile, isBotName } from "./bots";
+import { isBlockedName } from "./nameFilter";
 
 // ---------------------------------------------------------------------------
 // Settings
@@ -84,6 +85,7 @@ export type ErrorCode =
   | "SPECTATORS_FULL"
   | "TOO_MANY_DECKS"
   | "NAME_RESERVED"
+  | "NAME_BLOCKED"
   | "TOO_MANY_BOTS";
 
 export class GameError extends Error {
@@ -957,6 +959,7 @@ export class Game {
     if (name.length === 0) throw new GameError("NAME_INVALID");
     if ([...name].length < NAME_MIN) throw new GameError("NAME_TOO_SHORT");
     if (isReservedName(name)) throw new GameError("NAME_RESERVED");
+    if (isBlockedName(name)) throw new GameError("NAME_BLOCKED");
     const lower = name.toLowerCase();
     if ([...this.players, ...this.spectators].some((p) => p.name.toLowerCase() === lower)) {
       throw new GameError("NAME_TAKEN");

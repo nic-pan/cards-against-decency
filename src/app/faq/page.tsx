@@ -167,7 +167,8 @@ const GROUPS: Group[] = [
         q: "Someone in my game is being awful. What can I do?",
         a: [
           "The host can remove a player, or remove and ban them from that game. Any player can block another person. You then do not see each other's games, and you cannot join the same game. The other person is not told.",
-          "To report a player, a username or a game, write to iridescentburst@gmail.com. Tell us the room code and the username if you can.",
+          "To report an offensive username, select \"Report name\" next to it in the online list. When people on 3 different networks report the same name, the public lists show \"Hidden name\" instead. The game also refuses names with slurs, hate symbols, links, contact details or fake staff names. Crude names are fine.",
+          "To report a player, a username or a game to us, write to iridescentburst@gmail.com. Tell us the room code and the username if you can.",
         ],
       },
       {

@@ -15,7 +15,7 @@ export default function Privacy() {
         ← Back
       </Link>
       <h1 className="mt-4 text-3xl font-black">Privacy Notice</h1>
-      <p className="mt-2 text-sm text-muted">Last updated 18 November 2026.</p>
+      <p className="mt-2 text-sm text-muted">Last updated 21 November 2026.</p>
 
       <p className="mt-6">
         Cards Against Decency is a free, non-commercial party game. You do not need an account. We collect as little as
@@ -89,6 +89,11 @@ export default function Privacy() {
           <li>
             <b>Security logs.</b> Events such as wrong room passwords, bans and blocked requests go to the server log.
             The log contains a one-way hash of the IP address with a key that changes every day, never the address itself.
+          </li>
+          <li>
+            <b>Name reports.</b> When you report a username, the server keeps a one-way hash of your IP address for 24
+            hours, so that one network counts only once. The server log records the reported username and the hash. The
+            person you report is not told who reported them.
           </li>
         </ul>
         <p className="mt-3 text-sm text-muted">

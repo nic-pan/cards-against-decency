@@ -14,7 +14,7 @@ export default function Terms() {
         ← Back
       </Link>
       <h1 className="mt-4 text-3xl font-black">Terms of Use</h1>
-      <p className="mt-2 text-sm text-muted">Last updated 18 November 2026.</p>
+      <p className="mt-2 text-sm text-muted">Last updated 21 November 2026.</p>
 
       <p className="mt-6">
         Cards Against Decency is a free, non-commercial party card game that you play in your browser. When you tick
@@ -51,6 +51,7 @@ export default function Terms() {
           of the game. Names that can hurt real people are not. Do not use a username that:
         </p>
         <ul className="mt-2 list-disc space-y-1 pl-5">
+          <li>contains a slur or a hate symbol against a group of people, in any language,</li>
           <li>contains a real person&apos;s full name, contact details or address, including your own,</li>
           <li>targets a specific person, for example another player,</li>
           <li>threatens violence, or calls for violence against people or groups,</li>
@@ -58,6 +59,15 @@ export default function Terms() {
           <li>pretends to be the game&apos;s staff or one of the bots,</li>
           <li>advertises something or contains a link.</li>
         </ul>
+        <p className="mt-2">
+          The game checks every username automatically and refuses some names. The check is not perfect: it can miss a
+          name, or refuse a harmless one. Choose another name if it refuses yours.
+        </p>
+        <p className="mt-2">
+          Anyone can report a username from the online list. When people on several different networks report the
+          same name, the public game list and the online list show &quot;Hidden name&quot; instead, for 24 hours.
+          Inside a game, the name stays, and the host can still remove the player.
+        </p>
         <p className="mt-2">
           No list can cover everything. We can remove a username, a game or a player that crosses the line, without
           warning.

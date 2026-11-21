@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { BOT_DIVISION, BOT_PROFILES } from "@/engine/bots";
-import { session } from "@/lib/socket";
+import { call, session } from "@/lib/socket";
 import { GameBrowser } from "@/components/GameBrowser";
 import { ProfileForm } from "@/components/ProfileForm";
 
@@ -16,6 +16,12 @@ export default function Home() {
   useEffect(() => {
     const name = session.name().trim();
     setStep(name && session.termsAccepted() ? { kind: "browse", name } : { kind: "profile" });
+    // A saved name that the name filter now blocks: the player must choose a new one.
+    if (name) {
+      void call<{ available: boolean; reason?: string }>("name:check", { name, previous: session.current() }).then((r) => {
+        if (r.ok && r.data.reason === "NAME_BLOCKED") setStep({ kind: "profile" });
+      });
+    }
   }, []);
 
   if (step.kind === "browse") {
