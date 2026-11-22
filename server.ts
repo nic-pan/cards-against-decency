@@ -4,6 +4,7 @@ import next from "next";
 import { Server } from "socket.io";
 import { loadDecks } from "./src/server/decks";
 import { attachGameServer } from "./src/server/gameServer";
+import { checkFeedbackSetup } from "./src/server/feedback";
 
 const dev = process.env.NODE_ENV !== "production";
 // Hosts such as Render need the server to listen on all interfaces.
@@ -34,4 +35,6 @@ attachGameServer(io, decks);
 httpServer.listen(port, hostname, () => {
   const counts = decks.list().map((d) => `${d.name} (${d.blackCount}/${d.whiteCount})`).join(", ");
   console.log(`> Ready on http://${hostname}:${port} — decks: ${counts}`);
+  // In development, a missing Notion key is normal: reports go to the log.
+  if (!dev) void checkFeedbackSetup(process.env).then((ok) => ok && console.log("> Feedback goes to Notion."));
 });

@@ -15,7 +15,7 @@ export default function Privacy() {
         ← Back
       </Link>
       <h1 className="mt-4 text-3xl font-black">Privacy Notice</h1>
-      <p className="mt-2 text-sm text-muted">Last updated 21 November 2026.</p>
+      <p className="mt-2 text-sm text-muted">Last updated 22 November 2026.</p>
 
       <p className="mt-6">
         Cards Against Decency is a free, non-commercial party game. You do not need an account. We collect as little as
@@ -66,11 +66,16 @@ export default function Privacy() {
               "See the next section. We never store it in plain text in a log.",
               "To stop abuse",
             ],
+            [
+              "Feedback you send",
+              "Only when you use the Feedback form: your message, the type (bug, idea or other), your email address if you add one, the game version, the page, and your browser type (for example \"Chrome on Android\"). Not your username or the room code.",
+              "To fix bugs and improve the game",
+            ],
           ]}
         />
         <p className="mt-3 text-sm text-muted">
           Legal basis: running the game you asked to play (GDPR Art. 6(1)(b)), and our legitimate interest in keeping the
-          game safe from abuse (Art. 6(1)(f)).
+          game safe from abuse (Art. 6(1)(f)). For feedback: your consent when you send the form (Art. 6(1)(a)).
         </p>
       </Section>
 
@@ -124,6 +129,11 @@ export default function Privacy() {
             which carries the traffic to Render. They process your IP address to deliver the website, under their own
             privacy terms.
           </li>
+          <li>
+            <b>Feedback</b> goes to a private database in Notion (Notion Labs, United States), which we use as a tool
+            under its own privacy terms. Only the developer reads it. If Notion is not available, the report goes to the
+            server log instead, without the email address.
+          </li>
         </ul>
         <p className="mt-3">We do not sell your data, and we do not share it with anyone else.</p>
       </Section>
@@ -153,7 +163,8 @@ export default function Privacy() {
 
       <Section title="What we do not collect">
         <p>
-          No account, email address, phone number, real name, location, contacts or payment details. Nobody is told
+          No account, phone number, real name, location, contacts or payment details. No email address, unless you add
+          one to a feedback report. Nobody is told
           that you blocked them. No advertising, no
           analytics, no tracking cookies, and no fonts or scripts from other websites. No generative AI processes your
           data.
@@ -175,6 +186,10 @@ export default function Privacy() {
           </li>
           <li>
             <b>Security logs</b> stay for 7 days. Then our hosting provider deletes them.
+          </li>
+          <li>
+            <b>Feedback</b> stays in our Notion database until we have dealt with it, and at most 12 months. To have a
+            report deleted earlier, write to us and describe it.
           </li>
           <li>
             <b>Your browser&apos;s storage</b> stays until you log out or clear it.

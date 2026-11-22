@@ -178,6 +178,12 @@ const GROUPS: Group[] = [
         ],
       },
       {
+        q: "How do I report a bug or suggest an idea?",
+        a: [
+          "Select \"Feedback\" in the bottom-right corner, or in the room header during a game. Choose Bug, Idea or Other and write your message. Add your email address only if you want an answer. We read every report, but we cannot answer all of them.",
+        ],
+      },
+      {
         q: "Why did my game disappear?",
         a: [
           "Games exist only in the server's memory. An update or a restart of the server ends all games, and a game closes after 2 hours without activity. Scores are not saved.",

@@ -71,6 +71,11 @@ export interface ClientToServer {
   "block:create": (p: { handle?: string; playerId?: string }, ack: (r: Ack<{ token: string; name: string }>) => void) => void;
   /** Reports a name from the online list. Reports from 3 networks hide the name in the public lists. */
   "name:report": (p: { handle: string }, ack: (r: Ack) => void) => void;
+  /** A bug report or an idea for the developer. */
+  "feedback:send": (
+    p: { type: "bug" | "idea" | "other"; message: string; email?: string; page: "home" | "game" | "info"; website?: string },
+    ack: (r: Ack) => void,
+  ) => void;
   /** Is this name free on the whole server? The player's own previous seat does not count. */
   "name:check": (p: { name: string; previous?: PreviousSeat }, ack: (r: Ack<{ available: boolean; reason?: string }>) => void) => void;
   /** Does this seat still exist? Used for the "You are still in a game" banner. */
@@ -138,7 +143,16 @@ export const NAME_TOO_SHORT_TEXT = {
   body: "Your identity needs at least 3 characters. We're running a game, not a witness protection programme.",
 };
 
+/** Feedback limits. The server checks them again. */
+export const FEEDBACK_MIN = 10;
+export const FEEDBACK_MAX = 1000;
+export const FEEDBACK_PER_HOUR = 3;
+
 export const ERROR_TEXT: Record<string, string> = {
+  FEEDBACK_TOO_SHORT: `Write at least ${FEEDBACK_MIN} characters.`,
+  FEEDBACK_TOO_LONG: `Write at most ${FEEDBACK_MAX} characters.`,
+  FEEDBACK_BAD_EMAIL: "That email address does not look right. Check it, or leave the field empty.",
+  FEEDBACK_LIMIT: `You can send ${FEEDBACK_PER_HOUR} reports in an hour. Try again later.`,
   NOT_HOST: "Only the host can do that.",
   WRONG_PHASE: "You can't do that right now.",
   ROOM_FULL: "This room is full.",

@@ -8,6 +8,7 @@ import type { GameView } from "../engine/game";
 import { loadDecks } from "./decks";
 import { attachGameServer, hostedGamesFromEnv } from "./gameServer";
 import { TERMS_VERSION } from "../lib/protocol";
+import type { FeedbackReport } from "./feedback";
 
 const T = { termsVersion: TERMS_VERSION };
 let nameSeq = 0;
@@ -18,6 +19,8 @@ let url = "";
 let server: ReturnType<typeof createServer>;
 let ioServer: Server;
 const clients: Socket[] = [];
+/** Feedback that the test server sent. */
+const feedbackSent: FeedbackReport[] = [];
 
 beforeAll(async () => {
   server = createServer();
@@ -27,6 +30,7 @@ beforeAll(async () => {
     joinsPerMinute: 1000,
     lookupsPerMinute: 1000,
     hostedGamesPerIp: 1000,
+    sendFeedback: async (r) => void feedbackSent.push(r),
   });
   await new Promise<void>((r) => server.listen(0, "127.0.0.1", r));
   url = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
@@ -502,5 +506,60 @@ describe("hosted games limit", () => {
       io.close();
       await new Promise((r) => http.close(r));
     }
+  });
+});
+
+describe("feedback", () => {
+  it("sends a report with the version, the page and a short browser name, but no username", async () => {
+    await withTestIps(async () => {
+      const a = await client(undefined, "10.20.0.1");
+      const before = feedbackSent.length;
+      const r = await a.emit("feedback:send", {
+        type: "bug",
+        message: "  The timer froze on my phone.\u202e  ",
+        email: "player@example.com",
+        page: "game",
+      });
+      expect(r.ok).toBe(true);
+      expect(feedbackSent.length).toBe(before + 1);
+      expect(feedbackSent.at(-1)).toMatchObject({
+        type: "bug",
+        message: "The timer froze on my phone.",
+        email: "player@example.com",
+        page: "game",
+        version: "1",
+      });
+      expect(Object.keys(feedbackSent.at(-1)!)).not.toContain("name");
+    });
+  });
+
+  it("refuses short messages and bad email addresses", async () => {
+    await withTestIps(async () => {
+      const a = await client(undefined, "10.20.0.2");
+      expect((await a.emit("feedback:send", { type: "idea", message: "short", page: "home" })).error).toBe("FEEDBACK_TOO_SHORT");
+      expect(
+        (await a.emit("feedback:send", { type: "idea", message: "A long enough idea.", email: "not-an-email", page: "home" })).error,
+      ).toBe("FEEDBACK_BAD_EMAIL");
+      expect((await a.emit("feedback:send", { type: "nope", message: "A long enough idea.", page: "home" })).error).toBe("BAD_REQUEST");
+    });
+  });
+
+  it("allows 3 reports for each network in an hour", async () => {
+    await withTestIps(async () => {
+      const a = await client(undefined, "10.20.0.3");
+      const send = () => a.emit("feedback:send", { type: "other", message: "Hello from the tests.", page: "info" });
+      for (let i = 0; i < 3; i++) expect((await send()).ok).toBe(true);
+      expect((await send()).error).toBe("FEEDBACK_LIMIT");
+    });
+  });
+
+  it("drops a report from a bot that fills in the hidden field, but answers ok", async () => {
+    await withTestIps(async () => {
+      const a = await client(undefined, "10.20.0.4");
+      const before = feedbackSent.length;
+      const r = await a.emit("feedback:send", { type: "idea", message: "Buy cheap watches now!", page: "home", website: "spam.example" });
+      expect(r.ok).toBe(true);
+      expect(feedbackSent.length).toBe(before);
+    });
   });
 });
