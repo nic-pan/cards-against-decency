@@ -10,10 +10,10 @@ import { Button } from "./ui";
 type FeedbackType = "bug" | "idea" | "other";
 type FeedbackPage = "home" | "game" | "info";
 
-const TYPES: { value: FeedbackType; label: string; hint: string }[] = [
-  { value: "bug", label: "🐞 Bug", hint: "Something does not work" },
-  { value: "idea", label: "💡 Idea", hint: "A feature or a change" },
-  { value: "other", label: "💬 Other", hint: "Anything else" },
+const TYPES: { value: FeedbackType; icon: string; label: string; hint: string }[] = [
+  { value: "bug", icon: "🐞", label: "Bug", hint: "Something does not work as it should." },
+  { value: "idea", icon: "💡", label: "Idea", hint: "A new feature, or a change to the game." },
+  { value: "other", icon: "💬", label: "Other", hint: "Anything else you want to tell us." },
 ];
 
 const PLACEHOLDER: Record<FeedbackType, string> = {
@@ -111,12 +111,13 @@ export function FeedbackDialog({ page, onClose }: { page: FeedbackPage; onClose:
 
             <fieldset>
               <legend className="mb-2 text-sm font-semibold">What is it about?</legend>
-              <div className="grid grid-cols-3 gap-2">
+              {/* A segmented control: one bar, equal parts. The radio inputs keep it usable with a keyboard. */}
+              <div className="grid grid-cols-3 gap-1 rounded-xl border border-line bg-paper p-1">
                 {TYPES.map((t) => (
                   <label
                     key={t.value}
-                    className={`cursor-pointer rounded-lg border px-2 py-2 text-center text-sm ${
-                      type === t.value ? "border-accent bg-accent-soft font-bold" : "border-line hover:bg-paper"
+                    className={`flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg px-2 text-sm font-semibold transition has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent ${
+                      type === t.value ? "bg-accent text-white shadow-sm" : "text-muted hover:bg-surface hover:text-ink"
                     }`}
                   >
                     <input
@@ -127,11 +128,14 @@ export function FeedbackDialog({ page, onClose }: { page: FeedbackPage; onClose:
                       onChange={() => setType(t.value)}
                       className="sr-only"
                     />
-                    <span className="block">{t.label}</span>
-                    <span className="block text-xs font-normal text-muted">{t.hint}</span>
+                    <span aria-hidden className="text-base leading-none">
+                      {t.icon}
+                    </span>
+                    {t.label}
                   </label>
                 ))}
               </div>
+              <p className="mt-2 text-xs text-muted">{TYPES.find((t) => t.value === type)!.hint}</p>
             </fieldset>
 
             <label className="block">
