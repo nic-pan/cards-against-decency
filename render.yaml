@@ -31,3 +31,9 @@ services:
       # Secret that seals players' blocks (32 bytes, base64). Keep it the same, or all blocks stop working.
       - key: BLOCK_KEY
         generateValue: true
+      # Player feedback goes to the "Player feedback" database in Notion. Set both values in the
+      # Render dashboard: they are secrets. Without them, reports go only to the server log.
+      - key: NOTION_FEEDBACK_TOKEN
+        sync: false
+      - key: NOTION_FEEDBACK_DATABASE_ID
+        sync: false

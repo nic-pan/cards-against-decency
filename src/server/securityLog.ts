@@ -29,7 +29,9 @@ export type SecurityEvent =
   | "hosted_games_limit"
   | "invalid_payload"
   | "name_report"
-  | "name_hidden";
+  | "name_hidden"
+  | "feedback"
+  | "feedback_trap";
 
 export function securityLog(event: SecurityEvent, data: { ip?: string; room?: string; detail?: string }): void {
   console.warn(

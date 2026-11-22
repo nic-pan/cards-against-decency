@@ -46,6 +46,10 @@ export const RELEASES: Release[] = [
         text: "Each answer shows as one card with the full sentence: the black card with the answers filled in. While players choose, each answer is one stack of cards, not 2 or 3 separate cards.",
       },
       {
+        title: "Send us feedback",
+        text: "Found a bug, or have an idea? Select \"Feedback\" in the corner of the page, or in the room header during a game.",
+      },
+      {
         title: "Empty rooms close",
         text: "A room closes after 30 minutes without a game. Before it closes, everyone gets a warning and can keep the room open.",
       },

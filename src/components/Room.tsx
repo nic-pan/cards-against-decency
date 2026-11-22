@@ -10,6 +10,7 @@ import { PlayerList } from "./PlayerList";
 import { ProfileForm } from "./ProfileForm";
 import { VoteBanner } from "./VoteBanner";
 import { StillThereDialog } from "./StillThereDialog";
+import { FeedbackDialog } from "./Feedback";
 import { Button, Field, inputClass } from "./ui";
 import {
   installActivityTracker,
@@ -496,6 +497,7 @@ function SoundToggle() {
 function RoomHeader({ code, practice, onLeave }: { code: string; practice: boolean; onLeave: () => void }) {
   const [copied, setCopied] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
+  const [feedback, setFeedback] = useState(false);
 
   async function copy() {
     const link = `${window.location.origin}/r/${code}`;
@@ -531,6 +533,11 @@ function RoomHeader({ code, practice, onLeave }: { code: string; practice: boole
         <span className="hidden sm:inline">{copied ? "Link copied" : "Copy invite link"}</span>
       </Button>
       <SoundToggle />
+      <Button variant="ghost" className="min-h-9 px-3" onClick={() => setFeedback(true)} aria-label="Send feedback">
+        <span aria-hidden>💬</span>
+        <span className="ml-1.5 hidden sm:inline">Feedback</span>
+      </Button>
+      {feedback && <FeedbackDialog page="game" onClose={() => setFeedback(false)} />}
       {practice && (
         <span className="hidden rounded-full bg-accent-soft px-3 py-1 text-xs font-bold text-accent sm:inline">
           Practice mode

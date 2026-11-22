@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { SITE_URL } from "@/lib/site";
+import { FloatingFeedback } from "@/components/Feedback";
 import "./globals.css";
 
 const TITLE = "Cards Against Decency – A Free Online Party Card Game";
@@ -32,7 +33,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="flex min-h-dvh flex-col antialiased">
         <div className="flex-1">{children}</div>
-        <footer className="border-t border-line px-4 py-4 text-xs leading-relaxed text-muted">
+        <FloatingFeedback />
+        {/* The bottom padding keeps the footer text clear of the floating Feedback button. */}
+        <footer className="border-t border-line px-4 pb-20 pt-4 text-xs leading-relaxed text-muted sm:pb-4 sm:pr-40">
           <div className="mx-auto max-w-6xl space-y-1">
             <p>
               Cards Against Decency is a free, non-commercial fan project. It is not affiliated with, endorsed by or

@@ -10,6 +10,9 @@ import { ipKey, securityLog } from "./securityLog";
 import { DeckImportError, fetchManyDeck, normalizeCode } from "./manyDecks";
 import { clientIpFrom, ipHeaderFromEnv, trustedHopsFromEnv } from "./clientIp";
 import { BlockSeal, hasBlocked, identityInput, type Identity } from "./identity";
+import { browserSummary, feedbackSenderFromEnv, type FeedbackSender } from "./feedback";
+import { APP_VERSION } from "../lib/site";
+import { FEEDBACK_MAX, FEEDBACK_MIN, FEEDBACK_PER_HOUR } from "../lib/protocol";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -162,10 +165,23 @@ const schemas = {
   nameCheck: z.object({ name }),
   block: z.object({ handle: z.string().max(32).optional(), playerId: id.optional() }),
   report: z.object({ handle: z.string().min(1).max(32) }),
+  feedback: z.object({
+    type: z.enum(["bug", "idea", "other"]),
+    message: z.string().max(FEEDBACK_MAX + 200),
+    email: z.string().max(200).optional(),
+    page: z.enum(["home", "game", "info"]),
+    /** A hidden field. People never see it, so a value means a bot filled in the form. */
+    website: z.string().max(500).optional(),
+  }),
   deckRemove: z.object({ deckId: id }),
   unban: z.object({ banId: id }),
   botRemove: z.object({ playerId: id }),
 };
+
+/** Removes control characters and direction overrides. Keeps line breaks and tabs. */
+function cleanFeedback(text: string): string {
+  return text.replace(/[\u0000-\u0008\u000b-\u001f\u007f\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, "").trim();
+}
 
 class RequestError extends Error {
   constructor(public readonly code: string) {
@@ -199,6 +215,8 @@ export interface GameServerOptions {
   blockSeal?: BlockSeal;
   /** Open games that one IP address can host at the same time. Defaults to HOSTED_GAMES_PER_IP, or 3. */
   hostedGamesPerIp?: number;
+  /** Sends player feedback. Defaults to the Notion database from the environment, or the server log. */
+  sendFeedback?: FeedbackSender;
 }
 
 /** Reads HOSTED_GAMES_PER_IP. A missing or invalid value gives the default. */
@@ -225,6 +243,8 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
   const passwordFailures = new WindowCounter(5, 10 * 60_000);
   // Deck imports call an outside service, so they have their own, lower limit.
   const deckImports = new WindowCounter(10, 60_000);
+  const feedbackReports = new WindowCounter(FEEDBACK_PER_HOUR, 60 * 60_000);
+  const sendFeedback = options.sendFeedback ?? feedbackSenderFromEnv(process.env);
   const seal = options.blockSeal ?? BlockSeal.fromEnv(process.env.BLOCK_KEY);
   const hostedGamesPerIp = options.hostedGamesPerIp ?? hostedGamesFromEnv(process.env.HOSTED_GAMES_PER_IP);
 
@@ -683,6 +703,31 @@ export function attachGameServer(server: Server, decks: DeckRegistry, options: G
       }
       if (!target || target.browser === s.data.who?.browser) throw new RequestError("UNKNOWN_PLAYER");
       return { token: seal.seal(target.browser, target.name), name: target.name };
+    });
+
+    /** Sends a bug report or an idea to the developer. */
+    on(socket, "feedback:send", async (s, p) => {
+      const f = schemas.feedback.parse(p);
+      if (f.website) {
+        // A bot filled in the hidden field. Pretend that it worked.
+        securityLog("feedback_trap", { ip: s.data.ip });
+        return;
+      }
+      const message = cleanFeedback(f.message);
+      if (message.length < FEEDBACK_MIN) throw new RequestError("FEEDBACK_TOO_SHORT");
+      if (message.length > FEEDBACK_MAX) throw new RequestError("FEEDBACK_TOO_LONG");
+      const email = f.email?.trim() ? f.email.trim() : null;
+      if (email !== null && !z.string().email().safeParse(email).success) throw new RequestError("FEEDBACK_BAD_EMAIL");
+      if (!feedbackReports.hit(ipKey(s.data.ip))) throw new RequestError("FEEDBACK_LIMIT");
+      securityLog("feedback", { ip: s.data.ip, detail: f.type });
+      await sendFeedback({
+        type: f.type,
+        message,
+        email,
+        page: f.page,
+        browser: browserSummary(s.handshake.headers["user-agent"]),
+        version: APP_VERSION,
+      });
     });
 
     /** Reports a name from the online list. */
